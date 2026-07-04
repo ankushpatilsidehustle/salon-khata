@@ -1,0 +1,231 @@
+{
+  "app": {
+    "name": "Salon Khata"
+  },
+  "common": {
+    "loading": "Loading",
+    "save": "Save",
+    "offlineReady": "Works offline",
+    "profile": "Profile",
+    "back": "Go back",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "discard": "Discard",
+    "done": "Done",
+    "clear": "Clear",
+    "active": "Active",
+    "inactive": "Inactive",
+    "discardChanges": "Discard changes?",
+    "discardChangesMessage": "You have unsaved changes. Are you sure you want to discard them?"
+  },
+  "entries": {
+    "title": "Entries",
+    "hub": {
+      "employees": { "sub": "Add & manage staff" },
+      "services": { "sub": "Haircuts, treatments & more" },
+      "commission": {
+      "label": "Commission",
+      "sub": "Set rates per employee & service"
+    },
+      "expenses": {
+        "label": "Expenses",
+        "sub": "Coming in Wave 5"
+      }
+    }
+  },
+  "employees": {
+    "title": "Employees",
+    "active": "Active",
+    "inactive": "Inactive",
+    "empty": {
+      "icon": "👥",
+      "title": "No employees yet",
+      "body": "Add your staff to start tracking income & commissions."
+    },
+    "add": "Add employee",
+    "edit": "Edit employee",
+    "name": "Name",
+    "nameRequired": "Name is required",
+    "namePlaceholder": "e.g. Priya, Rahul",
+    "address": "Address",
+    "addressPlaceholder": "House / street / city (optional)",
+    "mobile": "Mobile number",
+    "mobilePlaceholder": "10-digit number",
+    "gender": "Gender",
+    "genderOptions": {
+      "male": "Male",
+      "female": "Female",
+      "other": "Other"
+    },
+    "joiningDate": "Joining date",
+    "joiningDatePlaceholder": "Pick a date",
+    "compensation": {
+      "label": "Salary or commission",
+      "salary": "Salary",
+      "commission": "Commission",
+      "hint": "Choose how this employee is paid (optional)."
+    },
+    "salaryAmount": "Monthly salary (₹)",
+    "salaryPlaceholder": "e.g. 15000",
+    "salaryRequired": "Enter a valid salary amount",
+    "commissionPercent": "Commission (%)",
+    "commissionPlaceholder": "e.g. 40",
+    "commissionRequired": "Enter a percent between 0 and 100",
+    "activeLabel": "Active",
+    "deleteAction": "Delete employee",
+    "deleteConfirm": {
+      "title": "Delete employee?",
+      "message": "This will remove the employee. Past transactions are unaffected."
+    },
+    "saved": "Employee saved",
+    "deleted": "Employee deleted"
+  },
+  "services": {
+    "title": "Services",
+    "uncategorized": "Uncategorized",
+    "filter": {
+      "all": "All"
+    },
+    "empty": {
+      "icon": "✂️",
+      "title": "No services yet",
+      "body": "Add haircuts, treatments and other services."
+    },
+    "add": "Add service",
+    "edit": "Edit service",
+    "name": "Service name",
+    "nameRequired": "Service name is required",
+    "namePlaceholder": "e.g. Haircut, Facial",
+    "category": "Category",
+    "categoryPlaceholder": "Select category",
+    "categoryRequired": "Please select a category",
+    "malePrice": "Male price (₹)",
+    "femalePrice": "Female price (₹)",
+    "priceAtLeastOne": "Enter at least one price",
+    "priceHint": "Leave a price blank if the service isn't offered for that gender.",
+    "pricePlaceholder": "0",
+    "activeLabel": "Active",
+    "saved": "Service saved",
+    "deleted": "Service deleted"
+  },
+  "categories": {
+    "pick": "Choose category",
+    "add": "Add category",
+    "name": "Category name",
+    "nameRequired": "Category name is required",
+    "namePlaceholder": "e.g. Hair, Facial, Bridal",
+    "activeLabel": "Active",
+    "empty": "No categories yet"
+  },
+  "dashboard": {
+    "title": "Today",
+    "subtitle": "Your salon notebook, ready even without internet.",
+    "businessNameFallback": "Salon Khata",
+    "income": {
+      "today": "Today's income"
+    },
+    "expenses": {
+      "today": "Today's expenses"
+    },
+    "net": {
+      "today": "Net collection"
+    },
+    "todayIncome": "Today's income",
+    "todayExpenses": "Today's expenses",
+    "netCollection": "Net collection",
+    "employeeCommission": "Employee commission",
+    "recentTransactions": "Recent transactions",
+    "emptyTransactions": "No transactions yet",
+    "recent": {
+      "title": "Recent transactions",
+      "viewAll": "View all ({{count}} today)"
+    },
+    "empty": {
+      "title": "No income yet",
+      "body": "Add your first entry to see today's totals.",
+      "icon": "📥"
+    },
+    "delta": {
+      "up": "{{amount}} vs yesterday",
+      "down": "{{amount}} vs yesterday"
+    }
+  },
+  "income": {
+    "add": "Add income",
+    "addIncome": "Add income",
+    "newBill": "New Bill",
+    "whoServed": "Who served?",
+    "noEmployees": "Add employees first to record a bill",
+    "customer": "Customer",
+    "male": "Male",
+    "female": "Female",
+    "genderHint": "affects pricing",
+    "date": "Bill date",
+    "services": "Services",
+    "addServices": "Add services",
+    "editSelection": "Edit selection",
+    "addSelected": "Add selected services",
+    "addSelectedCount": "Add {{count}} service",
+    "addSelectedCount_other": "Add {{count}} services",
+    "noServices": "Add services first",
+    "noServicesTitle": "No active services",
+    "noServicesBody": "Add services from the Services screen to select them here.",
+    "each": "each",
+    "bill": "Bill",
+    "subtotal": "Subtotal",
+    "commission": "Commission (owner owes)",
+    "commissionShort": "Comm. {{amount}}",
+    "discount": "Discount",
+    "discountPercent": "% Percentage",
+    "discountFlat": "₹ Flat amount",
+    "discountApplied": "Discount applied",
+    "discountInvalid": "Enter a valid discount value",
+    "discountMax": "Discount cannot exceed 100%",
+    "total": "Total",
+    "paymentMode": "Payment",
+    "modes": {
+      "cash": "Cash",
+      "upi": "UPI",
+      "card": "Card",
+      "other": "Other"
+    },
+    "saveBill": "Save Bill",
+    "saved": "Bill saved!",
+    "saveFailed": "Could not save bill",
+    "selectEmployee": "Select employee",
+    "selectService": "Select service",
+    "assignedTo": "Assigned to",
+    "changeEmployee": "Change employee"
+  },
+  "commission": {
+    "setRules": "Set commission rules",
+    "sheetTitle": "Commission · {{name}}",
+    "noServices": "No active services. Add services to set commission rates.",
+    "noRule": "No commission",
+    "typePercent": "% of service",
+    "typeFixed": "₹ flat per service",
+    "valueRequired": "Enter a value greater than 0",
+    "percentMax": "Percentage cannot exceed 100%"
+  },
+  "expense": {
+    "add": "Add expense"
+  },
+  "expenses": {
+    "addExpense": "Add expense"
+  },
+  "sync": {
+    "line": {
+      "neverSynced": "Not synced yet · records save on this device",
+      "synced": "Last synced {{relative}}",
+      "syncing": "Syncing…",
+      "offline": "Last synced {{relative}} · Offline"
+    },
+    "badge": {
+      "notSynced": "Not synced"
+    }
+  },
+  "errors": {
+    "startupTitle": "Could not start Salon Khata",
+    "unknown": "Something went wrong"
+  }
+}
