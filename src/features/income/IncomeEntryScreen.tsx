@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -23,6 +23,7 @@ import DateTimePicker, {
 
 import { AppBar } from "@/components/core/AppBar";
 import { Button } from "@/components/core/Button";
+import { useSnackbar } from "@/components/core/SnackbarProvider";
 import { colors, radius, spacing, typography } from "@/design-system/tokens";
 import { DEV_DEVICE_ID, DEV_SALON_ID } from "@/constants/dev";
 import { formatMoney } from "@/domain/money";
@@ -36,8 +37,10 @@ import type { ServiceRecord } from "@/repositories/service-repository";
 import { CommissionRepository } from "@/repositories/commission-repository";
 import type { CommissionRuleRecord } from "@/repositories/commission-repository";
 import { IncomeRepository } from "@/repositories/income-repository";
+import { SettingsRepository } from "@/repositories/settings-repository";
 import type { RootStackParamList } from "@/application/AppNavigator";
 import { AddServicesSheet } from "./AddServicesSheet";
+import type { ServiceSelection } from "./AddServicesSheet";
 
 type Props = NativeStackScreenProps<RootStackParamList, "IncomeEntry">;
 
@@ -66,6 +69,7 @@ const employeeRepo = new EmployeeRepository();
 const serviceRepo = new ServiceRepository();
 const commissionRepo = new CommissionRepository();
 const incomeRepo = new IncomeRepository();
+const settingsRepo = new SettingsRepository();
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -93,17 +97,10 @@ function toLocalISODate(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
-/** Human-friendly date label — "Today", "Yesterday", or "5 Jul 2026". */
+/** Human-friendly date label — "5 Jul 2026". */
 function formatDateLabel(iso: string): string {
   const [y, m, d] = iso.split("-").map(Number);
   const date = new Date(y, m - 1, d);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const diffDays = Math.round(
-    (today.getTime() - date.getTime()) / (1000 * 60 * 60 * 24)
-  );
-  if (diffDays === 0) return "Today";
-  if (diffDays === 1) return "Yesterday";
   return date.toLocaleDateString(undefined, {
     day: "numeric",
     month: "short",
@@ -113,9 +110,16 @@ function formatDateLabel(iso: string): string {
 
 // ─── Screen ──────────────────────────────────────────────────────────────────
 
-export function IncomeEntryScreen({ navigation }: Props) {
+export function IncomeEntryScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+
+  const editingId = route.params?.transactionId ?? null;
+  const isEditing = !!editingId;
+  /** Preserve original `created_at` across updates so ordering doesn't jump. */
+  const editingCreatedAtRef = useRef<string | null>(null);
+  /** Guards the hydration effect so it only runs once per mount. */
+  const hydratedRef = useRef<string | null>(null);
 
   // Master data
   const [employees, setEmployees] = useState<EmployeeRecord[]>([]);
@@ -126,7 +130,16 @@ export function IncomeEntryScreen({ navigation }: Props) {
   // Form
   const [employeeId, setEmployeeId] = useState<string | null>(null);
   const [customerGender, setCustomerGender] = useState<CustomerGender | null>(
-    null
+    () => {
+      // For a new bill, seed the default from the salon type. Editing an
+      // existing bill leaves this untouched (the price snapshots on items
+      // already reflect the gender chosen at save time).
+      if (editingId) return null;
+      const salonType = settingsRepo.getSalonType(DEV_SALON_ID);
+      if (salonType === "male") return "male";
+      if (salonType === "female") return "female";
+      return null;
+    }
   );
   const [billDate, setBillDate] = useState<string>(toLocalISODate(new Date()));
   const [billItems, setBillItems] = useState<BillItem[]>([]);
@@ -139,6 +152,7 @@ export function IncomeEntryScreen({ navigation }: Props) {
 
   // UI
   const [saving, setSaving] = useState(false);
+  const { showSnackbar } = useSnackbar();
   const [servicesSheetOpen, setServicesSheetOpen] = useState(false);
   const [iosPickerOpen, setIosPickerOpen] = useState(false);
   /** When set, the per-line employee picker modal is showing for this item. */
@@ -158,6 +172,51 @@ export function IncomeEntryScreen({ navigation }: Props) {
       setServicesById(map);
     }, [])
   );
+
+  // Hydrate the form from an existing transaction when in edit mode. Runs
+  // exactly once, after both masters (employees + services) are loaded so
+  // per-line lookups and commission-rule resolution succeed.
+  useEffect(() => {
+    if (!editingId) return;
+    if (hydratedRef.current === editingId) return;
+    if (employees.length === 0 || servicesById.size === 0) return;
+
+    const loaded = incomeRepo.getById(DEV_SALON_ID, editingId);
+    if (!loaded) return;
+    const { transaction: tx, items } = loaded;
+
+    editingCreatedAtRef.current = tx.created_at;
+    setEmployeeId(tx.employee_id || null);
+    setBillDate(tx.transaction_date);
+    setPaymentMode(tx.payment_mode as PaymentMode);
+    if (tx.discount_type) {
+      setDiscountEnabled(true);
+      setDiscountType(tx.discount_type as DiscountType);
+      // discount_value is stored as raw * 100 (e.g. 10% → 1000, ₹50 → 5000).
+      setDiscountInput(String(tx.discount_value / 100));
+    }
+
+    const hydrated: BillItem[] = items.map((item) => {
+      const lineEmployeeId = item.employee_id ?? tx.employee_id;
+      const rule = lineEmployeeId
+        ? commissionRepo.findActiveRule(lineEmployeeId, item.service_id)
+        : null;
+      return {
+        serviceId: item.service_id,
+        serviceName: item.service_name_snapshot,
+        unitPrice: item.service_price_snapshot,
+        quantity: item.quantity,
+        lineAmount: item.line_amount,
+        employeeId: lineEmployeeId,
+        employeeName:
+          item.employee_name_snapshot ?? tx.employee_name_snapshot ?? "",
+        rule,
+        commissionAmount: item.commission_amount
+      };
+    });
+    setBillItems(hydrated);
+    hydratedRef.current = editingId;
+  }, [editingId, employees.length, servicesById.size]);
 
   // ── Derived ────────────────────────────────────────────────────────────────
 
@@ -181,11 +240,27 @@ export function IncomeEntryScreen({ navigation }: Props) {
     [billItems]
   );
 
-  const canSave = !!employeeId && billItems.length > 0;
+  const canSave =
+    billItems.length > 0 && billItems.every((i) => !!i.employeeId);
   const selectedIds = useMemo(
     () => billItems.map((i) => i.serviceId),
     [billItems]
   );
+  const initialEmployeeByServiceId = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const item of billItems) {
+      if (item.employeeId) map[item.serviceId] = item.employeeId;
+    }
+    return map;
+  }, [billItems]);
+  /**
+   * True when every other field is at its default — so the sheet's "Done"
+   * button can be relabeled to "Save Bill" for the fast single-tap commit.
+   */
+  const isFormAtDefaults =
+    !discountEnabled &&
+    paymentMode === "cash" &&
+    billDate === toLocalISODate(new Date());
 
   // ── Employee ───────────────────────────────────────────────────────────────
 
@@ -216,6 +291,11 @@ export function IncomeEntryScreen({ navigation }: Props) {
         return { ...nextItem, commissionAmount: computeCommission(nextItem) };
       })
     );
+    // Fast-path: on first employee pick, jump straight into service selection.
+    // Skipped in edit mode — items are already populated from the loaded bill.
+    if (!isEditing && billItems.length === 0) {
+      setServicesSheetOpen(true);
+    }
   }
 
   /** Reassign a single service line to a specific employee. */
@@ -288,9 +368,8 @@ export function IncomeEntryScreen({ navigation }: Props) {
 
   // ── Services sheet callback ────────────────────────────────────────────────
 
-  function applyServiceSelection(services: ServiceRecord[]) {
-    // Preserve per-item quantity AND per-line employee overrides across
-    // reselection.
+  /** Pure builder — turns the sheet's selection payload into BillItems. */
+  function buildBillItems(selections: ServiceSelection[]): BillItem[] {
     const prevById = new Map<string, BillItem>();
     for (const item of billItems) prevById.set(item.serviceId, item);
 
@@ -298,19 +377,20 @@ export function IncomeEntryScreen({ navigation }: Props) {
       ? employees.find((e) => e.id === employeeId)
       : null;
 
-    const next: BillItem[] = services.map((svc) => {
+    return selections.map(({ service: svc, employeeId: assignedId }) => {
       const prev = prevById.get(svc.id);
       const quantity = prev?.quantity ?? 1;
       const unitPrice = pickPrice(svc, customerGender);
       const lineAmount = unitPrice * quantity;
 
-      // Existing line keeps its employee; new line inherits current default.
-      const lineEmployeeId = prev?.employeeId ?? defaultEmployee?.id ?? null;
-      const lineEmployeeName =
-        prev?.employeeName ?? defaultEmployee?.name ?? "";
+      const resolvedId =
+        assignedId ?? prev?.employeeId ?? defaultEmployee?.id ?? "";
+      const resolvedName = resolvedId
+        ? employees.find((e) => e.id === resolvedId)?.name ?? ""
+        : "";
 
-      const rule = lineEmployeeId
-        ? commissionRepo.findActiveRule(lineEmployeeId, svc.id)
+      const rule = resolvedId
+        ? commissionRepo.findActiveRule(resolvedId, svc.id)
         : null;
       const base = {
         serviceId: svc.id,
@@ -318,14 +398,16 @@ export function IncomeEntryScreen({ navigation }: Props) {
         unitPrice,
         quantity,
         lineAmount,
-        employeeId: lineEmployeeId ?? "",
-        employeeName: lineEmployeeName,
+        employeeId: resolvedId,
+        employeeName: resolvedName,
         rule
       };
       return { ...base, commissionAmount: computeCommission(base) };
     });
+  }
 
-    setBillItems(next);
+  function applyServiceSelection(selections: ServiceSelection[]) {
+    setBillItems(buildBillItems(selections));
     setServicesSheetOpen(false);
   }
 
@@ -378,39 +460,72 @@ export function IncomeEntryScreen({ navigation }: Props) {
       }
     }
 
+    saveBill(billItems);
+  }
+
+  /**
+   * Fast-path used by the services sheet when the rest of the form is at
+   * defaults (cash, today, no discount). Skips the return trip to the parent
+   * screen — selections → bill → save in one gesture.
+   */
+  function handleSaveFromSelections(selections: ServiceSelection[]) {
+    if (saving) return;
+    const items = buildBillItems(selections);
+    if (items.length === 0 || items.some((i) => !i.employeeId)) return;
+    setBillItems(items);
+    setServicesSheetOpen(false);
+    saveBill(items);
+  }
+
+  function saveBill(items: BillItem[]) {
     setSaving(true);
 
     try {
-      const employee = employees.find((e) => e.id === employeeId)!;
-      const txId = newId();
+      // Recompute totals from the exact `items` we're saving — avoids stale
+      // state when saving directly from the sheet.
+      const gross = items.reduce((s, i) => s + i.lineAmount, 0);
+      const discountRaw = parseFloat(discountInput) || 0;
+      const discount = discountEnabled
+        ? discountType === "flat"
+          ? Math.round(discountRaw * 100)
+          : Math.round((gross * discountRaw) / 100)
+        : 0;
+      const net = Math.max(0, gross - discount);
+      const commission = items.reduce((s, i) => s + i.commissionAmount, 0);
+
+      // Transaction-level employee: prefer the top-level shortcut selection;
+      // otherwise fall back to the first line's employee.
+      const primaryEmployeeId = employeeId || items[0].employeeId;
+      const primaryEmployee = employees.find((e) => e.id === primaryEmployeeId)!;
       const now = getUtcTimestamp();
-      const discountInputRaw = parseFloat(discountInput) || 0;
+      const txId = editingId ?? newId();
+      const createdAt = editingCreatedAtRef.current ?? now;
       const discountValue = discountEnabled
-        ? Math.round(discountInputRaw * 100)
+        ? Math.round(discountRaw * 100)
         : 0;
 
-      incomeRepo.saveIncomeTransaction({
+      const draft = {
         transaction: {
           id: txId,
           salon_id: DEV_SALON_ID,
-          employee_id: employeeId!,
-          employee_name_snapshot: employee.name,
+          employee_id: primaryEmployeeId,
+          employee_name_snapshot: primaryEmployee.name,
           transaction_date: billDate,
           payment_mode: paymentMode,
-          gross_amount: grossAmount,
+          gross_amount: gross,
           discount_type: discountEnabled ? discountType : null,
           discount_value: discountValue,
-          discount_amount: discountAmount,
-          net_amount: netAmount,
-          commission_amount: totalCommission,
+          discount_amount: discount,
+          net_amount: net,
+          commission_amount: commission,
           remarks: null,
-          created_at: now,
+          created_at: createdAt,
           updated_at: now,
           deleted_at: null,
           sync_status: "pending",
           device_id: DEV_DEVICE_ID
         },
-        items: billItems.map((item) => ({
+        items: items.map((item) => ({
           id: newId(),
           salon_id: DEV_SALON_ID,
           transaction_id: txId,
@@ -422,21 +537,25 @@ export function IncomeEntryScreen({ navigation }: Props) {
           commission_rule_type_snapshot: item.rule?.rule_type ?? null,
           commission_rule_value_snapshot: item.rule?.value ?? null,
           commission_amount: item.commissionAmount,
-          // Per-line employee assignment (migration 006). Falls back to the
-          // visit-level employee for lines that never got an override.
-          employee_id: item.employeeId || employeeId!,
-          employee_name_snapshot: item.employeeName || employee.name,
+          employee_id: item.employeeId,
+          employee_name_snapshot: item.employeeName,
           created_at: now,
           updated_at: now,
           deleted_at: null,
           sync_status: "pending",
           device_id: DEV_DEVICE_ID
         }))
-      });
+      };
 
-      Alert.alert(t("income.saved"), formatMoney(netAmount), [
-        { text: t("common.done"), onPress: () => navigation.goBack() }
-      ]);
+      if (isEditing) {
+        incomeRepo.updateIncomeTransaction(draft);
+      } else {
+        incomeRepo.saveIncomeTransaction(draft);
+      }
+
+      const label = isEditing ? t("income.updateBill") : t("income.saveBill");
+      showSnackbar(`${label} • ${formatMoney(net)}`);
+      navigation.goBack();
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       Alert.alert(t("income.saveFailed"), message);
@@ -462,7 +581,7 @@ export function IncomeEntryScreen({ navigation }: Props) {
     <View style={styles.root}>
       {/* AppBar */}
       <AppBar
-        title={t("income.newBill")}
+        title={isEditing ? t("income.editBill") : t("income.newBill")}
         leading={
           <Pressable
             onPress={() => navigation.goBack()}
@@ -544,23 +663,26 @@ export function IncomeEntryScreen({ navigation }: Props) {
             {/* Gender */}
             <View style={styles.metaCol}>
               <Text style={styles.sectionLabel}>{t("income.customer")}</Text>
-              <View style={styles.genderRow}>
-                {(["male", "female"] as CustomerGender[]).map((g) => (
+              <View style={styles.genderToggle}>
+                {(["male", "female"] as CustomerGender[]).map((g, idx) => (
                   <Pressable
                     key={g}
                     style={[
-                      styles.genderChip,
-                      customerGender === g && styles.genderChipSelected
+                      styles.genderToggleBtn,
+                      idx === 0 && styles.genderToggleBtnLeft,
+                      customerGender === g && styles.genderToggleBtnSelected
                     ]}
                     onPress={() => handleGender(g)}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: customerGender === g }}
                   >
                     <Text
                       style={[
-                        styles.genderChipText,
-                        customerGender === g && styles.genderChipTextSelected
+                        styles.genderToggleText,
+                        customerGender === g && styles.genderToggleTextSelected
                       ]}
                     >
-                      {g === "male" ? "♂  M" : "♀  F"}
+                      {g === "male" ? "♂ Male" : "♀ Female"}
                     </Text>
                   </Pressable>
                 ))}
@@ -890,9 +1012,13 @@ export function IncomeEntryScreen({ navigation }: Props) {
             styles.saveBtn,
             (!canSave || saving) && styles.saveBtnDisabled
           ]}
-          accessibilityLabel={t("income.saveBill")}
+          accessibilityLabel={isEditing ? t("income.updateBill") : t("income.saveBill")}
         >
-          {saving ? t("common.loading") : t("income.saveBill")}
+          {saving
+            ? t("common.loading")
+            : isEditing
+              ? t("income.updateBill")
+              : t("income.saveBill")}
         </Button>
       </View>
 
@@ -901,8 +1027,14 @@ export function IncomeEntryScreen({ navigation }: Props) {
         visible={servicesSheetOpen}
         onClose={() => setServicesSheetOpen(false)}
         onDone={applyServiceSelection}
+        onSaveAndClose={
+          !isEditing && isFormAtDefaults ? handleSaveFromSelections : undefined
+        }
         initialSelectedIds={selectedIds}
+        initialEmployeeByServiceId={initialEmployeeByServiceId}
         customerGender={customerGender}
+        employees={employees}
+        defaultEmployeeId={employeeId}
       />
 
       {/* Per-line employee picker */}
@@ -1066,34 +1198,38 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: spacing[2]
   },
-  genderRow: {
-    flexDirection: "row",
-    gap: spacing[2]
-  },
-  genderChip: {
+  genderToggle: {
     borderColor: colors.border.subtle,
-    borderRadius: radius.full,
+    borderRadius: radius.md,
     borderWidth: 1,
-    minWidth: 52,
-    paddingHorizontal: spacing[3],
-    paddingVertical: spacing[1]
+    flexDirection: "row",
+    overflow: "hidden"
   },
-  genderChipSelected: {
-    backgroundColor: colors.interactive.selected,
-    borderColor: colors.brand.primary
+  genderToggleBtn: {
+    alignItems: "center",
+    backgroundColor: colors.surface.default,
+    flex: 1,
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[2]
   },
-  genderChipText: {
+  genderToggleBtnLeft: {
+    borderColor: colors.border.subtle,
+    borderRightWidth: 1
+  },
+  genderToggleBtnSelected: {
+    backgroundColor: colors.interactive.selected
+  },
+  genderToggleText: {
     ...typography.bodySmall,
     color: colors.text.secondary,
     textAlign: "center"
   },
-  genderChipTextSelected: {
+  genderToggleTextSelected: {
     color: colors.brand.primary,
     fontWeight: "600"
   },
   dateField: {
     alignItems: "center",
-    alignSelf: "flex-start",
     borderColor: colors.border.subtle,
     borderRadius: radius.md,
     borderWidth: 1,

@@ -246,7 +246,7 @@ function PriceLine({
   const color = icon === "male" ? colors.status.info : colors.brand.accent;
   return (
     <View style={priceStyle.line}>
-      <Ionicons name={icon} size={12} color={color} />
+      {/* <Ionicons name={icon} size={12} color={color} /> */}
       <Text style={[priceStyle.text, solo && priceStyle.textSolo]}>{label}</Text>
     </View>
   );

@@ -4,6 +4,9 @@ import { runMigration003 } from "./003-service-categories";
 import { runMigration004 } from "./004-employees-expanded";
 import { runMigration005 } from "./005-income-discount";
 import { runMigration006 } from "./006-income-item-employee";
+import { runMigration007 } from "./007-expense-payment-mode";
+import { runMigration008 } from "./008-expense-settled-at";
+import { runMigration009 } from "./009-onboarding";
 
 /** Run every migration in order. Safe to call on every app start. */
 export function runAllMigrations(): void {
@@ -13,4 +16,7 @@ export function runAllMigrations(): void {
   runMigration004();
   runMigration005();
   runMigration006();
+  runMigration007();
+  runMigration008();
+  runMigration009();
 }

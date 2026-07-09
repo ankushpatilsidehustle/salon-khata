@@ -175,6 +175,7 @@ const styles = StyleSheet.create({
     flex: 1
   },
   avoider: {
+    flex: 1,
     justifyContent: "flex-end"
   },
   sheet: {

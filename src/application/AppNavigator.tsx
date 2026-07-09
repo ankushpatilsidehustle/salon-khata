@@ -5,6 +5,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { BottomTabBar } from "@/components/core/BottomTabBar";
 import { DashboardScreen } from "@/features/dashboard/DashboardScreen";
 import { EntriesNavigator } from "@/features/entries/EntriesNavigator";
+import { ExpenseEntryScreen } from "@/features/expenses/ExpenseEntryScreen";
 import { IncomeEntryScreen } from "@/features/income/IncomeEntryScreen";
 import { MoreScreen } from "@/features/more/MoreScreen";
 import { ReportsScreen } from "@/features/reports/ReportsScreen";
@@ -14,7 +15,10 @@ import { ReportsScreen } from "@/features/reports/ReportsScreen";
 /** Root modal stack — sits above the tab navigator so IncomeEntry slides up. */
 export type RootStackParamList = {
   MainTabs: undefined;
-  IncomeEntry: undefined;
+  /** `transactionId` present → edit mode; absent → new bill. */
+  IncomeEntry: { transactionId?: string } | undefined;
+  /** `expenseId` present → edit mode; absent → new expense. */
+  ExpenseEntry: { expenseId?: string } | undefined;
 };
 
 export type RootTabParamList = {
@@ -69,6 +73,11 @@ export function AppNavigator() {
         <RootStack.Screen
           name="IncomeEntry"
           component={IncomeEntryScreen}
+          options={{ presentation: "modal" }}
+        />
+        <RootStack.Screen
+          name="ExpenseEntry"
+          component={ExpenseEntryScreen}
           options={{ presentation: "modal" }}
         />
       </RootStack.Navigator>

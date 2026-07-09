@@ -27,6 +27,8 @@ export type EmployeeRecord = SharedColumns & {
   commission_percent: number | null;
   /** 1 = active, 0 = inactive */
   is_active: number;
+  /** 1 = this row represents the salon owner (auto-created during onboarding). */
+  is_owner: number;
   sort_order: number;
 };
 
@@ -40,6 +42,7 @@ export type NewEmployee = {
   compensationType?: CompensationType | null;
   salaryAmount?: number | null;
   commissionPercent?: number | null;
+  isOwner?: boolean;
 };
 
 export type UpdateEmployee = {
@@ -90,9 +93,9 @@ export class EmployeeRepository {
       `INSERT INTO employees
        (id, salon_id, name, address, mobile_number, gender, joining_date,
         compensation_type, salary_amount, commission_percent,
-        is_active, sort_order,
+        is_active, is_owner, sort_order,
         created_at, updated_at, deleted_at, sync_status, device_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0, ?, ?, NULL, 'pending', ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, 0, ?, ?, NULL, 'pending', ?)`,
       [
         id,
         data.salonId,
@@ -104,6 +107,7 @@ export class EmployeeRepository {
         data.compensationType ?? null,
         data.salaryAmount ?? null,
         data.commissionPercent ?? null,
+        data.isOwner ? 1 : 0,
         now,
         now,
         DEV_DEVICE_ID

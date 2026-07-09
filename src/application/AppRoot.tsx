@@ -1,27 +1,49 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
 import "@/i18n";
+import { i18n } from "@/i18n";
+import { SnackbarProvider } from "@/components/core/SnackbarProvider";
 import { colors, spacing, typography } from "@/design-system/tokens";
 import { runAllMigrations } from "@/database/migrations";
 import { AppNavigator } from "@/application/AppNavigator";
+import { DEV_SALON_ID } from "@/constants/dev";
+import { SalonRepository } from "@/repositories/salon-repository";
+import { SettingsRepository } from "@/repositories/settings-repository";
+import { OnboardingNavigator } from "@/features/onboarding/OnboardingNavigator";
+
+const salonRepo = new SalonRepository();
+const settingsRepo = new SettingsRepository();
 
 export function AppRoot() {
   const { t } = useTranslation();
   const [isReady, setIsReady] = useState(false);
   const [startupError, setStartupError] = useState<string | null>(null);
+  const [hasOnboarded, setHasOnboarded] = useState(false);
 
   useEffect(() => {
     try {
       runAllMigrations();
+      const onboarded = salonRepo.hasSalon(DEV_SALON_ID);
+      if (onboarded) {
+        const lang = settingsRepo.getSalonLanguage(DEV_SALON_ID);
+        if (lang && lang !== i18n.language) {
+          void i18n.changeLanguage(lang);
+        }
+      }
+      setHasOnboarded(onboarded);
       setIsReady(true);
     } catch (error) {
       setStartupError(error instanceof Error ? error.message : t("errors.unknown"));
     }
   }, [t]);
+
+  const handleOnboardingDone = useCallback(() => {
+    setHasOnboarded(true);
+  }, []);
 
   if (startupError) {
     return (
@@ -48,7 +70,13 @@ export function AppRoot() {
   return (
     <SafeAreaProvider>
       <StatusBar style="dark" />
-      <AppNavigator />
+      <SnackbarProvider>
+        {hasOnboarded ? (
+          <AppNavigator />
+        ) : (
+          <OnboardingNavigator onDone={handleOnboardingDone} />
+        )}
+      </SnackbarProvider>
     </SafeAreaProvider>
   );
 }

@@ -9,7 +9,7 @@ import { AppBar } from "@/components/core/AppBar";
 import { EmptyState } from "@/components/core/EmptyState";
 import { Fab } from "@/components/core/Fab";
 import { ListItem } from "@/components/core/ListItem";
-import { Snackbar } from "@/components/core/Snackbar";
+import { useSnackbar } from "@/components/core/SnackbarProvider";
 import { colors, radius, spacing, typography } from "@/design-system/tokens";
 import { DEV_SALON_ID } from "@/constants/dev";
 import { EmployeeRepository } from "@/repositories/employee-repository";
@@ -47,8 +47,7 @@ export function EmployeesScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const isFocused = useIsFocused();
   const [sections, setSections] = useState<Section[]>([]);
-  const [snackMessage, setSnackMessage] = useState("");
-  const [snackVisible, setSnackVisible] = useState(false);
+  const { showSnackbar } = useSnackbar();
 
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -104,8 +103,7 @@ export function EmployeesScreen({ navigation }: Props) {
           style: "destructive",
           onPress: () => {
             repo.softDelete(emp.id, DEV_SALON_ID);
-            setSnackMessage(t("employees.deleted"));
-            setSnackVisible(true);
+            showSnackbar(t("employees.deleted"));
             loadData();
           }
         }
@@ -208,12 +206,6 @@ export function EmployeesScreen({ navigation }: Props) {
           employeeName={commissionEmployee.name}
         />
       )}
-
-      <Snackbar
-        message={snackMessage}
-        visible={snackVisible}
-        onDismiss={() => setSnackVisible(false)}
-      />
     </View>
   );
 }

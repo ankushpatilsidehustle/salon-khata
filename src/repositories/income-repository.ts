@@ -189,4 +189,131 @@ export class IncomeRepository {
       [salonId, startDate, endDate]
     );
   }
+
+  /**
+   * Fetch a single transaction (header + items) by id. Returns null if the
+   * row is missing or soft-deleted.
+   */
+  getById(
+    salonId: string,
+    id: string
+  ): { transaction: IncomeTransactionRecord; items: IncomeItemRecord[] } | null {
+    const transaction = database.getFirstSync<IncomeTransactionRecord>(
+      `SELECT * FROM income_transactions
+       WHERE id = ? AND salon_id = ? AND deleted_at IS NULL`,
+      [id, salonId]
+    );
+    if (!transaction) return null;
+    const items = database.getAllSync<IncomeItemRecord>(
+      `SELECT * FROM income_transaction_items
+       WHERE transaction_id = ? AND salon_id = ? AND deleted_at IS NULL
+       ORDER BY created_at ASC`,
+      [id, salonId]
+    );
+    return { transaction, items };
+  }
+
+  /**
+   * Replace an existing transaction's header + items in a single SQL
+   * transaction. Items are hard-deleted and re-inserted with fresh ids —
+   * simpler than diffing and safe for MVP (sync engine treats the header's
+   * updated_at + sync_status='pending' as the change signal).
+   */
+  updateIncomeTransaction(draft: IncomeTransactionDraft) {
+    runInTransaction(() => {
+      database.runSync(
+        `UPDATE income_transactions SET
+           employee_id = ?, employee_name_snapshot = ?,
+           transaction_date = ?, payment_mode = ?,
+           gross_amount = ?, discount_type = ?, discount_value = ?, discount_amount = ?,
+           net_amount = ?, commission_amount = ?, remarks = ?,
+           updated_at = ?, sync_status = ?
+         WHERE id = ? AND salon_id = ?`,
+        [
+          draft.transaction.employee_id,
+          draft.transaction.employee_name_snapshot,
+          draft.transaction.transaction_date,
+          draft.transaction.payment_mode,
+          draft.transaction.gross_amount,
+          draft.transaction.discount_type ?? null,
+          draft.transaction.discount_value ?? 0,
+          draft.transaction.discount_amount ?? 0,
+          draft.transaction.net_amount,
+          draft.transaction.commission_amount,
+          draft.transaction.remarks,
+          draft.transaction.updated_at,
+          draft.transaction.sync_status,
+          draft.transaction.id,
+          draft.transaction.salon_id
+        ]
+      );
+
+      database.runSync(
+        `DELETE FROM income_transaction_items
+         WHERE transaction_id = ? AND salon_id = ?`,
+        [draft.transaction.id, draft.transaction.salon_id]
+      );
+
+      for (const item of draft.items) {
+        database.runSync(
+          `INSERT INTO income_transaction_items (
+            id, salon_id, transaction_id, service_id, service_name_snapshot,
+            service_price_snapshot, quantity, line_amount, commission_rule_type_snapshot,
+            commission_rule_value_snapshot, commission_amount,
+            employee_id, employee_name_snapshot,
+            created_at, updated_at,
+            deleted_at, sync_status, device_id
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            item.id,
+            item.salon_id,
+            item.transaction_id,
+            item.service_id,
+            item.service_name_snapshot,
+            item.service_price_snapshot,
+            item.quantity,
+            item.line_amount,
+            item.commission_rule_type_snapshot,
+            item.commission_rule_value_snapshot,
+            item.commission_amount,
+            item.employee_id ?? draft.transaction.employee_id ?? null,
+            item.employee_name_snapshot ??
+              draft.transaction.employee_name_snapshot ??
+              null,
+            item.created_at,
+            item.updated_at,
+            item.deleted_at,
+            item.sync_status,
+            item.device_id
+          ]
+        );
+      }
+    });
+  }
+
+  /**
+   * Soft-delete a transaction and its items. Both rows get `deleted_at` set
+   * and `sync_status='pending'` so the sync engine can replicate the tombstone.
+   */
+  softDelete(
+    salonId: string,
+    id: string,
+    now: string,
+    deviceId: string
+  ) {
+    runInTransaction(() => {
+      database.runSync(
+        `UPDATE income_transactions
+         SET deleted_at = ?, updated_at = ?, sync_status = 'pending', device_id = ?
+         WHERE id = ? AND salon_id = ?`,
+        [now, now, deviceId, id, salonId]
+      );
+      database.runSync(
+        `UPDATE income_transaction_items
+         SET deleted_at = ?, updated_at = ?, sync_status = 'pending', device_id = ?
+         WHERE transaction_id = ? AND salon_id = ?`,
+        [now, now, deviceId, id, salonId]
+      );
+    });
+  }
 }
