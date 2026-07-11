@@ -32,6 +32,7 @@ const emptyForm = {
   name: "",
   malePrice: "",
   femalePrice: "",
+  productCost: "",
   categoryId: null as string | null,
   isActive: true
 };
@@ -50,6 +51,7 @@ export function ServiceFormSheet({
   const [name, setName] = useState(emptyForm.name);
   const [malePrice, setMalePrice] = useState(emptyForm.malePrice);
   const [femalePrice, setFemalePrice] = useState(emptyForm.femalePrice);
+  const [productCost, setProductCost] = useState(emptyForm.productCost);
   const [categoryId, setCategoryId] = useState<string | null>(emptyForm.categoryId);
   const [isActive, setIsActive] = useState(emptyForm.isActive);
 
@@ -78,6 +80,7 @@ export function ServiceFormSheet({
       setName(svc.name);
       setMalePrice(svc.male_price > 0 ? paiseToInput(svc.male_price) : "");
       setFemalePrice(svc.female_price > 0 ? paiseToInput(svc.female_price) : "");
+      setProductCost(svc.product_cost > 0 ? paiseToInput(svc.product_cost) : "");
       setCategoryId(svc.category_id);
       setIsActive(svc.is_active === 1);
       loadedForIdRef.current = serviceId;
@@ -85,6 +88,7 @@ export function ServiceFormSheet({
       setName(emptyForm.name);
       setMalePrice(emptyForm.malePrice);
       setFemalePrice(emptyForm.femalePrice);
+      setProductCost(emptyForm.productCost);
       setCategoryId(emptyForm.categoryId);
       setIsActive(emptyForm.isActive);
     }
@@ -127,12 +131,14 @@ export function ServiceFormSheet({
     if (!validate()) return;
     const male = parsePriceToPaise(malePrice);
     const female = parsePriceToPaise(femalePrice);
+    const cost = parsePriceToPaise(productCost);
 
     if (isEditMode && serviceId) {
       serviceRepo.update(serviceId, DEV_SALON_ID, {
         name: name.trim(),
         malePrice: male,
         femalePrice: female,
+        productCost: cost,
         categoryId,
         isActive
       });
@@ -142,6 +148,7 @@ export function ServiceFormSheet({
         name: name.trim(),
         malePrice: male,
         femalePrice: female,
+        productCost: cost,
         categoryId
       });
     }
@@ -254,6 +261,20 @@ export function ServiceFormSheet({
           ) : (
             <Text style={styles.hint}>{t("services.priceHint")}</Text>
           )}
+
+          {/* Product cost (optional) — subtracted from line amount before */}
+          {/* applying percentage-based commissions. */}
+          <TextField
+            label={t("services.productCost")}
+            value={productCost}
+            onChangeText={setProductCost}
+            placeholder={t("services.pricePlaceholder")}
+            keyboardType="decimal-pad"
+            returnKeyType="done"
+            autoCapitalize="none"
+            testID="field-product-cost"
+          />
+          <Text style={styles.hint}>{t("services.productCostHint")}</Text>
 
           {/* Active toggle — edit mode only */}
           {isEditMode ? (

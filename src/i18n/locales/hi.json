@@ -104,6 +104,8 @@
     "priceAtLeastOne": "Enter at least one price",
     "priceHint": "Leave a price blank if the service isn't offered for that gender.",
     "pricePlaceholder": "0",
+    "productCost": "Product cost per unit (₹)",
+    "productCostHint": "Optional. Material cost (color, wax, kit) subtracted before commission on percentage rules.",
     "activeLabel": "Active",
     "saved": "Service saved",
     "deleted": "Service deleted"
@@ -156,6 +158,7 @@
     "newBill": "New Bill",
     "editBill": "Edit Bill",
     "updateBill": "Update Bill",
+    "previewTitle": "Bill saved! Send to customer?",
     "whoServed": "Who served?",
     "noEmployees": "Add employees first to record a bill",
     "customer": "Customer",
@@ -198,6 +201,13 @@
     "selectService": "Select service",
     "assignedTo": "Assigned to",
     "changeEmployee": "Change employee",
+    "customerSection": "Add customer (optional)",
+    "customerSectionSet": "Customer: {{label}}",
+    "customerPhone": "Phone",
+    "customerPhonePlaceholder": "10-digit number",
+    "customerName": "Name",
+    "customerNamePlaceholder": "e.g. Priya, Rahul",
+    "customerMatched": "Existing customer",
     "detail": {
       "title": "Bill",
       "edit": "Edit",
@@ -209,6 +219,26 @@
       "deleteFailed": "Could not delete bill",
       "billTime": "Recorded at {{time}}"
     }
+  },
+  "receipt": {
+    "title": "Receipt",
+    "date": "Date",
+    "customer": "Customer",
+    "servedBy": "Served by",
+    "service": "Service",
+    "qty": "Qty",
+    "amount": "Amount",
+    "subtotal": "Subtotal",
+    "discount": "Discount",
+    "total": "Total",
+    "paidBy": "Paid by",
+    "thankYou": "Thank you for visiting!",
+    "shareOnWhatsapp": "Share on WhatsApp",
+    "shareReceipt": "Share receipt",
+    "shareTitle": "Send receipt",
+    "shareFailed": "Could not share receipt",
+    "shareUnavailable": "Sharing is not available on this device",
+    "whatsappNotInstalled": "WhatsApp is not installed on this device"
   },
   "commission": {
     "setRules": "Set commission rules",
@@ -277,6 +307,50 @@
       "deleteFailed": "Could not delete expense",
       "loggedAt": "Logged at {{time}}"
     }
+  },
+  "advances": {
+    "title": "Staff advances",
+    "add": "Add advance",
+    "newAdvance": "New advance",
+    "editAdvance": "Edit advance",
+    "saveAdvance": "Save advance",
+    "updateAdvance": "Update advance",
+    "employee": "Employee",
+    "employeeRequired": "Pick an employee",
+    "noEmployees": "Add employees first to record an advance.",
+    "amount": "Amount",
+    "amountPlaceholder": "0.00",
+    "amountRequired": "Enter an amount greater than 0",
+    "date": "Date",
+    "remarks": "Remarks (optional)",
+    "remarksPlaceholder": "e.g. weekly salary advance",
+    "saveFailed": "Could not save advance",
+    "outstandingBadge": "OUTSTANDING",
+    "paidBadge": "PAID",
+    "outstandingTotal": "Outstanding: {{amount}}",
+    "sectionOutstanding": "Outstanding",
+    "sectionSettled": "Settled",
+    "emptyTitle": "No advances yet",
+    "emptyBody": "Log a cash advance to keep your staff ledger clean.",
+    "markPaid": "Mark as settled",
+    "markPaidConfirmTitle": "Mark this advance as settled?",
+    "markPaidConfirmBody": "This will remove it from the outstanding total.",
+    "markPaidConfirmCta": "Mark settled",
+    "markPaidFailed": "Could not mark as settled",
+    "detail": {
+      "title": "Advance",
+      "edit": "Edit",
+      "delete": "Delete",
+      "deleteConfirmTitle": "Delete this advance?",
+      "deleteConfirmBody": "This will remove the advance from the ledger. This can't be undone.",
+      "deleteConfirmCta": "Delete",
+      "deleteFailed": "Could not delete advance"
+    }
+  },
+  "more": {
+    "title": "More",
+    "staffAdvances": "Staff advances",
+    "staffAdvancesSub": "Log cash given to employees between paydays"
   },
   "sync": {
     "line": {

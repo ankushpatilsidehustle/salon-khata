@@ -9,6 +9,8 @@ import { ExpenseEntryScreen } from "@/features/expenses/ExpenseEntryScreen";
 import { IncomeEntryScreen } from "@/features/income/IncomeEntryScreen";
 import { MoreScreen } from "@/features/more/MoreScreen";
 import { ReportsScreen } from "@/features/reports/ReportsScreen";
+import { AdvanceEntryScreen } from "@/features/advances/AdvanceEntryScreen";
+import { AdvancesListScreen } from "@/features/advances/AdvancesListScreen";
 
 // ─── types ───────────────────────────────────────────────────────────────────
 
@@ -19,6 +21,10 @@ export type RootStackParamList = {
   IncomeEntry: { transactionId?: string } | undefined;
   /** `expenseId` present → edit mode; absent → new expense. */
   ExpenseEntry: { expenseId?: string } | undefined;
+  /** `advanceId` present → edit mode; `employeeId` pre-selects the employee. */
+  AdvanceEntry: { advanceId?: string; employeeId?: string } | undefined;
+  /** `employeeId` filters to that employee only. */
+  AdvancesList: { employeeId?: string } | undefined;
 };
 
 export type RootTabParamList = {
@@ -79,6 +85,15 @@ export function AppNavigator() {
           name="ExpenseEntry"
           component={ExpenseEntryScreen}
           options={{ presentation: "modal" }}
+        />
+        <RootStack.Screen
+          name="AdvanceEntry"
+          component={AdvanceEntryScreen}
+          options={{ presentation: "modal" }}
+        />
+        <RootStack.Screen
+          name="AdvancesList"
+          component={AdvancesListScreen}
         />
       </RootStack.Navigator>
     </NavigationContainer>

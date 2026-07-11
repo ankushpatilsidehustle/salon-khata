@@ -5,6 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { BottomSheet } from "@/components/core/BottomSheet";
 import { Button } from "@/components/core/Button";
+import { ReceiptCard } from "@/components/domain/ReceiptCard";
 import { colors, radius, spacing, typography } from "@/design-system/tokens";
 import { DEV_DEVICE_ID, DEV_SALON_ID } from "@/constants/dev";
 import { formatMoney } from "@/domain/money";
@@ -14,8 +15,11 @@ import type {
   IncomeItemRecord,
   IncomeTransactionRecord
 } from "@/repositories/income-repository";
+import { SalonRepository } from "@/repositories/salon-repository";
+import { useShareReceipt } from "./useShareReceipt";
 
 const incomeRepo = new IncomeRepository();
+const salonRepo = new SalonRepository();
 
 type Props = {
   visible: boolean;
@@ -50,6 +54,7 @@ export function TransactionDetailSheet({
     items: IncomeItemRecord[];
   } | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const { receiptRef, shareReceipt, sharing } = useShareReceipt();
 
   useEffect(() => {
     if (!visible || !transactionId) {
@@ -58,6 +63,10 @@ export function TransactionDetailSheet({
     }
     setLoaded(incomeRepo.getById(DEV_SALON_ID, transactionId));
   }, [visible, transactionId]);
+
+  const businessName =
+    salonRepo.getById(DEV_SALON_ID)?.business_name ?? t("dashboard.businessNameFallback");
+  const hasPhone = !!loaded?.transaction.customer_phone_snapshot;
 
   function handleDelete() {
     if (!loaded || deleting) return;
@@ -106,28 +115,49 @@ export function TransactionDetailSheet({
       title={t("income.detail.title")}
       size="auto"
       footer={
-        <View style={styles.footerRow}>
-          <View style={styles.footerBtn}>
+        <View style={styles.footer}>
+          {loaded ? (
             <Button
               variant="secondary"
-              onPress={handleDelete}
+              onPress={shareReceipt}
               fullWidth
               style={styles.footerBtnHeight}
-              accessibilityLabel={t("income.detail.delete")}
+              accessibilityLabel={
+                hasPhone
+                  ? t("receipt.shareOnWhatsapp")
+                  : t("receipt.shareReceipt")
+              }
             >
-              {deleting ? t("common.loading") : t("income.detail.delete")}
+              {sharing
+                ? t("common.loading")
+                : hasPhone
+                  ? t("receipt.shareOnWhatsapp")
+                  : t("receipt.shareReceipt")}
             </Button>
-          </View>
-          <View style={styles.footerBtn}>
-            <Button
-              variant="primary"
-              onPress={handleEdit}
-              fullWidth
-              style={styles.footerBtnHeight}
-              accessibilityLabel={t("income.detail.edit")}
-            >
-              {t("income.detail.edit")}
-            </Button>
+          ) : null}
+          <View style={styles.footerRow}>
+            <View style={styles.footerBtn}>
+              <Button
+                variant="secondary"
+                onPress={handleDelete}
+                fullWidth
+                style={styles.footerBtnHeight}
+                accessibilityLabel={t("income.detail.delete")}
+              >
+                {deleting ? t("common.loading") : t("income.detail.delete")}
+              </Button>
+            </View>
+            <View style={styles.footerBtn}>
+              <Button
+                variant="primary"
+                onPress={handleEdit}
+                fullWidth
+                style={styles.footerBtnHeight}
+                accessibilityLabel={t("income.detail.edit")}
+              >
+                {t("income.detail.edit")}
+              </Button>
+            </View>
           </View>
         </View>
       }
@@ -240,6 +270,21 @@ export function TransactionDetailSheet({
           </View>
         </ScrollView>
       )}
+
+      {/* Off-screen ReceiptCard used only for `captureRef`. Rendered inside the
+          sheet so it's still mounted while the sheet is visible. Layout is
+          computed but the view is positioned off-canvas so the user never
+          sees it. */}
+      {loaded ? (
+        <View pointerEvents="none" style={styles.receiptOffscreen}>
+          <ReceiptCard
+            ref={receiptRef}
+            transaction={loaded.transaction}
+            items={loaded.items}
+            businessName={businessName}
+          />
+        </View>
+      ) : null}
     </BottomSheet>
   );
 }
@@ -377,10 +422,18 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: spacing[2]
   },
+  footer: {
+    gap: spacing[2]
+  },
   footerBtn: {
     flex: 1
   },
   footerBtnHeight: {
     minHeight: 52
+  },
+  receiptOffscreen: {
+    left: 0,
+    position: "absolute",
+    top: -10000
   }
 });

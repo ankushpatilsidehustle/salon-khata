@@ -21,6 +21,12 @@ export type ServiceRecord = SharedColumns & {
   male_price: number;
   /** Paise. 0 means the service is not offered for female clients. */
   female_price: number;
+  /**
+   * Material ("parts") cost per unit of the service, in paise. Subtracted
+   * from the line amount before applying percentage commissions so stylists
+   * earn on the labor portion only. 0 disables the labor split.
+   */
+  product_cost: number;
   is_active: number;
   sort_order: number;
   gender: ServiceGender;
@@ -32,6 +38,8 @@ export type NewService = {
   name: string;
   malePrice: number;
   femalePrice: number;
+  /** Paise. Optional; defaults to 0 (no labor split). */
+  productCost?: number;
 };
 
 export type UpdateService = {
@@ -39,6 +47,7 @@ export type UpdateService = {
   name?: string;
   malePrice?: number;
   femalePrice?: number;
+  productCost?: number;
   isActive?: boolean;
 };
 
@@ -93,10 +102,10 @@ export class ServiceRepository {
     database.runSync(
       `INSERT INTO services
        (id, salon_id, category_id, name,
-        price, male_price, female_price, gender,
+        price, male_price, female_price, product_cost, gender,
         is_active, sort_order,
         created_at, updated_at, deleted_at, sync_status, device_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 'unisex', 1, 0, ?, ?, NULL, 'pending', ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'unisex', 1, 0, ?, ?, NULL, 'pending', ?)`,
       [
         id,
         data.salonId,
@@ -105,6 +114,7 @@ export class ServiceRepository {
         legacyPrice,
         data.malePrice,
         data.femalePrice,
+        data.productCost ?? 0,
         now,
         now,
         DEV_DEVICE_ID
@@ -142,6 +152,10 @@ export class ServiceRepository {
       const legacy = nextMale > 0 ? nextMale : nextFemale;
       fields.push("price = ?");
       values.push(legacy);
+    }
+    if (data.productCost !== undefined) {
+      fields.push("product_cost = ?");
+      values.push(data.productCost);
     }
     if (data.isActive !== undefined) {
       fields.push("is_active = ?");

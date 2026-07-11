@@ -37,10 +37,21 @@ import type { ServiceRecord } from "@/repositories/service-repository";
 import { CommissionRepository } from "@/repositories/commission-repository";
 import type { CommissionRuleRecord } from "@/repositories/commission-repository";
 import { IncomeRepository } from "@/repositories/income-repository";
+import type {
+  IncomeItemRecord,
+  IncomeTransactionRecord
+} from "@/repositories/income-repository";
 import { SettingsRepository } from "@/repositories/settings-repository";
+import {
+  CustomerRepository,
+  normalizePhone
+} from "@/repositories/customer-repository";
+import { SalonRepository } from "@/repositories/salon-repository";
+import { ReceiptCard } from "@/components/domain/ReceiptCard";
 import type { RootStackParamList } from "@/application/AppNavigator";
 import { AddServicesSheet } from "./AddServicesSheet";
 import type { ServiceSelection } from "./AddServicesSheet";
+import { useShareReceipt } from "./useShareReceipt";
 
 type Props = NativeStackScreenProps<RootStackParamList, "IncomeEntry">;
 
@@ -54,6 +65,8 @@ interface BillItem {
   serviceId: string;
   serviceName: string;
   unitPrice: number; // paise
+  /** Per-unit product ("parts") cost in paise. Captured from service master. */
+  unitProductCost: number;
   quantity: number;
   lineAmount: number; // unitPrice × quantity
   /** Employee assigned to this specific service line. */
@@ -70,6 +83,8 @@ const serviceRepo = new ServiceRepository();
 const commissionRepo = new CommissionRepository();
 const incomeRepo = new IncomeRepository();
 const settingsRepo = new SettingsRepository();
+const customerRepo = new CustomerRepository();
+const salonRepo = new SalonRepository();
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -85,7 +100,8 @@ function computeCommission(item: Omit<BillItem, "commissionAmount">): number {
   return calculateCommission({
     lineAmount: item.lineAmount,
     quantity: item.quantity,
-    rule: { ruleType: item.rule.rule_type, value: item.rule.value }
+    rule: { ruleType: item.rule.rule_type, value: item.rule.value },
+    productCostPerUnit: item.unitProductCost
   });
 }
 
@@ -135,10 +151,10 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
       // existing bill leaves this untouched (the price snapshots on items
       // already reflect the gender chosen at save time).
       if (editingId) return null;
-      const salonType = settingsRepo.getSalonType(DEV_SALON_ID);
-      if (salonType === "male") return "male";
-      if (salonType === "female") return "female";
-      return null;
+      const t = settingsRepo.getSalonType(DEV_SALON_ID);
+      if (t === "male") return "male";
+      if (t === "female") return "female";
+      return "male"; // unisex → default to male
     }
   );
   const [billDate, setBillDate] = useState<string>(toLocalISODate(new Date()));
@@ -150,6 +166,31 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
   const [discountInput, setDiscountInput] = useState("");
   const [discountError, setDiscountError] = useState("");
 
+  // Customer identity — always-visible inline fields (no collapse toggle).
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [customerName, setCustomerName] = useState("");
+  /** Set when the typed phone matches an existing customer. */
+  const [matchedCustomerId, setMatchedCustomerId] = useState<string | null>(
+    null
+  );
+  /** Typeahead suggestions surfaced under the customer fields. */
+  const [customerSuggestions, setCustomerSuggestions] = useState<
+    { id: string; name: string; phone: string }[]
+  >([]);
+  /** True while either customer field is focused — gates the dropdown. */
+  const [customerPickerActive, setCustomerPickerActive] = useState(false);
+  /** Which field the user is currently typing in — used to bias the search. */
+  const [customerActiveField, setCustomerActiveField] = useState<
+    "phone" | "name" | null
+  >(null);
+
+  // Post-save bill preview — shown when customer phone was provided.
+  const [previewVisible, setPreviewVisible] = useState(false);
+  const [previewData, setPreviewData] = useState<{
+    transaction: IncomeTransactionRecord;
+    items: IncomeItemRecord[];
+  } | null>(null);
+
   // UI
   const [saving, setSaving] = useState(false);
   const { showSnackbar } = useSnackbar();
@@ -159,6 +200,8 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
   const [pickingEmployeeForItemId, setPickingEmployeeForItemId] = useState<
     string | null
   >(null);
+  /** Share hook — provides ref for the receipt view + captureRef/share action. */
+  const { receiptRef, shareReceipt, sharing } = useShareReceipt();
 
   // Reload master data every time the screen is focused.
   useFocusEffect(
@@ -196,6 +239,13 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
       setDiscountInput(String(tx.discount_value / 100));
     }
 
+    // Hydrate the customer section if the bill was linked at save time.
+    if (tx.customer_phone_snapshot || tx.customer_name_snapshot) {
+      setCustomerPhone(tx.customer_phone_snapshot ?? "");
+      setCustomerName(tx.customer_name_snapshot ?? "");
+      setMatchedCustomerId(tx.customer_id ?? null);
+    }
+
     const hydrated: BillItem[] = items.map((item) => {
       const lineEmployeeId = item.employee_id ?? tx.employee_id;
       const rule = lineEmployeeId
@@ -205,6 +255,7 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
         serviceId: item.service_id,
         serviceName: item.service_name_snapshot,
         unitPrice: item.service_price_snapshot,
+        unitProductCost: item.product_cost_snapshot ?? 0,
         quantity: item.quantity,
         lineAmount: item.line_amount,
         employeeId: lineEmployeeId,
@@ -217,6 +268,67 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
     setBillItems(hydrated);
     hydratedRef.current = editingId;
   }, [editingId, employees.length, servicesById.size]);
+
+  // Debounced phone-first customer lookup. As the owner types, once we have
+  // 10 valid digits we look up the master row and auto-fill the name.
+  useEffect(() => {
+    const normalized = normalizePhone(customerPhone);
+    if (!normalized) {
+      setMatchedCustomerId(null);
+      return;
+    }
+    const handle = setTimeout(() => {
+      const match = customerRepo.findByPhone(DEV_SALON_ID, normalized);
+      if (match) {
+        setMatchedCustomerId(match.id);
+        // Only auto-fill the name if the field is still blank so we don't
+        // stomp on a name the user has already begun editing.
+        setCustomerName((prev) => (prev.trim() ? prev : match.name));
+      } else {
+        setMatchedCustomerId(null);
+      }
+    }, 250);
+    return () => clearTimeout(handle);
+  }, [customerPhone]);
+
+  // Debounced typeahead search — feeds the suggestion dropdown under the
+  // customer fields. We bias the query by whichever field the user is
+  // actively typing in so digits search phone, letters search name.
+  useEffect(() => {
+    if (!customerPickerActive) {
+      setCustomerSuggestions([]);
+      return;
+    }
+    const query =
+      customerActiveField === "name"
+        ? customerName
+        : customerActiveField === "phone"
+          ? customerPhone
+          : customerPhone || customerName;
+    if (!query.trim()) {
+      setCustomerSuggestions([]);
+      return;
+    }
+    // Hide suggestions when the phone field already resolved to an exact
+    // match — the badge below the fields already confirms selection.
+    if (matchedCustomerId && normalizePhone(customerPhone).length === 10) {
+      setCustomerSuggestions([]);
+      return;
+    }
+    const handle = setTimeout(() => {
+      const results = customerRepo.searchByQuery(DEV_SALON_ID, query, 5);
+      setCustomerSuggestions(
+        results.map((r) => ({ id: r.id, name: r.name, phone: r.phone }))
+      );
+    }, 150);
+    return () => clearTimeout(handle);
+  }, [
+    customerPickerActive,
+    customerActiveField,
+    customerName,
+    customerPhone,
+    matchedCustomerId
+  ]);
 
   // ── Derived ────────────────────────────────────────────────────────────────
 
@@ -346,6 +458,22 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
     );
   }
 
+  // ── Customer ───────────────────────────────────────────────────────────────
+
+  /** Fill both customer fields from a suggestion tap and close the dropdown. */
+  function handleSelectCustomer(row: {
+    id: string;
+    name: string;
+    phone: string;
+  }) {
+    setCustomerPhone(row.phone);
+    setCustomerName(row.name);
+    setMatchedCustomerId(row.id);
+    setCustomerSuggestions([]);
+    setCustomerPickerActive(false);
+    setCustomerActiveField(null);
+  }
+
   // ── Date ───────────────────────────────────────────────────────────────────
 
   function openDatePicker() {
@@ -381,6 +509,7 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
       const prev = prevById.get(svc.id);
       const quantity = prev?.quantity ?? 1;
       const unitPrice = pickPrice(svc, customerGender);
+      const unitProductCost = svc.product_cost ?? 0;
       const lineAmount = unitPrice * quantity;
 
       const resolvedId =
@@ -396,6 +525,7 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
         serviceId: svc.id,
         serviceName: svc.name,
         unitPrice,
+        unitProductCost,
         quantity,
         lineAmount,
         employeeId: resolvedId,
@@ -504,6 +634,23 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
         ? Math.round(discountRaw * 100)
         : 0;
 
+      // Resolve customer link — upsert only when we have both a valid phone
+      // and a non-blank name. Otherwise the bill stays customer-less.
+      const normalizedCustomerPhone = normalizePhone(customerPhone);
+      const trimmedCustomerName = customerName.trim();
+      let resolvedCustomerId: string | null = null;
+      let customerNameSnapshot: string | null = null;
+      let customerPhoneSnapshot: string | null = null;
+      if (normalizedCustomerPhone && trimmedCustomerName) {
+        resolvedCustomerId = customerRepo.upsert({
+          salonId: DEV_SALON_ID,
+          name: trimmedCustomerName,
+          phone: normalizedCustomerPhone
+        });
+        customerNameSnapshot = trimmedCustomerName;
+        customerPhoneSnapshot = normalizedCustomerPhone;
+      }
+
       const draft = {
         transaction: {
           id: txId,
@@ -519,6 +666,9 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
           net_amount: net,
           commission_amount: commission,
           remarks: null,
+          customer_id: resolvedCustomerId,
+          customer_name_snapshot: customerNameSnapshot,
+          customer_phone_snapshot: customerPhoneSnapshot,
           created_at: createdAt,
           updated_at: now,
           deleted_at: null,
@@ -539,6 +689,7 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
           commission_amount: item.commissionAmount,
           employee_id: item.employeeId,
           employee_name_snapshot: item.employeeName,
+          product_cost_snapshot: item.unitProductCost,
           created_at: now,
           updated_at: now,
           deleted_at: null,
@@ -555,6 +706,17 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
 
       const label = isEditing ? t("income.updateBill") : t("income.saveBill");
       showSnackbar(`${label} • ${formatMoney(net)}`);
+
+      // When customer phone is present, show the receipt preview modal so the
+      // owner can review and send to WhatsApp in one tap.
+      if (customerPhoneSnapshot) {
+        const saved = incomeRepo.getById(DEV_SALON_ID, txId);
+        if (saved) {
+          setPreviewData(saved);
+          setPreviewVisible(true);
+          return; // navigation happens when the preview is dismissed
+        }
+      }
       navigation.goBack();
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -605,6 +767,114 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          {/* ── Customer mobile + name (optional, always visible) ─── */}
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>
+              {t("income.customerSection")}
+            </Text>
+            <View style={styles.customerFieldRow}>
+              <View style={styles.customerFieldCol}>
+                <TextInput
+                  style={styles.customerInput}
+                  value={customerPhone}
+                  onChangeText={(v) => {
+                    setCustomerPhone(v);
+                    if (matchedCustomerId) setMatchedCustomerId(null);
+                    setCustomerActiveField("phone");
+                    setCustomerPickerActive(true);
+                  }}
+                  onFocus={() => {
+                    setCustomerActiveField("phone");
+                    setCustomerPickerActive(true);
+                  }}
+                  onBlur={() => {
+                    // Small delay so a tap on a suggestion registers before
+                    // we hide the dropdown.
+                    setTimeout(() => setCustomerPickerActive(false), 150);
+                  }}
+                  keyboardType="phone-pad"
+                  placeholder={t("income.customerPhonePlaceholder")}
+                  placeholderTextColor={colors.text.muted}
+                  maxLength={16}
+                />
+              </View>
+              <View style={styles.customerFieldCol}>
+                <TextInput
+                  style={styles.customerInput}
+                  value={customerName}
+                  onChangeText={(v) => {
+                    setCustomerName(v);
+                    if (matchedCustomerId) setMatchedCustomerId(null);
+                    setCustomerActiveField("name");
+                    setCustomerPickerActive(true);
+                  }}
+                  onFocus={() => {
+                    setCustomerActiveField("name");
+                    setCustomerPickerActive(true);
+                  }}
+                  onBlur={() => {
+                    setTimeout(() => setCustomerPickerActive(false), 150);
+                  }}
+                  autoCapitalize="words"
+                  placeholder={t("income.customerNamePlaceholder")}
+                  placeholderTextColor={colors.text.muted}
+                  maxLength={60}
+                />
+              </View>
+            </View>
+
+            {/* Typeahead suggestions — tap fills both fields. */}
+            {customerPickerActive && customerSuggestions.length > 0 ? (
+              <View style={styles.customerSuggestList}>
+                {customerSuggestions.map((row, idx) => (
+                  <Pressable
+                    key={row.id}
+                    style={[
+                      styles.customerSuggestItem,
+                      idx > 0 && styles.customerSuggestItemBorder
+                    ]}
+                    onPress={() => handleSelectCustomer(row)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${row.name}, ${row.phone}`}
+                  >
+                    <View style={styles.customerSuggestAvatar}>
+                      <Text style={styles.customerSuggestAvatarText}>
+                        {row.name.charAt(0).toUpperCase()}
+                      </Text>
+                    </View>
+                    <View style={styles.customerSuggestBody}>
+                      <Text
+                        style={styles.customerSuggestName}
+                        numberOfLines={1}
+                      >
+                        {row.name}
+                      </Text>
+                      <Text
+                        style={styles.customerSuggestPhone}
+                        numberOfLines={1}
+                      >
+                        {row.phone}
+                      </Text>
+                    </View>
+                  </Pressable>
+                ))}
+              </View>
+            ) : null}
+
+            {matchedCustomerId ? (
+              <View style={styles.customerMatchChip}>
+                <Ionicons
+                  name="checkmark-circle"
+                  size={12}
+                  color={colors.status.success}
+                />
+                <Text style={styles.customerMatchText}>
+                  {t("income.customerMatched")}
+                </Text>
+              </View>
+            ) : null}
+          </View>
+
           {/* ── Employee ───────────────────────────────────────────── */}
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>{t("income.whoServed")}</Text>
@@ -658,9 +928,9 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
             )}
           </View>
 
-          {/* ── Customer gender + Date ─────────────────────────────── */}
+          {/* ── Gender + Date ──────────────────────────────────────── */}
           <View style={styles.metaRow}>
-            {/* Gender */}
+            {/* Gender toggle — always visible */}
             <View style={styles.metaCol}>
               <Text style={styles.sectionLabel}>{t("income.customer")}</Text>
               <View style={styles.genderToggle}>
@@ -679,7 +949,8 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
                     <Text
                       style={[
                         styles.genderToggleText,
-                        customerGender === g && styles.genderToggleTextSelected
+                        customerGender === g &&
+                          styles.genderToggleTextSelected
                       ]}
                     >
                       {g === "male" ? "♂ Male" : "♀ Female"}
@@ -1102,6 +1373,76 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
           </Pressable>
         </Pressable>
       </Modal>
+
+      {/* ── Post-save bill preview ────────────────────────────────── */}
+      <Modal
+        visible={previewVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => {
+          setPreviewVisible(false);
+          navigation.goBack();
+        }}
+      >
+        <View style={styles.previewScrim}>
+          <View style={styles.previewCard}>
+            <Text style={styles.previewTitle}>{t("income.previewTitle")}</Text>
+
+            {previewData ? (
+              <ScrollView
+                style={styles.previewScroll}
+                showsVerticalScrollIndicator={false}
+              >
+                <ReceiptCard
+                  ref={receiptRef}
+                  transaction={previewData.transaction}
+                  items={previewData.items}
+                  businessName={
+                    salonRepo.getById(DEV_SALON_ID)?.business_name ??
+                    t("dashboard.businessNameFallback")
+                  }
+                />
+              </ScrollView>
+            ) : null}
+
+            <View style={styles.previewActions}>
+              {previewData?.transaction.customer_phone_snapshot ? (
+                <Button
+                  variant="primary"
+                  fullWidth
+                  onPress={async () => {
+                    // Capture the receipt view as PNG and open the native
+                    // share sheet. WhatsApp appears prominently — user picks
+                    // it, then picks the customer's chat, and the image is
+                    // attached. WhatsApp's share intent doesn't support
+                    // pre-selecting both a contact AND an image in one call,
+                    // so this is the reliable cross-platform flow.
+                    await shareReceipt();
+                    setPreviewVisible(false);
+                    navigation.goBack();
+                  }}
+                  accessibilityLabel={t("receipt.shareOnWhatsapp")}
+                >
+                  {sharing
+                    ? t("common.loading")
+                    : t("receipt.shareOnWhatsapp")}
+                </Button>
+              ) : null}
+              <Button
+                variant="secondary"
+                fullWidth
+                onPress={() => {
+                  setPreviewVisible(false);
+                  navigation.goBack();
+                }}
+                accessibilityLabel={t("common.cancel")}
+              >
+                {t("common.cancel")}
+              </Button>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -1486,6 +1827,121 @@ const styles = StyleSheet.create({
     color: colors.brand.primary,
     fontWeight: "600"
   },
+  // Customer section
+  customerToggle: {
+    alignItems: "center",
+    backgroundColor: colors.background.subtle,
+    borderRadius: radius.md,
+    flexDirection: "row",
+    gap: spacing[2],
+    justifyContent: "space-between",
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[3]
+  },
+  customerToggleLeft: {
+    alignItems: "center",
+    flex: 1,
+    flexDirection: "row",
+    gap: spacing[2]
+  },
+  customerToggleLabel: {
+    ...typography.bodySmall,
+    color: colors.text.primary,
+    flex: 1,
+    fontWeight: "500"
+  },
+  customerBody: {
+    gap: spacing[2],
+    marginTop: spacing[2]
+  },
+  customerFieldRow: {
+    flexDirection: "row",
+    gap: spacing[3]
+  },
+  customerFieldCol: {
+    flex: 1,
+    gap: spacing[1]
+  },
+  customerInput: {
+    ...typography.body,
+    backgroundColor: colors.surface.default,
+    borderColor: colors.border.subtle,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    color: colors.text.primary,
+    minHeight: 44,
+    paddingHorizontal: spacing[3]
+  },
+  customerFooterRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    minHeight: 24
+  },
+  customerMatchChip: {
+    alignItems: "center",
+    backgroundColor: colors.status.successBg,
+    borderRadius: radius.full,
+    flexDirection: "row",
+    gap: spacing[1],
+    paddingHorizontal: spacing[2],
+    paddingVertical: 2
+  },
+  customerMatchText: {
+    ...typography.caption,
+    color: colors.status.success,
+    fontWeight: "600"
+  },
+  customerSuggestList: {
+    backgroundColor: colors.surface.default,
+    borderColor: colors.border.subtle,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    marginTop: spacing[2],
+    overflow: "hidden"
+  },
+  customerSuggestItem: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing[3],
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2]
+  },
+  customerSuggestItemBorder: {
+    borderTopColor: colors.border.subtle,
+    borderTopWidth: 1
+  },
+  customerSuggestAvatar: {
+    alignItems: "center",
+    backgroundColor: colors.brand.accentLight,
+    borderRadius: radius.full,
+    height: 32,
+    justifyContent: "center",
+    width: 32
+  },
+  customerSuggestAvatarText: {
+    ...typography.bodySmall,
+    color: colors.brand.primary,
+    fontWeight: "700"
+  },
+  customerSuggestBody: {
+    flex: 1,
+    gap: 2
+  },
+  customerSuggestName: {
+    ...typography.body,
+    color: colors.text.primary,
+    fontWeight: "600"
+  },
+  customerSuggestPhone: {
+    ...typography.caption,
+    color: colors.text.muted
+  },
+  customerClearText: {
+    ...typography.bodySmall,
+    color: colors.brand.primary,
+    fontWeight: "600"
+  },
   // Footer
   footerSpacer: {
     height: spacing[9]
@@ -1568,5 +2024,32 @@ const styles = StyleSheet.create({
   pickerRowTextActive: {
     color: colors.brand.primary,
     fontWeight: "600"
+  },
+  // Post-save preview modal
+  previewScrim: {
+    backgroundColor: "rgba(0,0,0,0.55)",
+    flex: 1,
+    justifyContent: "flex-end"
+  },
+  previewCard: {
+    backgroundColor: colors.surface.default,
+    borderTopLeftRadius: radius.xl,
+    borderTopRightRadius: radius.xl,
+    maxHeight: "90%",
+    paddingTop: spacing[4]
+  },
+  previewTitle: {
+    ...typography.h3,
+    color: colors.text.primary,
+    paddingHorizontal: spacing[4],
+    marginBottom: spacing[3],
+    textAlign: "center"
+  },
+  previewScroll: {
+    maxHeight: 480
+  },
+  previewActions: {
+    gap: spacing[2],
+    padding: spacing[4]
   }
 });

@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Alert, Pressable, SectionList, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
-import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { useIsFocused } from "@react-navigation/native";
+import type { NativeStackScreenProps, NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useIsFocused, useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 
 import { AppBar } from "@/components/core/AppBar";
@@ -12,9 +12,12 @@ import { ListItem } from "@/components/core/ListItem";
 import { useSnackbar } from "@/components/core/SnackbarProvider";
 import { colors, radius, spacing, typography } from "@/design-system/tokens";
 import { DEV_SALON_ID } from "@/constants/dev";
+import { formatMoney } from "@/domain/money";
 import { EmployeeRepository } from "@/repositories/employee-repository";
 import type { EmployeeRecord } from "@/repositories/employee-repository";
+import { EmployeeAdvanceRepository } from "@/repositories/employee-advance-repository";
 import type { EntriesStackParamList } from "@/features/entries/EntriesNavigator";
+import type { RootStackParamList } from "@/application/AppNavigator";
 import { CommissionRulesSheet } from "./CommissionRulesSheet";
 import { EmployeeFormSheet } from "./EmployeeFormSheet";
 
@@ -23,6 +26,7 @@ type Props = NativeStackScreenProps<EntriesStackParamList, "Employees">;
 type Section = { title: string; data: EmployeeRecord[] };
 
 const repo = new EmployeeRepository();
+const advanceRepo = new EmployeeAdvanceRepository();
 
 // ─── Avatar ──────────────────────────────────────────────────────────────────
 
@@ -46,7 +50,12 @@ function InitialsAvatar({ name }: { name: string }) {
 export function EmployeesScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const isFocused = useIsFocused();
+  const rootNavigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [sections, setSections] = useState<Section[]>([]);
+  const [outstandingByEmp, setOutstandingByEmp] = useState<
+    Record<string, number>
+  >({});
   const { showSnackbar } = useSnackbar();
 
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -67,6 +76,11 @@ export function EmployeesScreen({ navigation }: Props) {
     if (active.length) s.push({ title: t("employees.active"), data: active });
     if (inactive.length) s.push({ title: t("employees.inactive"), data: inactive });
     setSections(s);
+
+    const outstanding = advanceRepo.outstandingByEmployee(DEV_SALON_ID);
+    const map: Record<string, number> = {};
+    for (const row of outstanding) map[row.employee_id] = row.total;
+    setOutstandingByEmp(map);
   }, [t]);
 
   useEffect(() => {
@@ -145,43 +159,70 @@ export function EmployeesScreen({ navigation }: Props) {
             <Text style={styles.sectionHeader}>{section.title}</Text>
           )}
           ItemSeparatorComponent={() => <View style={styles.separator} />}
-          renderItem={({ item }) => (
-            <ListItem
-              title={item.name}
-              subtitle={item.mobile_number ?? undefined}
-              leading={<InitialsAvatar name={item.name} />}
-              trailing={
-                <View style={styles.rowActions}>
-                  <Pressable
-                    onPress={() => openCommission(item.id, item.name)}
-                    hitSlop={8}
-                    accessibilityRole="button"
-                    accessibilityLabel={t("commission.setRules")}
-                  >
-                    <Ionicons
-                      name="cash-outline"
-                      size={20}
-                      color={colors.brand.primary}
-                    />
-                  </Pressable>
-                  <Pressable
-                    onPress={() => handleDelete(item)}
-                    hitSlop={8}
-                    accessibilityRole="button"
-                    accessibilityLabel={t("employees.deleteAction")}
-                  >
-                    <Ionicons
-                      name="trash-outline"
-                      size={20}
-                      color={colors.text.muted}
-                    />
-                  </Pressable>
-                </View>
-              }
-              showChevron={false}
-              onPress={() => openEdit(item.id)}
-            />
-          )}
+          renderItem={({ item }) => {
+            const outstanding = outstandingByEmp[item.id] ?? 0;
+            return (
+              <ListItem
+                title={item.name}
+                subtitle={item.mobile_number ?? undefined}
+                leading={<InitialsAvatar name={item.name} />}
+                trailing={
+                  <View style={styles.rowActions}>
+                    {outstanding > 0 ? (
+                      <Pressable
+                        onPress={() =>
+                          rootNavigation.navigate("AdvancesList", {
+                            employeeId: item.id
+                          })
+                        }
+                        hitSlop={6}
+                        style={styles.advancePill}
+                        accessibilityRole="button"
+                        accessibilityLabel={t("advances.outstandingTotal", {
+                          amount: formatMoney(outstanding)
+                        })}
+                      >
+                        <Ionicons
+                          name="wallet-outline"
+                          size={12}
+                          color={colors.status.warning}
+                        />
+                        <Text style={styles.advancePillText}>
+                          {formatMoney(outstanding)}
+                        </Text>
+                      </Pressable>
+                    ) : null}
+                    <Pressable
+                      onPress={() => openCommission(item.id, item.name)}
+                      hitSlop={8}
+                      accessibilityRole="button"
+                      accessibilityLabel={t("commission.setRules")}
+                    >
+                      <Ionicons
+                        name="cash-outline"
+                        size={20}
+                        color={colors.brand.primary}
+                      />
+                    </Pressable>
+                    <Pressable
+                      onPress={() => handleDelete(item)}
+                      hitSlop={8}
+                      accessibilityRole="button"
+                      accessibilityLabel={t("employees.deleteAction")}
+                    >
+                      <Ionicons
+                        name="trash-outline"
+                        size={20}
+                        color={colors.text.muted}
+                      />
+                    </Pressable>
+                  </View>
+                }
+                showChevron={false}
+                onPress={() => openEdit(item.id)}
+              />
+            );
+          }}
         />
       )}
 
@@ -248,5 +289,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flexDirection: "row",
     gap: spacing[3]
+  },
+  advancePill: {
+    alignItems: "center",
+    backgroundColor: colors.status.warningBg,
+    borderRadius: radius.full,
+    flexDirection: "row",
+    gap: 4,
+    paddingHorizontal: spacing[2],
+    paddingVertical: 3
+  },
+  advancePillText: {
+    ...typography.caption,
+    color: colors.status.warning,
+    fontWeight: "700"
   }
 });

@@ -19,6 +19,14 @@ export type IncomeTransactionRecord = SharedColumns & {
   net_amount: number;
   commission_amount: number;
   remarks: string | null;
+  /**
+   * Optional link to the customer master row. Snapshots below preserve the
+   * name + phone as they were at billing time so receipts stay stable even
+   * if the master row is later edited or deleted.
+   */
+  customer_id: string | null;
+  customer_name_snapshot: string | null;
+  customer_phone_snapshot: string | null;
 };
 
 export type IncomeItemRecord = SharedColumns & {
@@ -39,6 +47,12 @@ export type IncomeItemRecord = SharedColumns & {
    */
   employee_id: string | null;
   employee_name_snapshot: string | null;
+  /**
+   * Per-unit product cost captured from the service master at billing time.
+   * Preserved so historical bills stay stable when the master cost is later
+   * edited. Default 0.
+   */
+  product_cost_snapshot: number;
 };
 
 /** Convenience shape for dashboards: header row + concatenated service names. */
@@ -68,8 +82,9 @@ export class IncomeRepository {
           id, salon_id, employee_id, employee_name_snapshot, transaction_date, payment_mode,
           gross_amount, discount_type, discount_value, discount_amount,
           net_amount, commission_amount, remarks,
+          customer_id, customer_name_snapshot, customer_phone_snapshot,
           created_at, updated_at, deleted_at, sync_status, device_id
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           draft.transaction.id,
           draft.transaction.salon_id,
@@ -84,6 +99,9 @@ export class IncomeRepository {
           draft.transaction.net_amount,
           draft.transaction.commission_amount,
           draft.transaction.remarks,
+          draft.transaction.customer_id ?? null,
+          draft.transaction.customer_name_snapshot ?? null,
+          draft.transaction.customer_phone_snapshot ?? null,
           draft.transaction.created_at,
           draft.transaction.updated_at,
           draft.transaction.deleted_at,
@@ -99,9 +117,10 @@ export class IncomeRepository {
             service_price_snapshot, quantity, line_amount, commission_rule_type_snapshot,
             commission_rule_value_snapshot, commission_amount,
             employee_id, employee_name_snapshot,
+            product_cost_snapshot,
             created_at, updated_at,
             deleted_at, sync_status, device_id
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             item.id,
             item.salon_id,
@@ -120,6 +139,7 @@ export class IncomeRepository {
             item.employee_name_snapshot ??
               draft.transaction.employee_name_snapshot ??
               null,
+            item.product_cost_snapshot ?? 0,
             item.created_at,
             item.updated_at,
             item.deleted_at,
@@ -227,6 +247,7 @@ export class IncomeRepository {
            transaction_date = ?, payment_mode = ?,
            gross_amount = ?, discount_type = ?, discount_value = ?, discount_amount = ?,
            net_amount = ?, commission_amount = ?, remarks = ?,
+           customer_id = ?, customer_name_snapshot = ?, customer_phone_snapshot = ?,
            updated_at = ?, sync_status = ?
          WHERE id = ? AND salon_id = ?`,
         [
@@ -241,6 +262,9 @@ export class IncomeRepository {
           draft.transaction.net_amount,
           draft.transaction.commission_amount,
           draft.transaction.remarks,
+          draft.transaction.customer_id ?? null,
+          draft.transaction.customer_name_snapshot ?? null,
+          draft.transaction.customer_phone_snapshot ?? null,
           draft.transaction.updated_at,
           draft.transaction.sync_status,
           draft.transaction.id,
@@ -261,9 +285,10 @@ export class IncomeRepository {
             service_price_snapshot, quantity, line_amount, commission_rule_type_snapshot,
             commission_rule_value_snapshot, commission_amount,
             employee_id, employee_name_snapshot,
+            product_cost_snapshot,
             created_at, updated_at,
             deleted_at, sync_status, device_id
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             item.id,
             item.salon_id,
@@ -280,6 +305,7 @@ export class IncomeRepository {
             item.employee_name_snapshot ??
               draft.transaction.employee_name_snapshot ??
               null,
+            item.product_cost_snapshot ?? 0,
             item.created_at,
             item.updated_at,
             item.deleted_at,
