@@ -161,9 +161,30 @@ export function EmployeesScreen({ navigation }: Props) {
           ItemSeparatorComponent={() => <View style={styles.separator} />}
           renderItem={({ item }) => {
             const outstanding = outstandingByEmp[item.id] ?? 0;
+            const isOwner = item.is_owner === 1;
             return (
               <ListItem
-                title={item.name}
+                title={
+                  isOwner ? (
+                    <View style={styles.titleRow}>
+                      <Text style={styles.titleText} numberOfLines={1}>
+                        {item.name}
+                      </Text>
+                      <View style={styles.ownerPill}>
+                        <Ionicons
+                          name="star"
+                          size={10}
+                          color={colors.brand.primary}
+                        />
+                        <Text style={styles.ownerPillText}>
+                          {t("employees.ownerBadge")}
+                        </Text>
+                      </View>
+                    </View>
+                  ) : (
+                    item.name
+                  )
+                }
                 subtitle={item.mobile_number ?? undefined}
                 leading={<InitialsAvatar name={item.name} />}
                 trailing={
@@ -302,6 +323,31 @@ const styles = StyleSheet.create({
   advancePillText: {
     ...typography.caption,
     color: colors.status.warning,
+    fontWeight: "700"
+  },
+  titleRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing[2]
+  },
+  titleText: {
+    ...typography.body,
+    color: colors.text.primary,
+    flexShrink: 1
+  },
+  ownerPill: {
+    alignItems: "center",
+    backgroundColor: "rgba(103,57,183,0.10)",
+    borderRadius: radius.full,
+    flexDirection: "row",
+    gap: 3,
+    paddingHorizontal: spacing[2],
+    paddingVertical: 2
+  },
+  ownerPillText: {
+    ...typography.caption,
+    color: colors.brand.primary,
+    fontSize: 10,
     fontWeight: "700"
   }
 });

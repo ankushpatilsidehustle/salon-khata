@@ -28,7 +28,7 @@ const LEFT_TABS: TabDef[] = [
   },
   {
     routeIndex: 1,
-    label: "Entries",
+    label: "Manage",
     iconFilled: "layers",
     iconOutline: "layers-outline"
   }

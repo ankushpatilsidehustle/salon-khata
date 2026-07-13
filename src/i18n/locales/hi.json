@@ -19,7 +19,8 @@
     "discardChangesMessage": "You have unsaved changes. Are you sure you want to discard them?"
   },
   "entries": {
-    "title": "Entries",
+    "title": "Manage",
+    "tabTitle": "Manage",
     "hub": {
       "employees": { "sub": "Add & manage staff" },
       "services": { "sub": "Haircuts, treatments & more" },
@@ -27,6 +28,10 @@
       "label": "Commission",
       "sub": "Set rates per employee & service"
     },
+      "customers": {
+        "label": "Customers",
+        "sub": "Your regulars & their visit history"
+      },
       "expenses": {
         "label": "Expenses",
         "sub": "Coming in Wave 5"
@@ -86,7 +91,9 @@
       "message": "This will remove the employee. Past transactions are unaffected."
     },
     "saved": "Employee saved",
-    "deleted": "Employee deleted"
+    "deleted": "Employee deleted",
+    "ownerBadge": "Owner",
+    "ownerHint": "Auto-created during setup — this is you."
   },
   "services": {
     "title": "Services",
@@ -137,8 +144,13 @@
     "expenses": {
       "today": "Today's expenses"
     },
+    "commission": {
+      "today": "Staff commission",
+      "hint": "Tap for per-employee breakdown"
+    },
     "net": {
-      "today": "Net collection"
+      "today": "Net collection",
+      "formula": "Income − Expenses − Commission"
     },
     "todayIncome": "Today's income",
     "todayExpenses": "Today's expenses",
@@ -159,6 +171,144 @@
       "up": "{{amount}} vs yesterday",
       "down": "{{amount}} vs yesterday"
     }
+  },
+  "commissionSummary": {
+    "title": "Commission",
+    "totalLabel": "Total commission",
+    "sectionPerEmployee": "Per employee",
+    "lineCount_one": "{{count}} bill",
+    "lineCount_other": "{{count}} bills",
+    "empty": {
+      "title": "No commission in this period",
+      "body": "Commission will appear here once a bill is recorded."
+    }
+  },
+  "employeeCommissionDetail": {
+    "title": "{{name}}",
+    "totalLabel": "{{name}}'s commission",
+    "servicesSection": "Services performed",
+    "ruleFixed": "{{amount}} flat",
+    "rulePercent": "{{percent}}% of {{lineAmount}}",
+    "rulePercentWithProduct": "{{percent}}% of {{netAmount}} ({{lineAmount}} − {{productCost}} parts)",
+    "ruleNone": "No commission rule",
+    "quantityMultiplier": "× {{quantity}}",
+    "customerLabel": "Customer: {{name}}",
+    "noCustomer": "Walk-in",
+    "empty": {
+      "title": "No bills in this period",
+      "body": "Services performed by this employee will show up here."
+    }
+  },
+  "reports": {
+    "title": "Reports",
+    "period": {
+      "day": "Day",
+      "week": "Week",
+      "month": "Month",
+      "custom": "Custom",
+      "prev": "Previous period",
+      "next": "Next period",
+      "customTitle": "Custom range",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "rangeInvalid": "Start date must be on or before end date."
+    },
+    "metrics": {
+      "income": "Income",
+      "expenses": "Expenses",
+      "net": "Net collection",
+      "netFormula": "Income − Expenses − Commission",
+      "commission": "Staff commission",
+      "commissionHint": "Tap for per-employee breakdown",
+      "billCount": "Bills",
+      "avgBill": "Avg bill value",
+      "billStats": "Bill stats",
+      "topEmployees": "Top employees",
+      "topServices": "Top services",
+      "paymentSplit": "Payment split",
+      "newVsRepeat": "Customers",
+      "transactions": "Transactions",
+      "viewAll": "View all",
+      "cash": "Cash",
+      "upi": "UPI",
+      "card": "Card",
+      "credit": "Credit",
+      "other": "Other",
+      "walkIn": "Walk-in",
+      "walkIn_bill_one": "{{count}} walk-in bill",
+      "walkIn_bill_other": "{{count}} walk-in bills",
+      "newCustomer": "New",
+      "repeatCustomer": "Repeat",
+      "share": "{{percent}}%",
+      "billCountLabel_one": "{{count}} bill",
+      "billCountLabel_other": "{{count}} bills",
+      "qtyLabel_one": "{{count}} sold",
+      "qtyLabel_other": "{{count}} sold"
+    },
+    "empty": {
+      "title": "No activity in this period",
+      "body": "Add an income entry or expense to see it here.",
+      "cta": "Add income"
+    },
+    "topEmployeesScreen": {
+      "title": "Top employees",
+      "empty": {
+        "title": "No revenue in this period",
+        "body": "Once bills are recorded, top earners will appear here."
+      }
+    },
+    "topServicesScreen": {
+      "title": "Top services",
+      "empty": {
+        "title": "No services sold in this period",
+        "body": "Add a bill to start tracking top services."
+      }
+    }
+  },
+  "customers": {
+    "title": "Customers",
+    "add": "Add customer",
+    "edit": "Edit customer",
+    "search": "Search name or phone",
+    "empty": {
+      "icon": "👤",
+      "title": "No customers yet",
+      "body": "Add a customer or record a bill with a phone number to build your list."
+    },
+    "form": {
+      "name": "Name",
+      "namePlaceholder": "e.g. Priya, Rahul",
+      "phone": "Phone",
+      "phonePlaceholder": "10-digit number",
+      "nameRequired": "Name is required",
+      "phoneRequired": "Enter a 10-digit phone number",
+      "duplicate": "A customer with this phone already exists",
+      "duplicateJump": "Open existing"
+    },
+    "stats": {
+      "visits_one": "{{count}} visit",
+      "visits_other": "{{count}} visits",
+      "noVisits": "No visits yet",
+      "totalSpend": "Total spend",
+      "lastVisit": "Last visit",
+      "lastVisitOn": "Last visited {{date}}"
+    },
+    "actions": {
+      "call": "Call",
+      "whatsapp": "WhatsApp",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "pastBills": "Past bills",
+    "pastBillsEmpty": "No past bills for this customer yet.",
+    "saved": "Customer saved",
+    "deleted": "Customer deleted",
+    "deleteConfirm": {
+      "title": "Delete customer?",
+      "message": "Their master row is removed but past bills stay in your history."
+    },
+    "callUnavailable": "Can't open the phone dialer on this device.",
+    "whatsappUnavailable": "WhatsApp is not installed on this device."
   },
   "income": {
     "add": "Add income",
@@ -199,9 +349,13 @@
     "modes": {
       "cash": "Cash",
       "upi": "UPI",
+      "credit": "Credit",
       "card": "Card",
       "other": "Other"
     },
+    "creditRequiresCustomerTitle": "Customer required for credit",
+    "creditRequiresCustomerHint": "Credit bills need a customer so you can chase collection later.",
+    "creditRequiresCustomerBody": "Add the customer's phone and name before saving a credit bill.",
     "saveBill": "Save Bill",
     "saved": "Bill saved!",
     "saveFailed": "Could not save bill",

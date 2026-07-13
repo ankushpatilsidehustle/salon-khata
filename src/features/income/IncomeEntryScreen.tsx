@@ -58,7 +58,14 @@ type Props = NativeStackScreenProps<RootStackParamList, "IncomeEntry">;
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 type CustomerGender = "male" | "female";
-type PaymentMode = "cash" | "upi" | "card" | "other";
+/**
+ * Payment modes the picker offers for new bills. Historical bills may still
+ * carry legacy values (`card`, `other`) — we accept them in state via
+ * `LegacyPaymentMode` and preserve them on save/load, but never let the user
+ * pick them again from the chips.
+ */
+type PaymentMode = "cash" | "upi" | "credit";
+type LegacyPaymentMode = PaymentMode | "card" | "other";
 type DiscountType = "percentage" | "flat";
 
 interface BillItem {
@@ -163,7 +170,7 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
   );
   const [billDate, setBillDate] = useState<string>(toLocalISODate(new Date()));
   const [billItems, setBillItems] = useState<BillItem[]>([]);
-  const [paymentMode, setPaymentMode] = useState<PaymentMode>("cash");
+  const [paymentMode, setPaymentMode] = useState<LegacyPaymentMode>("cash");
 
   const [discountEnabled, setDiscountEnabled] = useState(false);
   const [discountType, setDiscountType] = useState<DiscountType>("percentage");
@@ -187,6 +194,12 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
   const [customerActiveField, setCustomerActiveField] = useState<
     "phone" | "name" | null
   >(null);
+  /**
+   * Error surfaced under the customer section when credit is selected but a
+   * valid phone + name aren't supplied. Cleared as soon as the user starts
+   * filling either field.
+   */
+  const [customerError, setCustomerError] = useState("");
 
   // Post-save bill preview — shown when customer phone was provided.
   const [previewVisible, setPreviewVisible] = useState(false);
@@ -235,7 +248,7 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
     editingCreatedAtRef.current = tx.created_at;
     setEmployeeId(tx.employee_id || null);
     setBillDate(tx.transaction_date);
-    setPaymentMode(tx.payment_mode as PaymentMode);
+    setPaymentMode(tx.payment_mode as LegacyPaymentMode);
     if (tx.discount_type) {
       setDiscountEnabled(true);
       setDiscountType(tx.discount_type as DiscountType);
@@ -593,6 +606,24 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
 
   // ── Save ───────────────────────────────────────────────────────────────────
 
+  /**
+   * Credit bills owe the salon money — always tag them to a specific customer
+   * so the owner can chase collection later. Returns true when validation
+   * passes; otherwise shows an alert + inline error and returns false.
+   */
+  function validateCreditCustomer(): boolean {
+    if (paymentMode !== "credit") return true;
+    const normalized = normalizePhone(customerPhone);
+    const trimmedName = customerName.trim();
+    if (normalized.length === 10 && trimmedName.length > 0) return true;
+    setCustomerError(t("income.creditRequiresCustomerBody"));
+    Alert.alert(
+      t("income.creditRequiresCustomerTitle"),
+      t("income.creditRequiresCustomerBody")
+    );
+    return false;
+  }
+
   function handleSave() {
     if (!canSave || saving) return;
 
@@ -607,6 +638,8 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
         return;
       }
     }
+
+    if (!validateCreditCustomer()) return;
 
     saveBill(billItems);
   }
@@ -753,11 +786,10 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
   const PAYMENT_MODES: { key: PaymentMode; icon: string; label: string }[] = [
     { key: "cash", icon: "cash-outline", label: t("income.modes.cash") },
     { key: "upi", icon: "phone-portrait-outline", label: t("income.modes.upi") },
-    { key: "card", icon: "card-outline", label: t("income.modes.card") },
     {
-      key: "other",
-      icon: "ellipsis-horizontal-circle-outline",
-      label: t("income.modes.other")
+      key: "credit",
+      icon: "time-outline",
+      label: t("income.modes.credit")
     }
   ];
 
@@ -802,6 +834,7 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
                   onChangeText={(v) => {
                     setCustomerPhone(v);
                     if (matchedCustomerId) setMatchedCustomerId(null);
+                    if (customerError) setCustomerError("");
                     setCustomerActiveField("phone");
                     setCustomerPickerActive(true);
                   }}
@@ -827,6 +860,7 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
                   onChangeText={(v) => {
                     setCustomerName(v);
                     if (matchedCustomerId) setMatchedCustomerId(null);
+                    if (customerError) setCustomerError("");
                     setCustomerActiveField("name");
                     setCustomerPickerActive(true);
                   }}
@@ -892,6 +926,28 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
                 />
                 <Text style={styles.customerMatchText}>
                   {t("income.customerMatched")}
+                </Text>
+              </View>
+            ) : null}
+
+            {customerError ? (
+              <View style={styles.customerErrorRow}>
+                <Ionicons
+                  name="alert-circle"
+                  size={14}
+                  color={colors.status.danger}
+                />
+                <Text style={styles.customerErrorText}>{customerError}</Text>
+              </View>
+            ) : paymentMode === "credit" ? (
+              <View style={styles.customerHintRow}>
+                <Ionicons
+                  name="information-circle-outline"
+                  size={14}
+                  color={colors.status.warning}
+                />
+                <Text style={styles.customerHintText}>
+                  {t("income.creditRequiresCustomerHint")}
                 </Text>
               </View>
             ) : null}
@@ -1252,7 +1308,11 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
                     styles.payChip,
                     paymentMode === key && styles.payChipSelected
                   ]}
-                  onPress={() => setPaymentMode(key)}
+                  onPress={() => {
+                    setPaymentMode(key);
+                    // Leaving credit clears the customer-required warning.
+                    if (key !== "credit" && customerError) setCustomerError("");
+                  }}
                 >
                   <Ionicons
                     name={icon as any}
@@ -1913,6 +1973,29 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.status.success,
     fontWeight: "600"
+  },
+  customerErrorRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing[1],
+    marginTop: spacing[1]
+  },
+  customerErrorText: {
+    ...typography.caption,
+    color: colors.status.danger,
+    flex: 1,
+    fontWeight: "600"
+  },
+  customerHintRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing[1],
+    marginTop: spacing[1]
+  },
+  customerHintText: {
+    ...typography.caption,
+    color: colors.status.warning,
+    flex: 1
   },
   customerSuggestList: {
     backgroundColor: colors.surface.default,

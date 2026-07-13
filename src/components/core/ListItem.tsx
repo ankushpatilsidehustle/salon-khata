@@ -6,7 +6,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { colors, spacing, typography } from "@/design-system/tokens";
 
 type ListItemProps = {
-  title: string;
+  /** Primary text; pass a `ReactNode` to render inline badges next to the title. */
+  title: ReactNode;
   subtitle?: string;
   /** Left slot — avatar circle, icon, or any ReactNode. */
   leading?: ReactNode;
@@ -40,9 +41,13 @@ export function ListItem({
     <View style={[styles.container, style]}>
       {leading ? <View style={styles.leading}>{leading}</View> : null}
       <View style={styles.textBlock}>
-        <Text style={styles.title} numberOfLines={1}>
-          {title}
-        </Text>
+        {typeof title === "string" ? (
+          <Text style={styles.title} numberOfLines={1}>
+            {title}
+          </Text>
+        ) : (
+          title
+        )}
         {subtitle ? (
           <Text style={styles.subtitle} numberOfLines={1}>
             {subtitle}

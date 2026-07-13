@@ -74,6 +74,39 @@ export type EmployeeCommissionTotal = {
   line_count: number;
 };
 
+/** Row shape returned by `topEmployeesByRevenue`. */
+export type EmployeeRevenueTotal = {
+  employee_id: string;
+  employee_name: string;
+  revenue: number;
+  bill_count: number;
+};
+
+/** Row shape returned by `topServicesByRevenue`. */
+export type ServiceRevenueTotal = {
+  service_id: string;
+  service_name: string;
+  revenue: number;
+  quantity: number;
+};
+
+/** Row shape returned by `paymentModeSplit`. */
+export type PaymentModeTotals = Record<string, number>;
+
+/** Row shape returned by `newVsRepeatCounts`. */
+export type NewVsRepeatCounts = {
+  newCustomers: number;
+  repeatCustomers: number;
+  walkIns: number;
+};
+
+/** Row shape returned by `countBillsBetween`. */
+export type BillCountStats = {
+  count: number;
+  /** Average `net_amount` across the returned bills; 0 when count = 0. */
+  avg: number;
+};
+
 export class IncomeRepository {
   saveIncomeTransaction(draft: IncomeTransactionDraft) {
     runInTransaction(() => {
@@ -211,6 +244,41 @@ export class IncomeRepository {
   }
 
   /**
+   * All bill line items credited to a specific employee within the given
+   * date range (inclusive, local business dates). Joined with the parent
+   * transaction so callers can show the customer name and time-of-day
+   * alongside each service. Ordered newest transaction first.
+   */
+  listItemsByEmployeeAndDateRange(
+    salonId: string,
+    employeeId: string,
+    startDate: string,
+    endDate: string
+  ): (IncomeItemRecord & {
+    transaction_date: string;
+    transaction_created_at: string;
+    customer_name_snapshot: string | null;
+    customer_phone_snapshot: string | null;
+  })[] {
+    return database.getAllSync(
+      `SELECT i.*,
+              t.transaction_date       AS transaction_date,
+              t.created_at             AS transaction_created_at,
+              t.customer_name_snapshot AS customer_name_snapshot,
+              t.customer_phone_snapshot AS customer_phone_snapshot
+       FROM income_transaction_items i
+       JOIN income_transactions t ON t.id = i.transaction_id
+       WHERE t.salon_id = ?
+         AND i.employee_id = ?
+         AND t.transaction_date BETWEEN ? AND ?
+         AND t.deleted_at IS NULL
+         AND i.deleted_at IS NULL
+       ORDER BY t.created_at DESC, i.created_at ASC`,
+      [salonId, employeeId, startDate, endDate]
+    );
+  }
+
+  /**
    * Fetch a single transaction (header + items) by id. Returns null if the
    * row is missing or soft-deleted.
    */
@@ -341,5 +409,243 @@ export class IncomeRepository {
         [now, now, deviceId, id, salonId]
       );
     });
+  }
+
+  // ─── Report aggregations ──────────────────────────────────────────────────
+
+  /** Sum of `net_amount` across all bills within the inclusive date range. */
+  sumIncomeBetween(salonId: string, startDate: string, endDate: string): number {
+    const row = database.getFirstSync<{ total: number | null }>(
+      `SELECT SUM(net_amount) AS total FROM income_transactions
+       WHERE salon_id = ?
+         AND transaction_date BETWEEN ? AND ?
+         AND deleted_at IS NULL`,
+      [salonId, startDate, endDate]
+    );
+    return row?.total ?? 0;
+  }
+
+  /** Bill count + average net-amount for the given range. */
+  countBillsBetween(
+    salonId: string,
+    startDate: string,
+    endDate: string
+  ): BillCountStats {
+    const row = database.getFirstSync<{ count: number | null; avg: number | null }>(
+      `SELECT COUNT(*) AS count, AVG(net_amount) AS avg
+       FROM income_transactions
+       WHERE salon_id = ?
+         AND transaction_date BETWEEN ? AND ?
+         AND deleted_at IS NULL`,
+      [salonId, startDate, endDate]
+    );
+    return {
+      count: row?.count ?? 0,
+      // AVG is null when count = 0 — normalize to 0 and round to paise.
+      avg: row?.avg ? Math.round(row.avg) : 0
+    };
+  }
+
+  /**
+   * Top employees by revenue (sum of line_amount) within the date range,
+   * limited to `limit` rows, highest first. Revenue is credited to the
+   * item-level employee (migration 006 backfilled legacy rows).
+   */
+  topEmployeesByRevenue(
+    salonId: string,
+    startDate: string,
+    endDate: string,
+    limit = 3
+  ): EmployeeRevenueTotal[] {
+    return database.getAllSync<EmployeeRevenueTotal>(
+      `SELECT
+         i.employee_id                          AS employee_id,
+         COALESCE(i.employee_name_snapshot, '') AS employee_name,
+         COALESCE(SUM(i.line_amount), 0)        AS revenue,
+         COUNT(DISTINCT i.transaction_id)       AS bill_count
+       FROM income_transaction_items i
+       JOIN income_transactions t ON t.id = i.transaction_id
+       WHERE t.salon_id = ?
+         AND t.transaction_date BETWEEN ? AND ?
+         AND t.deleted_at IS NULL
+         AND i.deleted_at IS NULL
+         AND i.employee_id IS NOT NULL
+       GROUP BY i.employee_id, i.employee_name_snapshot
+       ORDER BY revenue DESC
+       LIMIT ?`,
+      [salonId, startDate, endDate, limit]
+    );
+  }
+
+  /**
+   * Top services by revenue (sum of line_amount) within the date range.
+   * Grouped by service_id + service_name_snapshot so renamed services stay
+   * distinct entries in the report.
+   */
+  topServicesByRevenue(
+    salonId: string,
+    startDate: string,
+    endDate: string,
+    limit = 3
+  ): ServiceRevenueTotal[] {
+    return database.getAllSync<ServiceRevenueTotal>(
+      `SELECT
+         i.service_id                         AS service_id,
+         i.service_name_snapshot              AS service_name,
+         COALESCE(SUM(i.line_amount), 0)      AS revenue,
+         COALESCE(SUM(i.quantity), 0)         AS quantity
+       FROM income_transaction_items i
+       JOIN income_transactions t ON t.id = i.transaction_id
+       WHERE t.salon_id = ?
+         AND t.transaction_date BETWEEN ? AND ?
+         AND t.deleted_at IS NULL
+         AND i.deleted_at IS NULL
+       GROUP BY i.service_id, i.service_name_snapshot
+       ORDER BY revenue DESC
+       LIMIT ?`,
+      [salonId, startDate, endDate, limit]
+    );
+  }
+
+  /**
+   * Total net-amount grouped by payment mode within the date range. Modes
+   * that never appear are omitted from the returned map.
+   */
+  paymentModeSplit(
+    salonId: string,
+    startDate: string,
+    endDate: string
+  ): PaymentModeTotals {
+    const rows = database.getAllSync<{ payment_mode: string; total: number }>(
+      `SELECT payment_mode, COALESCE(SUM(net_amount), 0) AS total
+       FROM income_transactions
+       WHERE salon_id = ?
+         AND transaction_date BETWEEN ? AND ?
+         AND deleted_at IS NULL
+       GROUP BY payment_mode`,
+      [salonId, startDate, endDate]
+    );
+    const out: PaymentModeTotals = {};
+    for (const r of rows) out[r.payment_mode] = r.total;
+    return out;
+  }
+
+  /**
+   * Split bills in the range into new vs repeat vs walk-in customers.
+   *  - "new": bill has a `customer_id` AND that customer's earliest bill
+   *    (across all-time, non-deleted) also falls inside this range.
+   *  - "repeat": bill has a `customer_id` AND the customer's first bill
+   *    predates the range.
+   *  - "walk-in": bill has NO `customer_id`.
+   *
+   * We count DISTINCT customers for new/repeat and DISTINCT bills for walk-ins
+   * — a repeat customer with 3 bills in the range still counts once.
+   */
+  newVsRepeatCounts(
+    salonId: string,
+    startDate: string,
+    endDate: string
+  ): NewVsRepeatCounts {
+    // Walk-in bills are counted per-transaction.
+    const walkIns =
+      database.getFirstSync<{ count: number | null }>(
+        `SELECT COUNT(*) AS count FROM income_transactions
+         WHERE salon_id = ?
+           AND transaction_date BETWEEN ? AND ?
+           AND deleted_at IS NULL
+           AND customer_id IS NULL`,
+        [salonId, startDate, endDate]
+      )?.count ?? 0;
+
+    // For known customers, compare their first-ever transaction_date against
+    // the range boundary using a per-customer MIN().
+    const rows = database.getAllSync<{ customer_id: string; first_date: string }>(
+      `SELECT customer_id, MIN(transaction_date) AS first_date
+       FROM income_transactions
+       WHERE salon_id = ?
+         AND deleted_at IS NULL
+         AND customer_id IN (
+           SELECT DISTINCT customer_id FROM income_transactions
+           WHERE salon_id = ?
+             AND transaction_date BETWEEN ? AND ?
+             AND deleted_at IS NULL
+             AND customer_id IS NOT NULL
+         )
+       GROUP BY customer_id`,
+      [salonId, salonId, startDate, endDate]
+    );
+
+    let newCustomers = 0;
+    let repeatCustomers = 0;
+    for (const r of rows) {
+      if (r.first_date >= startDate && r.first_date <= endDate) newCustomers += 1;
+      else repeatCustomers += 1;
+    }
+
+    return { newCustomers, repeatCustomers, walkIns };
+  }
+
+  /** All bills within the date range, newest first, with the same summary
+   *  shape used by `listByDate` (services + employees concatenated). */
+  listBillsBetween(
+    salonId: string,
+    startDate: string,
+    endDate: string
+  ): IncomeTransactionSummary[] {
+    return database.getAllSync<IncomeTransactionSummary>(
+      `SELECT t.*,
+              COALESCE(
+                (SELECT GROUP_CONCAT(i.service_name_snapshot, ', ')
+                 FROM income_transaction_items i
+                 WHERE i.transaction_id = t.id AND i.deleted_at IS NULL),
+                ''
+              ) AS services_summary,
+              COALESCE(
+                (SELECT GROUP_CONCAT(DISTINCT i.employee_name_snapshot)
+                 FROM income_transaction_items i
+                 WHERE i.transaction_id = t.id
+                   AND i.deleted_at IS NULL
+                   AND i.employee_name_snapshot IS NOT NULL),
+                t.employee_name_snapshot
+              ) AS employees_summary
+       FROM income_transactions t
+       WHERE t.salon_id = ?
+         AND t.transaction_date BETWEEN ? AND ?
+         AND t.deleted_at IS NULL
+       ORDER BY t.transaction_date DESC, t.created_at DESC`,
+      [salonId, startDate, endDate]
+    );
+  }
+
+  /** All bills for a specific customer, newest first, limited to `limit`. */
+  listBillsForCustomer(
+    salonId: string,
+    customerId: string,
+    limit = 100
+  ): IncomeTransactionSummary[] {
+    return database.getAllSync<IncomeTransactionSummary>(
+      `SELECT t.*,
+              COALESCE(
+                (SELECT GROUP_CONCAT(i.service_name_snapshot, ', ')
+                 FROM income_transaction_items i
+                 WHERE i.transaction_id = t.id AND i.deleted_at IS NULL),
+                ''
+              ) AS services_summary,
+              COALESCE(
+                (SELECT GROUP_CONCAT(DISTINCT i.employee_name_snapshot)
+                 FROM income_transaction_items i
+                 WHERE i.transaction_id = t.id
+                   AND i.deleted_at IS NULL
+                   AND i.employee_name_snapshot IS NOT NULL),
+                t.employee_name_snapshot
+              ) AS employees_summary
+       FROM income_transactions t
+       WHERE t.salon_id = ?
+         AND t.customer_id = ?
+         AND t.deleted_at IS NULL
+       ORDER BY t.transaction_date DESC, t.created_at DESC
+       LIMIT ?`,
+      [salonId, customerId, limit]
+    );
   }
 }

@@ -512,6 +512,7 @@ export function ExpenseEntryScreen({ navigation, route }: Props) {
                 <Button
                   variant="secondary"
                   fullWidth
+                  style={styles.pickerActionBtn}
                   onPress={() => {
                     setNewCatOpen(false);
                     setNewCatName("");
@@ -525,9 +526,10 @@ export function ExpenseEntryScreen({ navigation, route }: Props) {
                   variant="primary"
                   fullWidth
                   onPress={handleAddCategory}
-                  style={
-                    newCatName.trim() ? undefined : styles.saveBtnDisabled
-                  }
+                  style={[
+                    styles.pickerActionBtn,
+                    !newCatName.trim() && styles.saveBtnDisabled
+                  ]}
                 >
                   {t("common.done")}
                 </Button>
@@ -780,5 +782,8 @@ const styles = StyleSheet.create({
   },
   pickerBtn: {
     flex: 1
+  },
+  pickerActionBtn: {
+    minHeight: 48
   }
 });

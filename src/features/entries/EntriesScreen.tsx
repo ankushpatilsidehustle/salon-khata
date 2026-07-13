@@ -1,15 +1,17 @@
 // EntriesScreen re-exports as EntriesHubScreen — the landing page of the
-// Entries stack navigator. Four tiles: Employees, Services, Commission (locked),
-// Expenses (locked).
+// Manage stack navigator. Four tiles: Employees, Services, Customers,
+// Commission (opens CommissionSummary in the root stack).
 
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
-import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import type { NativeStackScreenProps, NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 
 import { AppBar } from "@/components/core/AppBar";
 import { colors, radius, shadows, spacing, typography } from "@/design-system/tokens";
 import type { EntriesStackParamList } from "./EntriesNavigator";
+import type { RootStackParamList } from "@/application/AppNavigator";
 
 type Props = NativeStackScreenProps<EntriesStackParamList, "EntriesHub">;
 
@@ -20,11 +22,12 @@ type Tile = {
   iconColor: string;
   iconBg: string;
   onPress: () => void;
-  locked: boolean;
 };
 
 export function EntriesHubScreen({ navigation }: Props) {
   const { t } = useTranslation();
+  const rootNavigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const tiles: Tile[] = [
     {
@@ -33,8 +36,7 @@ export function EntriesHubScreen({ navigation }: Props) {
       icon: "people",
       iconColor: colors.brand.primary,
       iconBg: "rgba(103,57,183,0.10)",
-      onPress: () => navigation.navigate("Employees"),
-      locked: false
+      onPress: () => navigation.navigate("Employees")
     },
     {
       label: t("services.title"),
@@ -42,8 +44,15 @@ export function EntriesHubScreen({ navigation }: Props) {
       icon: "cut",
       iconColor: colors.status.info,
       iconBg: "rgba(37,99,235,0.10)",
-      onPress: () => navigation.navigate("Services"),
-      locked: false
+      onPress: () => navigation.navigate("Services")
+    },
+    {
+      label: t("entries.hub.customers.label"),
+      sub: t("entries.hub.customers.sub"),
+      icon: "person-circle-outline",
+      iconColor: colors.brand.accent,
+      iconBg: "rgba(153,103,209,0.14)",
+      onPress: () => navigation.navigate("Customers")
     },
     {
       label: t("entries.hub.commission.label"),
@@ -51,17 +60,7 @@ export function EntriesHubScreen({ navigation }: Props) {
       icon: "cash-outline",
       iconColor: colors.status.success,
       iconBg: "rgba(21,131,62,0.10)",
-      onPress: () => navigation.navigate("Employees"),
-      locked: false
-    },
-    {
-      label: t("entries.hub.expenses.label"),
-      sub: t("entries.hub.expenses.sub"),
-      icon: "wallet-outline",
-      iconColor: colors.status.warning,
-      iconBg: "rgba(245,158,11,0.10)",
-      onPress: () => {},
-      locked: true
+      onPress: () => rootNavigation.navigate("CommissionSummary")
     }
   ];
 
@@ -77,33 +76,17 @@ export function EntriesHubScreen({ navigation }: Props) {
             key={tile.label}
             style={({ pressed }) => [
               styles.tile,
-              tile.locked && styles.tileLocked,
-              pressed && !tile.locked && styles.tilePressed
+              pressed && styles.tilePressed
             ]}
-            onPress={tile.locked ? undefined : tile.onPress}
-            disabled={tile.locked}
+            onPress={tile.onPress}
             accessibilityRole="button"
             accessibilityLabel={tile.label}
-            accessibilityState={{ disabled: tile.locked }}
           >
             <View style={[styles.iconCircle, { backgroundColor: tile.iconBg }]}>
-              <Ionicons
-                name={tile.icon}
-                size={28}
-                color={tile.locked ? colors.text.muted : tile.iconColor}
-              />
+              <Ionicons name={tile.icon} size={28} color={tile.iconColor} />
             </View>
-            <Text
-              style={[styles.tileLabel, tile.locked && styles.tileLabelMuted]}
-            >
-              {tile.label}
-            </Text>
+            <Text style={styles.tileLabel}>{tile.label}</Text>
             <Text style={styles.tileSub}>{tile.sub}</Text>
-            {tile.locked ? (
-              <View style={styles.lockBadge}>
-                <Ionicons name="lock-closed" size={10} color={colors.text.inverse} />
-              </View>
-            ) : null}
           </Pressable>
         ))}
       </ScrollView>
@@ -130,9 +113,6 @@ const styles = StyleSheet.create({
     gap: spacing[2],
     ...shadows.sm
   },
-  tileLocked: {
-    opacity: 0.55
-  },
   tilePressed: {
     backgroundColor: colors.surface.raised
   },
@@ -148,23 +128,8 @@ const styles = StyleSheet.create({
     ...typography.bodyEmphasis,
     color: colors.text.primary
   },
-  tileLabelMuted: {
-    color: colors.text.secondary
-  },
   tileSub: {
     ...typography.caption,
     color: colors.text.muted
-  },
-  lockBadge: {
-    position: "absolute",
-    top: spacing[3],
-    right: spacing[3],
-    width: 18,
-    height: 18,
-    borderRadius: radius.full,
-    backgroundColor: colors.text.muted,
-    alignItems: "center",
-    justifyContent: "center"
   }
 });
-

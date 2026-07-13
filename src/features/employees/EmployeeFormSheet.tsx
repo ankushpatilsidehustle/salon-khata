@@ -59,6 +59,7 @@ export function EmployeeFormSheet({
   const [salaryInput, setSalaryInput] = useState("");
   const [commissionInput, setCommissionInput] = useState("");
   const [isActive, setIsActive] = useState(true);
+  const [isOwner, setIsOwner] = useState(false);
 
   const [nameError, setNameError] = useState("");
   const [compError, setCompError] = useState("");
@@ -100,6 +101,7 @@ export function EmployeeFormSheet({
           : ""
       );
       setIsActive(emp.is_active === 1);
+      setIsOwner(emp.is_owner === 1);
       setRuleCount(
         commissionRepo.findAllRulesForEmployee(employeeId, DEV_SALON_ID).length
       );
@@ -114,6 +116,7 @@ export function EmployeeFormSheet({
       setSalaryInput("");
       setCommissionInput("");
       setIsActive(true);
+      setIsOwner(false);
       setRuleCount(0);
     }
   }, [visible, employeeId]);
@@ -223,6 +226,18 @@ export function EmployeeFormSheet({
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
+        {isEditMode && isOwner ? (
+          <View style={styles.ownerBanner}>
+            <View style={styles.ownerPill}>
+              <Ionicons name="star" size={12} color={colors.brand.primary} />
+              <Text style={styles.ownerPillText}>
+                {t("employees.ownerBadge")}
+              </Text>
+            </View>
+            <Text style={styles.ownerHint}>{t("employees.ownerHint")}</Text>
+          </View>
+        ) : null}
+
         {/* Name */}
         <TextField
           label={t("employees.name")}
@@ -723,5 +738,34 @@ const styles = StyleSheet.create({
   toggleLabel: {
     ...typography.body,
     color: colors.text.primary
+  },
+  ownerBanner: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing[2],
+    backgroundColor: "rgba(103,57,183,0.06)",
+    borderRadius: radius.md,
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2]
+  },
+  ownerPill: {
+    alignItems: "center",
+    backgroundColor: "rgba(103,57,183,0.14)",
+    borderRadius: radius.full,
+    flexDirection: "row",
+    gap: 4,
+    paddingHorizontal: spacing[2],
+    paddingVertical: 3
+  },
+  ownerPillText: {
+    ...typography.caption,
+    color: colors.brand.primary,
+    fontSize: 11,
+    fontWeight: "700"
+  },
+  ownerHint: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    flex: 1
   }
 });

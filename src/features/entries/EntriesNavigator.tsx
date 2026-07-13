@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { EntriesHubScreen } from "./EntriesScreen";
 import { EmployeesScreen } from "@/features/employees/EmployeesScreen";
 import { ServicesScreen } from "@/features/services/ServicesScreen";
+import { CustomersListScreen } from "@/features/customers/CustomersListScreen";
 
 // ─── Param list ──────────────────────────────────────────────────────────────
 
@@ -12,6 +13,8 @@ export type EntriesStackParamList = {
   Employees: undefined;
   /** Services add/edit is a bottom sheet, not a route. */
   Services: undefined;
+  /** Customers add/edit + detail are bottom sheets, not routes. */
+  Customers: undefined;
 };
 
 // ─── Navigator ───────────────────────────────────────────────────────────────
@@ -24,6 +27,7 @@ export function EntriesNavigator() {
       <Stack.Screen name="EntriesHub" component={EntriesHubScreen} />
       <Stack.Screen name="Employees" component={EmployeesScreen} />
       <Stack.Screen name="Services" component={ServicesScreen} />
+      <Stack.Screen name="Customers" component={CustomersListScreen} />
     </Stack.Navigator>
   );
 }

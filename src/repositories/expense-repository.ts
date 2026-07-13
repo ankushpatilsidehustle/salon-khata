@@ -47,6 +47,21 @@ export class ExpenseRepository {
   }
 
   /**
+   * Sum of all expense amounts within an inclusive date range (YYYY-MM-DD).
+   * Excludes soft-deleted rows. Used by the Reports screen.
+   */
+  sumBetween(salonId: string, startDate: string, endDate: string) {
+    const row = database.getFirstSync<{ total: number | null }>(
+      `SELECT SUM(amount) as total FROM expenses
+       WHERE salon_id = ?
+         AND expense_date BETWEEN ? AND ?
+         AND deleted_at IS NULL`,
+      [salonId, startDate, endDate]
+    );
+    return row?.total ?? 0;
+  }
+
+  /**
    * Lifetime total of unpaid credit expenses (payment_mode = 'credit' AND
    * settled_at IS NULL) — i.e. money the salon still owes vendors.
    * Excludes soft-deleted rows.

@@ -166,12 +166,31 @@ export function DashboardScreen() {
             amount={todaySummary.expenses}
             testID="dash-peer-expenses"
           />
-          <MoneyCard
+          <Pressable
             style={styles.peerCard}
+            onPress={() => navigation.navigate("CommissionSummary")}
+            accessibilityRole="button"
+            accessibilityLabel={t("dashboard.commission.today")}
+            accessibilityHint={t("dashboard.commission.hint")}
+            testID="dash-peer-commission"
+          >
+            <MoneyCard
+              label={t("dashboard.commission.today")}
+              amount={todaySummary.commission}
+            />
+            <Text style={styles.tapHint} numberOfLines={1}>
+              {t("dashboard.commission.hint")}
+            </Text>
+          </Pressable>
+        </View>
+
+        <View style={styles.netRow}>
+          <MoneyCard
             label={t("dashboard.net.today")}
             amount={todaySummary.netCollection}
-            testID="dash-peer-net"
+            testID="dash-net"
           />
+          <Text style={styles.netFormula}>{t("dashboard.net.formula")}</Text>
         </View>
 
         <View style={styles.ghostRow}>
@@ -431,6 +450,21 @@ const styles = StyleSheet.create({
   },
   peerCard: {
     flex: 1
+  },
+  tapHint: {
+    ...typography.caption,
+    color: colors.text.muted,
+    marginTop: spacing[1],
+    marginLeft: spacing[1]
+  },
+  netRow: {
+    marginTop: spacing[3],
+    gap: spacing[1]
+  },
+  netFormula: {
+    ...typography.caption,
+    color: colors.text.muted,
+    marginLeft: spacing[1]
   },
   ghostRow: {
     marginTop: spacing[2],

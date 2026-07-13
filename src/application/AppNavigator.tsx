@@ -9,10 +9,27 @@ import { ExpenseEntryScreen } from "@/features/expenses/ExpenseEntryScreen";
 import { IncomeEntryScreen } from "@/features/income/IncomeEntryScreen";
 import { MoreScreen } from "@/features/more/MoreScreen";
 import { ReportsScreen } from "@/features/reports/ReportsScreen";
+import { CommissionSummaryScreen } from "@/features/reports/CommissionSummaryScreen";
+import { EmployeeCommissionDetailScreen } from "@/features/reports/EmployeeCommissionDetailScreen";
+import { TopEmployeesScreen } from "@/features/reports/TopEmployeesScreen";
+import { TopServicesScreen } from "@/features/reports/TopServicesScreen";
 import { AdvanceEntryScreen } from "@/features/advances/AdvanceEntryScreen";
 import { AdvancesListScreen } from "@/features/advances/AdvancesListScreen";
+import type { PeriodMode } from "@/domain/period";
 
 // ─── types ───────────────────────────────────────────────────────────────────
+
+/** Optional date-range params shared by report screens. Backwards compatible
+ *  with the pre-range `date` param — screens normalize either shape. */
+type ReportRangeParams = {
+  /** Legacy: single YYYY-MM-DD date; treated as day range when start/end absent. */
+  date?: string;
+  /** Inclusive local YYYY-MM-DD. */
+  start?: string;
+  /** Inclusive local YYYY-MM-DD. */
+  end?: string;
+  mode?: PeriodMode;
+};
 
 /** Root modal stack — sits above the tab navigator so IncomeEntry slides up. */
 export type RootStackParamList = {
@@ -25,6 +42,21 @@ export type RootStackParamList = {
   AdvanceEntry: { advanceId?: string; employeeId?: string } | undefined;
   /** `employeeId` filters to that employee only. */
   AdvancesList: { employeeId?: string } | undefined;
+  /**
+   * Per-employee commission totals. Accepts either the legacy `date` param
+   * (single day) or an explicit `{ start, end, mode }` range. When all are
+   * omitted, defaults to today.
+   */
+  CommissionSummary: ReportRangeParams | undefined;
+  /** Line-item breakdown of one employee's commission for a date range. */
+  EmployeeCommissionDetail: ReportRangeParams & {
+    employeeId: string;
+    employeeName: string;
+  };
+  /** Full ranked list of employees by revenue for the given period. */
+  TopEmployees: ReportRangeParams | undefined;
+  /** Full ranked list of services by revenue for the given period. */
+  TopServices: ReportRangeParams | undefined;
 };
 
 export type RootTabParamList = {
@@ -94,6 +126,22 @@ export function AppNavigator() {
         <RootStack.Screen
           name="AdvancesList"
           component={AdvancesListScreen}
+        />
+        <RootStack.Screen
+          name="CommissionSummary"
+          component={CommissionSummaryScreen}
+        />
+        <RootStack.Screen
+          name="EmployeeCommissionDetail"
+          component={EmployeeCommissionDetailScreen}
+        />
+        <RootStack.Screen
+          name="TopEmployees"
+          component={TopEmployeesScreen}
+        />
+        <RootStack.Screen
+          name="TopServices"
+          component={TopServicesScreen}
         />
       </RootStack.Navigator>
     </NavigationContainer>
