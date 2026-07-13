@@ -29,7 +29,7 @@ import { DEV_DEVICE_ID, DEV_SALON_ID } from "@/constants/dev";
 import { formatMoney } from "@/domain/money";
 import { newId } from "@/domain/id";
 import { getUtcTimestamp } from "@/domain/dates";
-import { calculateCommission } from "@/domain/commission-service";
+import { calculateCommission, resolveEffectiveRule } from "@/domain/commission-service";
 import { EmployeeRepository } from "@/repositories/employee-repository";
 import type { EmployeeRecord } from "@/repositories/employee-repository";
 import { ServiceRepository } from "@/repositories/service-repository";
@@ -95,12 +95,16 @@ function pickPrice(svc: ServiceRecord, gender: CustomerGender | null): number {
   return svc.male_price || svc.female_price;
 }
 
-function computeCommission(item: Omit<BillItem, "commissionAmount">): number {
-  if (!item.rule) return 0;
+function computeCommission(
+  item: Omit<BillItem, "commissionAmount">,
+  employee: EmployeeRecord | undefined
+): number {
+  const effective = resolveEffectiveRule(item.rule, employee ?? null);
+  if (!effective) return 0;
   return calculateCommission({
     lineAmount: item.lineAmount,
     quantity: item.quantity,
-    rule: { ruleType: item.rule.rule_type, value: item.rule.value },
+    rule: { ruleType: effective.rule_type, value: effective.value },
     productCostPerUnit: item.unitProductCost
   });
 }
@@ -400,7 +404,10 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
           employeeName: newEmployee.name,
           rule
         };
-        return { ...nextItem, commissionAmount: computeCommission(nextItem) };
+        return {
+          ...nextItem,
+          commissionAmount: computeCommission(nextItem, newEmployee)
+        };
       })
     );
     // Fast-path: on first employee pick, jump straight into service selection.
@@ -427,7 +434,10 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
           employeeName: nextEmployee.name,
           rule
         };
-        return { ...nextItem, commissionAmount: computeCommission(nextItem) };
+        return {
+          ...nextItem,
+          commissionAmount: computeCommission(nextItem, nextEmployee)
+        };
       })
     );
   }
@@ -444,15 +454,15 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
         if (!svc) return item;
         const unitPrice = pickPrice(svc, newGender);
         const lineAmount = unitPrice * item.quantity;
+        const emp = employees.find((e) => e.id === item.employeeId);
         return {
           ...item,
           unitPrice,
           lineAmount,
-          commissionAmount: computeCommission({
-            ...item,
-            unitPrice,
-            lineAmount
-          })
+          commissionAmount: computeCommission(
+            { ...item, unitPrice, lineAmount },
+            emp
+          )
         };
       })
     );
@@ -514,9 +524,10 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
 
       const resolvedId =
         assignedId ?? prev?.employeeId ?? defaultEmployee?.id ?? "";
-      const resolvedName = resolvedId
-        ? employees.find((e) => e.id === resolvedId)?.name ?? ""
-        : "";
+      const resolvedEmployee = resolvedId
+        ? employees.find((e) => e.id === resolvedId)
+        : undefined;
+      const resolvedName = resolvedEmployee?.name ?? "";
 
       const rule = resolvedId
         ? commissionRepo.findActiveRule(resolvedId, svc.id)
@@ -532,7 +543,10 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
         employeeName: resolvedName,
         rule
       };
-      return { ...base, commissionAmount: computeCommission(base) };
+      return {
+        ...base,
+        commissionAmount: computeCommission(base, resolvedEmployee)
+      };
     });
   }
 
@@ -551,11 +565,15 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
         if (item.serviceId !== serviceId) return item;
         const quantity = Math.max(1, item.quantity + delta);
         const lineAmount = item.unitPrice * quantity;
+        const emp = employees.find((e) => e.id === item.employeeId);
         return {
           ...item,
           quantity,
           lineAmount,
-          commissionAmount: computeCommission({ ...item, quantity, lineAmount })
+          commissionAmount: computeCommission(
+            { ...item, quantity, lineAmount },
+            emp
+          )
         };
       })
     );
@@ -675,27 +693,31 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
           sync_status: "pending",
           device_id: DEV_DEVICE_ID
         },
-        items: items.map((item) => ({
-          id: newId(),
-          salon_id: DEV_SALON_ID,
-          transaction_id: txId,
-          service_id: item.serviceId,
-          service_name_snapshot: item.serviceName,
-          service_price_snapshot: item.unitPrice,
-          quantity: item.quantity,
-          line_amount: item.lineAmount,
-          commission_rule_type_snapshot: item.rule?.rule_type ?? null,
-          commission_rule_value_snapshot: item.rule?.value ?? null,
-          commission_amount: item.commissionAmount,
-          employee_id: item.employeeId,
-          employee_name_snapshot: item.employeeName,
-          product_cost_snapshot: item.unitProductCost,
-          created_at: now,
-          updated_at: now,
-          deleted_at: null,
-          sync_status: "pending",
-          device_id: DEV_DEVICE_ID
-        }))
+        items: items.map((item) => {
+          const lineEmployee = employees.find((e) => e.id === item.employeeId);
+          const effective = resolveEffectiveRule(item.rule, lineEmployee ?? null);
+          return {
+            id: newId(),
+            salon_id: DEV_SALON_ID,
+            transaction_id: txId,
+            service_id: item.serviceId,
+            service_name_snapshot: item.serviceName,
+            service_price_snapshot: item.unitPrice,
+            quantity: item.quantity,
+            line_amount: item.lineAmount,
+            commission_rule_type_snapshot: effective?.rule_type ?? null,
+            commission_rule_value_snapshot: effective?.value ?? null,
+            commission_amount: item.commissionAmount,
+            employee_id: item.employeeId,
+            employee_name_snapshot: item.employeeName,
+            product_cost_snapshot: item.unitProductCost,
+            created_at: now,
+            updated_at: now,
+            deleted_at: null,
+            sync_status: "pending",
+            device_id: DEV_DEVICE_ID
+          };
+        })
       };
 
       if (isEditing) {

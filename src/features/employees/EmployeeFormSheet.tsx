@@ -20,12 +20,14 @@ import { Button } from "@/components/core/Button";
 import { TextField } from "@/components/core/TextField";
 import { colors, radius, spacing, typography } from "@/design-system/tokens";
 import { DEV_SALON_ID } from "@/constants/dev";
+import { CommissionRepository } from "@/repositories/commission-repository";
 import { EmployeeRepository } from "@/repositories/employee-repository";
 import type {
   CompensationType,
   EmployeeGender,
   EmployeeRecord
 } from "@/repositories/employee-repository";
+import { CommissionRulesSheet } from "./CommissionRulesSheet";
 
 type EmployeeFormSheetProps = {
   visible: boolean;
@@ -36,6 +38,7 @@ type EmployeeFormSheetProps = {
 };
 
 const repo = new EmployeeRepository();
+const commissionRepo = new CommissionRepository();
 
 export function EmployeeFormSheet({
   employeeId,
@@ -62,6 +65,11 @@ export function EmployeeFormSheet({
 
   const [iosPickerOpen, setIosPickerOpen] = useState(false);
   const loadedForIdRef = useRef<string | null>(null);
+
+  /** Number of per-service overrides configured for this employee (edit mode). */
+  const [ruleCount, setRuleCount] = useState(0);
+  /** Toggles the nested commission-rules sheet on top of this one. */
+  const [rulesSheetOpen, setRulesSheetOpen] = useState(false);
 
   // Reset / load whenever visibility or target id changes.
   useEffect(() => {
@@ -92,6 +100,9 @@ export function EmployeeFormSheet({
           : ""
       );
       setIsActive(emp.is_active === 1);
+      setRuleCount(
+        commissionRepo.findAllRulesForEmployee(employeeId, DEV_SALON_ID).length
+      );
       loadedForIdRef.current = employeeId;
     } else {
       setName("");
@@ -103,6 +114,7 @@ export function EmployeeFormSheet({
       setSalaryInput("");
       setCommissionInput("");
       setIsActive(true);
+      setRuleCount(0);
     }
   }, [visible, employeeId]);
 
@@ -422,6 +434,64 @@ export function EmployeeFormSheet({
           )}
         </View>
 
+        {/* Per-service commission overrides */}
+        {isEditMode && employeeId ? (
+          <Pressable
+            onPress={() => setRulesSheetOpen(true)}
+            style={({ pressed }) => [
+              styles.rulesTile,
+              pressed && styles.rulesTilePressed
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={t("employees.perServiceRules.title")}
+          >
+            <View style={styles.rulesTileIcon}>
+              <Ionicons
+                name="cash-outline"
+                size={20}
+                color={colors.brand.primary}
+              />
+            </View>
+            <View style={styles.rulesTileText}>
+              <Text style={styles.rulesTileTitle}>
+                {t("employees.perServiceRules.title")}
+              </Text>
+              <Text style={styles.rulesTileSubtitle}>
+                {ruleCount === 0
+                  ? t("employees.perServiceRules.countZero")
+                  : ruleCount === 1
+                  ? t("employees.perServiceRules.countOne")
+                  : t("employees.perServiceRules.countMany", {
+                      count: ruleCount
+                    })}
+              </Text>
+            </View>
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={colors.text.muted}
+            />
+          </Pressable>
+        ) : (
+          <View style={styles.rulesTileDisabled}>
+            <View style={styles.rulesTileIcon}>
+              <Ionicons
+                name="cash-outline"
+                size={20}
+                color={colors.text.muted}
+              />
+            </View>
+            <View style={styles.rulesTileText}>
+              <Text style={styles.rulesTileTitleDisabled}>
+                {t("employees.perServiceRules.title")}
+              </Text>
+              <Text style={styles.rulesTileSubtitle}>
+                {t("employees.perServiceRules.hintAddMode")}
+              </Text>
+            </View>
+          </View>
+        )}
+
         {/* Active toggle — edit mode only */}
         {isEditMode ? (
           <View style={styles.toggleRow}>
@@ -438,6 +508,24 @@ export function EmployeeFormSheet({
           </View>
         ) : null}
       </ScrollView>
+
+      {/* Nested commission-rules sheet — layers on top of this one so the
+          user returns to the same employee edit context on close. */}
+      {isEditMode && employeeId ? (
+        <CommissionRulesSheet
+          visible={rulesSheetOpen}
+          onClose={() => {
+            setRulesSheetOpen(false);
+            // Refresh the tile count in case the user added/removed overrides.
+            setRuleCount(
+              commissionRepo.findAllRulesForEmployee(employeeId, DEV_SALON_ID)
+                .length
+            );
+          }}
+          employeeId={employeeId}
+          employeeName={name.trim() || ""}
+        />
+      ) : null}
     </BottomSheet>
   );
 }
@@ -575,6 +663,56 @@ const styles = StyleSheet.create({
     ...typography.bodySmall,
     color: colors.text.muted,
     marginTop: spacing[2]
+  },
+  rulesTile: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing[3],
+    borderWidth: 1,
+    borderColor: colors.border.subtle,
+    borderRadius: radius.md,
+    backgroundColor: colors.surface.default,
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[3]
+  },
+  rulesTilePressed: {
+    backgroundColor: colors.interactive.selected
+  },
+  rulesTileDisabled: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing[3],
+    borderWidth: 1,
+    borderColor: colors.border.subtle,
+    borderStyle: "dashed",
+    borderRadius: radius.md,
+    backgroundColor: colors.surface.sunken,
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[3]
+  },
+  rulesTileIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.full,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(103,57,183,0.10)"
+  },
+  rulesTileText: {
+    flex: 1,
+    gap: 2
+  },
+  rulesTileTitle: {
+    ...typography.bodyEmphasis,
+    color: colors.text.primary
+  },
+  rulesTileTitleDisabled: {
+    ...typography.bodyEmphasis,
+    color: colors.text.secondary
+  },
+  rulesTileSubtitle: {
+    ...typography.caption,
+    color: colors.text.secondary
   },
   toggleRow: {
     flexDirection: "row",

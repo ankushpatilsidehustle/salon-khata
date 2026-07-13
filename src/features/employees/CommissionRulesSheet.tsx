@@ -16,6 +16,8 @@ import { colors, radius, spacing, typography } from "@/design-system/tokens";
 import { DEV_SALON_ID } from "@/constants/dev";
 import { CommissionRepository } from "@/repositories/commission-repository";
 import type { CommissionRuleRecord } from "@/repositories/commission-repository";
+import { EmployeeRepository } from "@/repositories/employee-repository";
+import type { EmployeeRecord } from "@/repositories/employee-repository";
 import { ServiceRepository } from "@/repositories/service-repository";
 import type { ServiceRecord } from "@/repositories/service-repository";
 
@@ -29,12 +31,19 @@ type Props = {
 type RuleType = "percentage" | "fixed";
 
 const commissionRepo = new CommissionRepository();
+const employeeRepo = new EmployeeRepository();
 const serviceRepo = new ServiceRepository();
 
 /** Display label for a saved rule — e.g. "35%" or "₹50". */
 function ruleLabel(rule: CommissionRuleRecord): string {
   const n = rule.value / 100;
   return rule.rule_type === "percentage" ? `${n}%` : `₹${n}`;
+}
+
+/** Format a basis-point percent value (4000 → "40") for display. */
+function formatPercent(bps: number): string {
+  const p = bps / 100;
+  return Number.isInteger(p) ? String(p) : p.toFixed(2);
 }
 
 /** Convert stored value → user-facing input string. */
@@ -50,6 +59,7 @@ export function CommissionRulesSheet({
 }: Props) {
   const { t } = useTranslation();
 
+  const [employee, setEmployee] = useState<EmployeeRecord | null>(null);
   const [services, setServices] = useState<ServiceRecord[]>([]);
   const [rulesMap, setRulesMap] = useState<Record<string, CommissionRuleRecord>>({});
 
@@ -59,6 +69,7 @@ export function CommissionRulesSheet({
   const [editError, setEditError] = useState("");
 
   function loadData() {
+    setEmployee(employeeRepo.getById(employeeId, DEV_SALON_ID));
     setServices(serviceRepo.listActive(DEV_SALON_ID));
     const rules = commissionRepo.findAllRulesForEmployee(employeeId, DEV_SALON_ID);
     const map: Record<string, CommissionRuleRecord> = {};
@@ -113,6 +124,32 @@ export function CommissionRulesSheet({
     if (editingId === serviceId) setEditingId(null);
   }
 
+  // Employee-level fallback percent, if this employee is on commission and
+  // has a default set. Any service without its own rule inherits this.
+  const defaultPercentBps =
+    employee &&
+    employee.compensation_type === "commission" &&
+    employee.commission_percent != null &&
+    employee.commission_percent > 0
+      ? employee.commission_percent
+      : null;
+
+  const defaultSummary = (() => {
+    if (!employee) return null;
+    if (defaultPercentBps != null) {
+      return {
+        tone: "commission" as const,
+        text: t("commission.defaultCommission", {
+          percent: formatPercent(defaultPercentBps)
+        })
+      };
+    }
+    if (employee.compensation_type === "salary") {
+      return { tone: "salary" as const, text: t("commission.defaultSalary") };
+    }
+    return { tone: "none" as const, text: t("commission.defaultNone") };
+  })();
+
   return (
     <BottomSheet
       visible={visible}
@@ -126,6 +163,38 @@ export function CommissionRulesSheet({
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
+        {defaultSummary ? (
+          <View
+            style={[
+              styles.defaultCard,
+              defaultSummary.tone === "commission" && styles.defaultCardCommission,
+              defaultSummary.tone === "salary" && styles.defaultCardSalary,
+              defaultSummary.tone === "none" && styles.defaultCardNone
+            ]}
+          >
+            <View style={styles.defaultCardHeader}>
+              <Ionicons
+                name={
+                  defaultSummary.tone === "commission"
+                    ? "cash-outline"
+                    : defaultSummary.tone === "salary"
+                    ? "briefcase-outline"
+                    : "information-circle-outline"
+                }
+                size={16}
+                color={colors.brand.primary}
+              />
+              <Text style={styles.defaultCardLabel}>
+                {t("commission.defaultLabel")}
+              </Text>
+            </View>
+            <Text style={styles.defaultCardText}>{defaultSummary.text}</Text>
+            <Text style={styles.defaultCardHint}>
+              {t("commission.defaultHint")}
+            </Text>
+          </View>
+        ) : null}
+
         {services.length === 0 ? (
           <Text style={styles.empty}>{t("commission.noServices")}</Text>
         ) : (
@@ -147,6 +216,14 @@ export function CommissionRulesSheet({
                     {rule ? (
                       <View style={styles.badge}>
                         <Text style={styles.badgeText}>{ruleLabel(rule)}</Text>
+                      </View>
+                    ) : defaultPercentBps != null ? (
+                      <View style={styles.defaultBadge}>
+                        <Text style={styles.defaultBadgeText}>
+                          {t("commission.usesDefaultBadge", {
+                            percent: formatPercent(defaultPercentBps)
+                          })}
+                        </Text>
                       </View>
                     ) : (
                       <Text style={styles.noRule}>{t("commission.noRule")}</Text>
@@ -259,6 +336,58 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: spacing[4]
+  },
+  defaultCard: {
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border.subtle,
+    backgroundColor: colors.surface.sunken,
+    gap: spacing[1],
+    marginHorizontal: spacing[4],
+    marginTop: spacing[3],
+    marginBottom: spacing[3],
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[3]
+  },
+  defaultCardCommission: {
+    backgroundColor: "rgba(103,57,183,0.06)",
+    borderColor: "rgba(103,57,183,0.24)"
+  },
+  defaultCardSalary: {
+    backgroundColor: "rgba(37,99,235,0.06)",
+    borderColor: "rgba(37,99,235,0.24)"
+  },
+  defaultCardNone: {
+    backgroundColor: colors.surface.sunken,
+    borderColor: colors.border.subtle
+  },
+  defaultCardHeader: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing[1]
+  },
+  defaultCardLabel: {
+    ...typography.overline,
+    color: colors.text.secondary
+  },
+  defaultCardText: {
+    ...typography.bodyEmphasis,
+    color: colors.text.primary
+  },
+  defaultCardHint: {
+    ...typography.caption,
+    color: colors.text.secondary
+  },
+  defaultBadge: {
+    backgroundColor: "rgba(0,0,0,0.04)",
+    borderRadius: radius.full,
+    paddingHorizontal: spacing[2],
+    paddingVertical: 2
+  },
+  defaultBadgeText: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    fontWeight: "500"
   },
   empty: {
     ...typography.bodySmall,

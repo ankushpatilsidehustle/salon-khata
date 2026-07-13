@@ -146,7 +146,14 @@ export function BottomSheet({
             )}
 
             {/* Scrollable content area — shrinks so the footer stays visible. */}
-            <View style={styles.content}>{children}</View>
+            <View
+              style={[
+                styles.content,
+                size === "tall" && styles.contentTall
+              ]}
+            >
+              {children}
+            </View>
 
             {footer ? (
               <View style={[styles.footer, { paddingBottom: insets.bottom + spacing[3] }]}>
@@ -190,6 +197,9 @@ const styles = StyleSheet.create({
   },
   content: {
     flexShrink: 1
+  },
+  contentTall: {
+    flex: 1
   },
   footer: {
     paddingHorizontal: spacing[4],

@@ -71,6 +71,14 @@
     "commissionPercent": "Commission (%)",
     "commissionPlaceholder": "e.g. 40",
     "commissionRequired": "Enter a percent between 0 and 100",
+    "perServiceRules": {
+      "title": "Per-service commission",
+      "subtitle": "Override the default for specific services (e.g. 35% head massage, 50% keratin).",
+      "countZero": "No overrides — default applies to all services",
+      "countOne": "1 override set",
+      "countMany": "{{count}} overrides set",
+      "hintAddMode": "Save the employee first to configure per-service rates."
+    },
     "activeLabel": "Active",
     "deleteAction": "Delete employee",
     "deleteConfirm": {
@@ -248,7 +256,13 @@
     "typePercent": "% of service",
     "typeFixed": "₹ flat per service",
     "valueRequired": "Enter a value greater than 0",
-    "percentMax": "Percentage cannot exceed 100%"
+    "percentMax": "Percentage cannot exceed 100%",
+    "defaultLabel": "Default",
+    "defaultCommission": "{{percent}}% on every service",
+    "defaultSalary": "Salaried — no commission unless a rule is set below",
+    "defaultNone": "No default set — commission applies only where a rule is set below",
+    "defaultHint": "Set a rule below to override the default for a specific service.",
+    "usesDefaultBadge": "{{percent}}% (default)"
   },
   "expense": {
     "add": "Add expense"
