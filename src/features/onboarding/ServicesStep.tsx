@@ -17,7 +17,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { Button } from "@/components/core/Button";
 import { useSnackbar } from "@/components/core/SnackbarProvider";
 import { colors, radius, spacing, typography } from "@/design-system/tokens";
-import { DEV_SALON_ID } from "@/constants/dev";
+import { getCurrentAuthUser } from "@/firebase/auth";
+import { setCurrentSalonId } from "@/session/current-salon";
 import { runInTransaction } from "@/database/sqlite-client";
 import { EmployeeRepository } from "@/repositories/employee-repository";
 import type { EmployeeGender } from "@/repositories/employee-repository";
@@ -90,20 +91,32 @@ export function ServicesStep({ navigation, route }: Props) {
   }
 
   function handleFinish() {
+    const authUser = getCurrentAuthUser();
+    if (!authUser) {
+      Alert.alert(
+        t("onboarding.business.saveFailed"),
+        t("auth.errors.sessionExpired")
+      );
+      return;
+    }
+    const salonId = authUser.uid;
+
     setSaving(true);
     try {
       runInTransaction(() => {
         salonRepo.create({
-          id: DEV_SALON_ID,
+          id: salonId,
           businessName,
           ownerName,
+          mobileNumber: authUser.phoneNumber ?? undefined,
           language,
-          salonType
+          salonType,
+          ownerUid: authUser.uid
         });
 
         if (alsoDoesServices && ownerName.length > 0) {
           employeeRepo.insert({
-            salonId: DEV_SALON_ID,
+            salonId,
             name: ownerName,
             gender: ownerGenderFor(salonType),
             isOwner: true
@@ -112,9 +125,9 @@ export function ServicesStep({ navigation, route }: Props) {
 
         // Seed the default category set, then build a name → id lookup so
         // each service can point at the correct category row.
-        categoryRepo.ensureDefaults(DEV_SALON_ID);
+        categoryRepo.ensureDefaults(salonId);
         const categoriesByName = new Map<string, string>();
-        for (const cat of categoryRepo.listActive(DEV_SALON_ID)) {
+        for (const cat of categoryRepo.listActive(salonId)) {
           categoriesByName.set(cat.name.toLowerCase(), cat.id);
         }
         const fallbackCategoryId =
@@ -127,7 +140,7 @@ export function ServicesStep({ navigation, route }: Props) {
               categoriesByName.get(row.category.toLowerCase()) ??
               fallbackCategoryId;
             serviceRepo.insert({
-              salonId: DEV_SALON_ID,
+              salonId,
               categoryId,
               name: row.name,
               malePrice: row.gender === "male" ? paise : 0,
@@ -139,6 +152,8 @@ export function ServicesStep({ navigation, route }: Props) {
         insertSide(womenRows);
       });
 
+      // Publish the session salon id before AuthProvider re-resolves.
+      setCurrentSalonId(salonId);
       showSnackbar(t("onboarding.welcome", { name: businessName }));
       onDone();
     } catch (err) {

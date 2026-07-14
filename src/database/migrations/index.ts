@@ -10,6 +10,7 @@ import { runMigration009 } from "./009-onboarding";
 import { runMigration010 } from "./010-service-product-cost";
 import { runMigration011 } from "./011-customers";
 import { runMigration012 } from "./012-employee-advances";
+import { runMigration013 } from "./013-salon-owner-uid";
 
 /** Run every migration in order. Safe to call on every app start. */
 export function runAllMigrations(): void {
@@ -25,4 +26,5 @@ export function runAllMigrations(): void {
   runMigration010();
   runMigration011();
   runMigration012();
+  runMigration013();
 }

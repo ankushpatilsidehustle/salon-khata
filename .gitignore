@@ -6,3 +6,6 @@ yarn-debug.log*
 yarn-error.log*
 .DS_Store
 *.tsbuildinfo
+# Firebase config (contains project identifiers)
+google-services.json
+GoogleService-Info.plist

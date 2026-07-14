@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text } from "react-native";
 import { useTranslation } from "react-i18next";
 
 import "@/i18n";
@@ -10,40 +10,40 @@ import { SnackbarProvider } from "@/components/core/SnackbarProvider";
 import { colors, spacing, typography } from "@/design-system/tokens";
 import { runAllMigrations } from "@/database/migrations";
 import { AppNavigator } from "@/application/AppNavigator";
-import { DEV_SALON_ID } from "@/constants/dev";
-import { SalonRepository } from "@/repositories/salon-repository";
 import { SettingsRepository } from "@/repositories/settings-repository";
 import { OnboardingNavigator } from "@/features/onboarding/OnboardingNavigator";
+import { AuthNavigator } from "@/features/auth/AuthNavigator";
+import { AuthProvider, useAuth } from "@/features/auth/AuthProvider";
+import { initializeAppCheck } from "@/firebase/app-check";
 
-const salonRepo = new SalonRepository();
 const settingsRepo = new SettingsRepository();
 
 export function AppRoot() {
   const { t } = useTranslation();
   const [isReady, setIsReady] = useState(false);
   const [startupError, setStartupError] = useState<string | null>(null);
-  const [hasOnboarded, setHasOnboarded] = useState(false);
 
   useEffect(() => {
-    try {
-      runAllMigrations();
-      const onboarded = salonRepo.hasSalon(DEV_SALON_ID);
-      if (onboarded) {
-        const lang = settingsRepo.getSalonLanguage(DEV_SALON_ID);
-        if (lang && lang !== i18n.language) {
-          void i18n.changeLanguage(lang);
+    let cancelled = false;
+    (async () => {
+      try {
+        runAllMigrations();
+        // Kick off App Check before any auth request goes out. Errors are
+        // swallowed inside initializeAppCheck (soft-fail).
+        await initializeAppCheck();
+        if (!cancelled) setIsReady(true);
+      } catch (error) {
+        if (!cancelled) {
+          setStartupError(
+            error instanceof Error ? error.message : t("errors.unknown")
+          );
         }
       }
-      setHasOnboarded(onboarded);
-      setIsReady(true);
-    } catch (error) {
-      setStartupError(error instanceof Error ? error.message : t("errors.unknown"));
-    }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [t]);
-
-  const handleOnboardingDone = useCallback(() => {
-    setHasOnboarded(true);
-  }, []);
 
   if (startupError) {
     return (
@@ -57,26 +57,54 @@ export function AppRoot() {
   }
 
   if (!isReady) {
-    return (
-      <SafeAreaProvider>
-        <SafeAreaView style={styles.centeredScreen}>
-          <ActivityIndicator color={colors.brand.primary} />
-          <Text style={styles.body}>{t("common.loading")}</Text>
-        </SafeAreaView>
-      </SafeAreaProvider>
-    );
+    return <BootSplash label={t("common.loading")} />;
   }
 
   return (
     <SafeAreaProvider>
       <StatusBar style="dark" />
-      <SnackbarProvider>
-        {hasOnboarded ? (
-          <AppNavigator />
-        ) : (
-          <OnboardingNavigator onDone={handleOnboardingDone} />
-        )}
-      </SnackbarProvider>
+      <AuthProvider>
+        <SnackbarProvider>
+          <AuthGate />
+        </SnackbarProvider>
+      </AuthProvider>
+    </SafeAreaProvider>
+  );
+}
+
+function AuthGate() {
+  const { t } = useTranslation();
+  const { status, salonId, refreshSalon } = useAuth();
+
+  // Whenever we land in `signed-in` for the first time, sync the salon's
+  // saved language into i18n so the app boots in the owner's chosen locale.
+  useEffect(() => {
+    if (status !== "signed-in" || !salonId) return;
+    const lang = settingsRepo.getSalonLanguage(salonId);
+    if (lang && lang !== i18n.language) {
+      void i18n.changeLanguage(lang);
+    }
+  }, [status, salonId]);
+
+  if (status === "loading") {
+    return <BootSplash label={t("common.loading")} />;
+  }
+  if (status === "signed-out") {
+    return <AuthNavigator />;
+  }
+  if (status === "signed-in-no-salon") {
+    return <OnboardingNavigator onDone={refreshSalon} />;
+  }
+  return <AppNavigator />;
+}
+
+function BootSplash({ label }: { label: string }) {
+  return (
+    <SafeAreaProvider>
+      <SafeAreaView style={styles.centeredScreen}>
+        <ActivityIndicator color={colors.brand.primary} />
+        <Text style={styles.body}>{label}</Text>
+      </SafeAreaView>
     </SafeAreaProvider>
   );
 }

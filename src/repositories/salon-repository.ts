@@ -12,6 +12,7 @@ export type SalonRecord = SharedColumns & {
   currency: string;
   language: string;
   salon_type: SalonType;
+  owner_uid: string | null;
 };
 
 export type NewSalon = {
@@ -22,6 +23,8 @@ export type NewSalon = {
   language: string;
   salonType: SalonType;
   currency?: string;
+  /** Firebase Auth uid — links the salon to the signed-in user. */
+  ownerUid?: string;
 };
 
 export class SalonRepository {
@@ -42,13 +45,25 @@ export class SalonRepository {
     );
   }
 
+  /** Lookup by Firebase Auth uid (populated by migration 013). */
+  findByOwnerUid(ownerUid: string): SalonRecord | null {
+    return (
+      database.getFirstSync<SalonRecord>(
+        `SELECT * FROM salons
+         WHERE owner_uid = ? AND deleted_at IS NULL
+         LIMIT 1`,
+        [ownerUid]
+      ) ?? null
+    );
+  }
+
   create(data: NewSalon): SalonRecord {
     const now = getUtcTimestamp();
     database.runSync(
       `INSERT INTO salons
        (id, business_name, owner_name, mobile_number, currency, language,
-        salon_type, created_at, updated_at, deleted_at, sync_status, device_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 'pending', ?)`,
+        salon_type, owner_uid, created_at, updated_at, deleted_at, sync_status, device_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 'pending', ?)`,
       [
         data.id,
         data.businessName.trim(),
@@ -57,6 +72,7 @@ export class SalonRepository {
         data.currency ?? "INR",
         data.language,
         data.salonType,
+        data.ownerUid ?? null,
         now,
         now,
         DEV_DEVICE_ID

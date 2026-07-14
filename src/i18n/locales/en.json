@@ -518,7 +518,12 @@
   "more": {
     "title": "More",
     "staffAdvances": "Staff advances",
-    "staffAdvancesSub": "Log cash given to employees between paydays"
+    "staffAdvancesSub": "Log cash given to employees between paydays",
+    "account": "Account",
+    "logOut": "Log out",
+    "logOutSub": "Sign out on this device",
+    "deleteAccount": "Delete account",
+    "deleteAccountSub": "Permanently remove your account and data"
   },
   "sync": {
     "line": {
@@ -534,6 +539,49 @@
   "errors": {
     "startupTitle": "Could not start Salon Khata",
     "unknown": "Something went wrong"
+  },
+  "auth": {
+    "phone": {
+      "title": "Enter your mobile number",
+      "subtitle": "We'll send you a 6-digit code by SMS to verify it's you.",
+      "placeholder": "10-digit mobile number",
+      "helper": "Standard SMS charges may apply.",
+      "continue": "Continue",
+      "legal": "By continuing, you agree to our Terms & Privacy Policy.",
+      "a11yLabel": "Mobile number"
+    },
+    "otp": {
+      "title": "Enter verification code",
+      "subtitle": "We sent a 6-digit code to {{phone}}.",
+      "verify": "Verify",
+      "resend": "Resend code",
+      "resending": "Resending…",
+      "resendIn": "Resend in {{seconds}}s",
+      "a11yLabel": "Six digit verification code"
+    },
+    "signOut": {
+      "title": "Log out?",
+      "message": "You'll need to sign in again with your mobile number. Your salon data stays on this device.",
+      "confirm": "Log out",
+      "failed": "Could not log out. Please try again."
+    },
+    "delete": {
+      "title": "Delete your account?",
+      "message": "This permanently deletes your account and wipes every bill, employee, service and customer stored on this device. This cannot be undone.",
+      "confirm": "Delete forever",
+      "requiresRecentLogin": "For security, please sign in again to delete your account.",
+      "failed": "Could not delete account. Please try again."
+    },
+    "errors": {
+      "invalidPhone": "Please enter a valid 10-digit mobile number.",
+      "invalidCode": "The code you entered isn't correct. Try again.",
+      "codeExpired": "That code has expired. Resend a new one.",
+      "tooManyRequests": "Too many attempts. Please try again in a few minutes.",
+      "network": "No internet connection. Please try again when you're back online.",
+      "quotaExceeded": "Service is temporarily unavailable. Please try again later.",
+      "sessionExpired": "Your session expired. Please sign in again.",
+      "unknown": "Something went wrong. Please try again."
+    }
   },
   "onboarding": {
     "step": "Step {{current}} of {{total}}",

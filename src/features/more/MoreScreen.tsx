@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useNavigation } from "@react-navigation/native";
@@ -8,6 +9,8 @@ import { AppBar } from "@/components/core/AppBar";
 import { Button } from "@/components/core/Button";
 import { colors, radius, spacing, typography } from "@/design-system/tokens";
 import { resetAppData } from "@/database/reset";
+import { useAuth } from "@/features/auth/AuthProvider";
+import { AuthError } from "@/firebase/auth";
 import type { RootStackParamList } from "@/application/AppNavigator";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -15,6 +18,8 @@ type Nav = NativeStackNavigationProp<RootStackParamList>;
 export function MoreScreen() {
   const { t } = useTranslation();
   const navigation = useNavigation<Nav>();
+  const { signOut, deleteAccount } = useAuth();
+  const [busy, setBusy] = useState(false);
 
   function handleReset() {
     Alert.alert(
@@ -33,6 +38,79 @@ export function MoreScreen() {
     );
   }
 
+  function handleLogout() {
+    Alert.alert(
+      t("auth.signOut.title"),
+      t("auth.signOut.message"),
+      [
+        { text: t("common.cancel"), style: "cancel" },
+        {
+          text: t("auth.signOut.confirm"),
+          style: "destructive",
+          onPress: async () => {
+            if (busy) return;
+            setBusy(true);
+            try {
+              await signOut();
+              // AuthProvider will flip status → signed-out and swap navigators.
+            } catch {
+              Alert.alert(t("auth.signOut.failed"));
+              setBusy(false);
+            }
+          }
+        }
+      ]
+    );
+  }
+
+  function handleDeleteAccount() {
+    Alert.alert(
+      t("auth.delete.title"),
+      t("auth.delete.message"),
+      [
+        { text: t("common.cancel"), style: "cancel" },
+        {
+          text: t("auth.delete.confirm"),
+          style: "destructive",
+          onPress: () => confirmDeleteAccount()
+        }
+      ]
+    );
+  }
+
+  async function confirmDeleteAccount() {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await deleteAccount();
+      // Firebase user is gone. Reset local DB then reload; AuthProvider will
+      // resolve to signed-out on next boot.
+      await resetAppData();
+    } catch (err) {
+      setBusy(false);
+      if (err instanceof AuthError && err.code === "requires-recent-login") {
+        // The user's session is too old. Sign them out so they re-auth via
+        // OTP, then they can retry deletion from the fresh session.
+        Alert.alert(
+          t("auth.delete.title"),
+          t("auth.delete.requiresRecentLogin"),
+          [
+            {
+              text: t("auth.signOut.confirm"),
+              style: "destructive",
+              onPress: () => {
+                void signOut();
+              }
+            },
+            { text: t("common.cancel"), style: "cancel" }
+          ]
+        );
+        return;
+      }
+      Alert.alert(t("auth.delete.failed"));
+    }
+  }
+
   return (
     <View style={styles.root}>
       <AppBar title={t("more.title")} />
@@ -45,6 +123,23 @@ export function MoreScreen() {
           label={t("more.staffAdvances")}
           sub={t("more.staffAdvancesSub")}
           onPress={() => navigation.navigate("AdvancesList")}
+        />
+
+        <Text style={styles.sectionLabel}>{t("more.account")}</Text>
+
+        <Tile
+          icon="log-out-outline"
+          label={t("more.logOut")}
+          sub={t("more.logOutSub")}
+          onPress={handleLogout}
+        />
+
+        <Tile
+          icon="trash-outline"
+          label={t("more.deleteAccount")}
+          sub={t("more.deleteAccountSub")}
+          onPress={handleDeleteAccount}
+          destructive
         />
 
         {__DEV__ ? (
@@ -70,13 +165,20 @@ function Tile({
   icon,
   label,
   onPress,
-  sub
+  sub,
+  destructive = false
 }: {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
   sub?: string;
   onPress: () => void;
+  destructive?: boolean;
 }) {
+  const iconColor = destructive ? colors.status.danger : colors.brand.primary;
+  const iconBg = destructive
+    ? colors.status.dangerBg
+    : colors.brand.accentLight;
+  const labelColor = destructive ? colors.status.danger : colors.text.primary;
   return (
     <Pressable
       onPress={onPress}
@@ -84,11 +186,11 @@ function Tile({
       accessibilityRole="button"
       accessibilityLabel={label}
     >
-      <View style={styles.tileIcon}>
-        <Ionicons name={icon} size={20} color={colors.brand.primary} />
+      <View style={[styles.tileIcon, { backgroundColor: iconBg }]}>
+        <Ionicons name={icon} size={20} color={iconColor} />
       </View>
       <View style={styles.tileText}>
-        <Text style={styles.tileLabel}>{label}</Text>
+        <Text style={[styles.tileLabel, { color: labelColor }]}>{label}</Text>
         {sub ? <Text style={styles.tileSub}>{sub}</Text> : null}
       </View>
       <Ionicons
@@ -109,6 +211,11 @@ const styles = StyleSheet.create({
     padding: spacing[4],
     gap: spacing[3]
   },
+  sectionLabel: {
+    ...typography.overline,
+    color: colors.text.muted,
+    marginTop: spacing[4]
+  },
   tile: {
     alignItems: "center",
     backgroundColor: colors.surface.default,
@@ -124,7 +231,6 @@ const styles = StyleSheet.create({
   },
   tileIcon: {
     alignItems: "center",
-    backgroundColor: colors.brand.accentLight,
     borderRadius: radius.full,
     height: 36,
     justifyContent: "center",
