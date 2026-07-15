@@ -1,8 +1,9 @@
-import { database } from "@/database/sqlite-client";
+import { database, runInTransaction } from "@/database/sqlite-client";
 import type { SharedColumns } from "@/database/schema/shared-columns";
+import { markDirty } from "@/database/db-meta";
 import { newId } from "@/domain/id";
 import { getUtcTimestamp } from "@/domain/dates";
-import { DEV_DEVICE_ID } from "@/constants/dev";
+import { trackChange } from "@/sync/change-tracker";
 
 export type CustomerRecord = SharedColumns & {
   salon_id: string;
@@ -114,24 +115,40 @@ export class CustomerRepository {
 
     if (existing) {
       if (existing.name !== name) {
-        database.runSync(
-          `UPDATE customers
-           SET name = ?, updated_at = ?, sync_status = 'pending'
-           WHERE id = ?`,
-          [name, now, existing.id]
-        );
+        runInTransaction(() => {
+          database.runSync(
+            `UPDATE customers
+             SET name = ?, updated_at = ?
+             WHERE id = ?`,
+            [name, now, existing.id]
+          );
+          trackChange({
+            entityType: "customers",
+            entityId: existing.id,
+            salonId: data.salonId
+          });
+          markDirty();
+        });
       }
       return existing.id;
     }
 
     const id = newId();
-    database.runSync(
-      `INSERT INTO customers
-       (id, salon_id, phone, name,
-        created_at, updated_at, deleted_at, sync_status, device_id)
-       VALUES (?, ?, ?, ?, ?, ?, NULL, 'pending', ?)`,
-      [id, data.salonId, phone, name, now, now, DEV_DEVICE_ID]
-    );
+    runInTransaction(() => {
+      database.runSync(
+        `INSERT INTO customers
+         (id, salon_id, phone, name,
+          created_at, updated_at, deleted_at)
+         VALUES (?, ?, ?, ?, ?, ?, NULL)`,
+        [id, data.salonId, phone, name, now, now]
+      );
+      trackChange({
+        entityType: "customers",
+        entityId: id,
+        salonId: data.salonId
+      });
+      markDirty();
+    });
     return id;
   }
 
@@ -185,13 +202,21 @@ export class CustomerRepository {
 
     const id = newId();
     const now = getUtcTimestamp();
-    database.runSync(
-      `INSERT INTO customers
-       (id, salon_id, phone, name,
-        created_at, updated_at, deleted_at, sync_status, device_id)
-       VALUES (?, ?, ?, ?, ?, ?, NULL, 'pending', ?)`,
-      [id, data.salonId, phone, name, now, now, DEV_DEVICE_ID]
-    );
+    runInTransaction(() => {
+      database.runSync(
+        `INSERT INTO customers
+         (id, salon_id, phone, name,
+          created_at, updated_at, deleted_at)
+         VALUES (?, ?, ?, ?, ?, ?, NULL)`,
+        [id, data.salonId, phone, name, now, now]
+      );
+      trackChange({
+        entityType: "customers",
+        entityId: id,
+        salonId: data.salonId
+      });
+      markDirty();
+    });
     return id;
   }
 
@@ -215,23 +240,31 @@ export class CustomerRepository {
     }
 
     const now = getUtcTimestamp();
-    database.runSync(
-      `UPDATE customers
-       SET name = ?, phone = ?, updated_at = ?, sync_status = 'pending', device_id = ?
-       WHERE id = ? AND salon_id = ? AND deleted_at IS NULL`,
-      [name, phone, now, DEV_DEVICE_ID, id, salonId]
-    );
+    runInTransaction(() => {
+      database.runSync(
+        `UPDATE customers
+         SET name = ?, phone = ?, updated_at = ?
+         WHERE id = ? AND salon_id = ? AND deleted_at IS NULL`,
+        [name, phone, now, id, salonId]
+      );
+      trackChange({ entityType: "customers", entityId: id, salonId });
+      markDirty();
+    });
   }
 
-  /** Soft-delete: sets deleted_at + updated_at + sync_status='pending'. */
+  /** Soft-delete: sets deleted_at + updated_at. */
   softDelete(salonId: string, id: string): void {
     const now = getUtcTimestamp();
-    database.runSync(
-      `UPDATE customers
-       SET deleted_at = ?, updated_at = ?, sync_status = 'pending', device_id = ?
-       WHERE id = ? AND salon_id = ? AND deleted_at IS NULL`,
-      [now, now, DEV_DEVICE_ID, id, salonId]
-    );
+    runInTransaction(() => {
+      database.runSync(
+        `UPDATE customers
+         SET deleted_at = ?, updated_at = ?
+         WHERE id = ? AND salon_id = ? AND deleted_at IS NULL`,
+        [now, now, id, salonId]
+      );
+      trackChange({ entityType: "customers", entityId: id, salonId });
+      markDirty();
+    });
   }
 }
 

@@ -1,0 +1,100 @@
+rules_version = '2';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Salon Khata — Firestore Security Rules
+//
+// Multi-writer ready: a salon has one `owner_uid` and zero-or-more
+// `member_uids`. Both owner and members can read/write records under
+// `/salons/{sid}/entities/**`. Only the owner can mutate the top-level
+// salon doc itself (which is where owner_uid + member_uids live).
+//
+// App Check is enforced globally — `request.app` must be non-null.
+// Requires the client to have `initializeAppCheck()` succeed (see
+// `src/firebase/app-check.ts`).
+//
+// Deploy:
+//   firebase deploy --only firestore:rules
+// ─────────────────────────────────────────────────────────────────────────────
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── helper functions ───────────────────────────────────────────────────
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function hasAppCheck() {
+      // Guarantees the request came from an attested app instance. See
+      // src/firebase/app-check.ts on the client side.
+      return request.app != null;
+    }
+
+    function authed() {
+      return isSignedIn() && hasAppCheck();
+    }
+
+    /**
+     * True when the current caller is a member of salon `sid`. Reads the
+     * top-level `/salons/{sid}` doc and checks either owner_uid or
+     * membership in the member_uids array. Backwards-compatible with
+     * older docs that only have owner_uid (no member_uids field yet).
+     */
+    function salonMember(sid) {
+      let salon = get(/databases/$(database)/documents/salons/$(sid)).data;
+      return salon.owner_uid == request.auth.uid ||
+             (salon.member_uids is list &&
+              request.auth.uid in salon.member_uids);
+    }
+
+    // ── salon doc: owner-controlled metadata + membership ─────────────────
+
+    match /salons/{sid} {
+      // Any authorized member may read the salon doc (needed to render
+      // "backed up from Riya's iPhone" and to check own membership).
+      allow read: if authed() && (
+        resource.data.owner_uid == request.auth.uid ||
+        (resource.data.member_uids is list &&
+         request.auth.uid in resource.data.member_uids)
+      );
+
+      // Anyone signed in may create their own salon doc — the payload
+      // must claim their uid as owner_uid.
+      allow create: if authed() &&
+        request.resource.data.owner_uid == request.auth.uid;
+
+      // Only the current owner may update the salon doc, and the update
+      // may not change the owner_uid (ownership transfer is out of scope
+      // for MVP).
+      allow update: if authed() &&
+        resource.data.owner_uid == request.auth.uid &&
+        request.resource.data.owner_uid == resource.data.owner_uid;
+
+      // Never delete salon docs — a salon leaving means archiving rows,
+      // not vaporizing them. Admin console can override in emergencies.
+      allow delete: if false;
+
+      // ── per-record sync docs ────────────────────────────────────────────
+      match /entities/{entityType}/records/{docId} {
+        allow read, write: if authed() && salonMember(sid);
+      }
+
+      // ── file-backup snapshots (kept for DR after Phase 7) ───────────────
+      match /backups/{versionId} {
+        allow read, write: if authed() && salonMember(sid);
+      }
+
+      // ── active-device lock (single-writer coordination for file backup) ─
+      match /device/{lockDoc} {
+        allow read, write: if authed() && salonMember(sid);
+      }
+    }
+
+    // Everything else is denied. Explicit terminal rule so no future
+    // top-level collection accidentally becomes readable.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

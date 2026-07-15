@@ -25,7 +25,7 @@ import { AppBar } from "@/components/core/AppBar";
 import { Button } from "@/components/core/Button";
 import { useSnackbar } from "@/components/core/SnackbarProvider";
 import { colors, radius, spacing, typography } from "@/design-system/tokens";
-import { DEV_DEVICE_ID, DEV_SALON_ID } from "@/constants/dev";
+import { DEV_SALON_ID } from "@/constants/dev";
 import { formatMoney } from "@/domain/money";
 import { newId } from "@/domain/id";
 import { getUtcTimestamp } from "@/domain/dates";
@@ -722,9 +722,7 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
           customer_phone_snapshot: customerPhoneSnapshot,
           created_at: createdAt,
           updated_at: now,
-          deleted_at: null,
-          sync_status: "pending",
-          device_id: DEV_DEVICE_ID
+          deleted_at: null
         },
         items: items.map((item) => {
           const lineEmployee = employees.find((e) => e.id === item.employeeId);
@@ -746,9 +744,7 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
             product_cost_snapshot: item.unitProductCost,
             created_at: now,
             updated_at: now,
-            deleted_at: null,
-            sync_status: "pending",
-            device_id: DEV_DEVICE_ID
+            deleted_at: null
           };
         })
       };

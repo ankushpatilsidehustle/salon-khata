@@ -4,7 +4,7 @@ Salon Khata uses SQLite as the local source of truth. All normal operations read
 
 ## Shared Columns
 
-Every mutable table must include:
+Every mutable business table must include:
 
 | Column | Type | Notes |
 | --- | --- | --- |
@@ -12,8 +12,17 @@ Every mutable table must include:
 | `created_at` | TEXT | ISO 8601 UTC timestamp |
 | `updated_at` | TEXT | ISO 8601 UTC timestamp |
 | `deleted_at` | TEXT NULL | Soft delete timestamp |
-| `sync_status` | TEXT | `pending`, `synced`, `failed`, `conflict` |
-| `device_id` | TEXT | Stable app installation ID |
+| `sync_status` | TEXT | `pending`, `syncing`, `synced`, `failed`, `conflict` (added by migration 016) |
+| `sync_version` | INTEGER | Server-assigned monotonic revision, `0` = never pushed (migration 016) |
+| `last_synced_at` | TEXT NULL | ISO UTC of last successful cloud ack (migration 016) |
+| `updated_by` | TEXT NULL | `install_id` of the device that authored the current row (migration 016) |
+| `created_by` | TEXT NULL | `install_id` of the device that first created the row (migration 016) |
+
+See [sync-engine.md](sync-engine.md) for the semantics of the sync columns.
+
+> **Historical note**: earlier iterations carried a `device_id` column on
+> every table. It was dropped in migration 014 and superseded by
+> `updated_by` / `created_by` in migration 016.
 
 ## Tables
 
@@ -182,38 +191,40 @@ Stores local settings that affect behavior.
 
 ### sync_queue
 
-Durable outbox for local changes.
+Pending-changes ledger consumed by the per-record push loop. The queue
+never stores payloads — the push loop reads the live row at push time,
+so repeated writes to the same `(salon_id, entity_type, entity_id)`
+naturally coalesce via the unique index. See [sync-engine.md](sync-engine.md).
 
 | Column | Type | Notes |
 | --- | --- | --- |
-| `id` | TEXT | UUID |
-| `salon_id` | TEXT | FK to `salons.id` |
-| `entity_type` | TEXT | Table or aggregate name |
-| `entity_id` | TEXT | Changed record ID |
-| `operation` | TEXT | `create`, `update`, `delete` |
-| `payload` | TEXT | JSON snapshot |
-| `status` | TEXT | `queued`, `processing`, `synced`, `failed` |
-| `attempt_count` | INTEGER | Retry count |
+| `id` | TEXT | UUID for the queue row itself |
+| `salon_id` | TEXT | Scope for security-rule shard |
+| `entity_type` | TEXT | Table name (e.g. `services`) |
+| `entity_id` | TEXT | The row's UUID |
+| `operation` | TEXT | `upsert` or `delete` (delete is sticky) |
+| `status` | TEXT | `queued`, `processing`, `failed`, `dead` |
+| `attempt_count` | INTEGER | Retry counter |
 | `last_attempt_at` | TEXT NULL | Retry tracking |
-| `next_attempt_at` | TEXT NULL | Backoff tracking |
-| `error_message` | TEXT NULL | Last failure summary |
-| `created_at` | TEXT | Required |
-| `updated_at` | TEXT | Required |
-| `device_id` | TEXT | Required |
+| `next_attempt_at` | TEXT NULL | Backoff scheduling |
+| `error_code` | TEXT NULL | Last failure code (e.g. `unavailable`) |
+| `error_message` | TEXT NULL | Last failure message |
+| `created_at` | TEXT | Row created |
+| `updated_at` | TEXT | Row last touched |
+
+Indexes:
+
+- UNIQUE `(salon_id, entity_type, entity_id)` — drives natural coalescing.
+- `(salon_id, status, next_attempt_at)` — dequeue hot path.
 
 ### sync_state
 
-Tracks incremental pull state.
+Key/value store for per-entity pull cursors and one-off sync metadata.
 
 | Column | Type | Notes |
 | --- | --- | --- |
-| `id` | TEXT | Usually one row per salon |
-| `salon_id` | TEXT | FK to `salons.id` |
-| `last_pulled_at` | TEXT NULL | Cloud cursor timestamp |
-| `last_successful_push_at` | TEXT NULL | Push checkpoint |
-| `restore_completed_at` | TEXT NULL | Restore checkpoint |
-| `created_at` | TEXT | Required |
-| `updated_at` | TEXT | Required |
+| `key` | TEXT PK | Well-known keys: `cursor:{entityType}`, `last_pull_at:{entityType}`, `last_full_sync_at` |
+| `value` | TEXT NULL | JSON blob for cursor entries (`{seconds, nanoseconds}`) or plain ISO strings |
 
 ### audit_logs
 

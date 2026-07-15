@@ -1,8 +1,9 @@
-import { database } from "@/database/sqlite-client";
+import { database, runInTransaction } from "@/database/sqlite-client";
 import type { SharedColumns } from "@/database/schema/shared-columns";
+import { markDirty } from "@/database/db-meta";
 import { newId } from "@/domain/id";
 import { getUtcTimestamp } from "@/domain/dates";
-import { DEV_DEVICE_ID } from "@/constants/dev";
+import { trackChange } from "@/sync/change-tracker";
 
 /**
  * Legacy `gender` column values retained for schema compatibility.
@@ -99,33 +100,40 @@ export class ServiceRepository {
     // Legacy `price` column is NOT NULL — mirror the more relevant price so
     // any old code path reading it still gets something sensible.
     const legacyPrice = data.malePrice > 0 ? data.malePrice : data.femalePrice;
-    database.runSync(
-      `INSERT INTO services
-       (id, salon_id, category_id, name,
-        price, male_price, female_price, product_cost, gender,
-        is_active, sort_order,
-        created_at, updated_at, deleted_at, sync_status, device_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'unisex', 1, 0, ?, ?, NULL, 'pending', ?)`,
-      [
-        id,
-        data.salonId,
-        data.categoryId,
-        data.name.trim(),
-        legacyPrice,
-        data.malePrice,
-        data.femalePrice,
-        data.productCost ?? 0,
-        now,
-        now,
-        DEV_DEVICE_ID
-      ]
-    );
+    runInTransaction(() => {
+      database.runSync(
+        `INSERT INTO services
+         (id, salon_id, category_id, name,
+          price, male_price, female_price, product_cost, gender,
+          is_active, sort_order,
+          created_at, updated_at, deleted_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'unisex', 1, 0, ?, ?, NULL)`,
+        [
+          id,
+          data.salonId,
+          data.categoryId,
+          data.name.trim(),
+          legacyPrice,
+          data.malePrice,
+          data.femalePrice,
+          data.productCost ?? 0,
+          now,
+          now
+        ]
+      );
+      trackChange({
+        entityType: "services",
+        entityId: id,
+        salonId: data.salonId
+      });
+      markDirty();
+    });
     return this.getById(id, data.salonId)!;
   }
 
   update(id: string, salonId: string, data: UpdateService): void {
     const now = getUtcTimestamp();
-    const fields: string[] = ["updated_at = ?", "sync_status = 'pending'"];
+    const fields: string[] = ["updated_at = ?"];
     const values: (string | number | null)[] = [now];
 
     if (data.categoryId !== undefined) {
@@ -163,20 +171,28 @@ export class ServiceRepository {
     }
 
     values.push(id, salonId);
-    database.runSync(
-      `UPDATE services SET ${fields.join(", ")}
-       WHERE id = ? AND salon_id = ? AND deleted_at IS NULL`,
-      values
-    );
+    runInTransaction(() => {
+      database.runSync(
+        `UPDATE services SET ${fields.join(", ")}
+         WHERE id = ? AND salon_id = ? AND deleted_at IS NULL`,
+        values
+      );
+      trackChange({ entityType: "services", entityId: id, salonId });
+      markDirty();
+    });
   }
 
   softDelete(id: string, salonId: string): void {
     const now = getUtcTimestamp();
-    database.runSync(
-      `UPDATE services
-       SET deleted_at = ?, updated_at = ?, sync_status = 'pending'
-       WHERE id = ? AND salon_id = ?`,
-      [now, now, id, salonId]
-    );
+    runInTransaction(() => {
+      database.runSync(
+        `UPDATE services
+         SET deleted_at = ?, updated_at = ?
+         WHERE id = ? AND salon_id = ?`,
+        [now, now, id, salonId]
+      );
+      trackChange({ entityType: "services", entityId: id, salonId });
+      markDirty();
+    });
   }
 }

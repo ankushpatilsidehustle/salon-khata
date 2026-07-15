@@ -25,7 +25,7 @@ import { AppBar } from "@/components/core/AppBar";
 import { Button } from "@/components/core/Button";
 import { useSnackbar } from "@/components/core/SnackbarProvider";
 import { colors, radius, spacing, typography } from "@/design-system/tokens";
-import { DEV_DEVICE_ID, DEV_SALON_ID } from "@/constants/dev";
+import { DEV_SALON_ID } from "@/constants/dev";
 import { formatMoney } from "@/domain/money";
 import { newId } from "@/domain/id";
 import { getUtcTimestamp } from "@/domain/dates";
@@ -208,9 +208,7 @@ export function ExpenseEntryScreen({ navigation, route }: Props) {
           paymentMode === "credit" ? editingSettledAtRef.current : null,
         created_at: createdAt,
         updated_at: now,
-        deleted_at: null,
-        sync_status: "pending",
-        device_id: DEV_DEVICE_ID
+        deleted_at: null
       };
 
       if (isEditing) {

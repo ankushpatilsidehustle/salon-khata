@@ -15,6 +15,7 @@ import { TopEmployeesScreen } from "@/features/reports/TopEmployeesScreen";
 import { TopServicesScreen } from "@/features/reports/TopServicesScreen";
 import { AdvanceEntryScreen } from "@/features/advances/AdvanceEntryScreen";
 import { AdvancesListScreen } from "@/features/advances/AdvancesListScreen";
+import { SyncStatusScreen } from "@/features/sync/SyncStatusScreen";
 import type { PeriodMode } from "@/domain/period";
 
 // ─── types ───────────────────────────────────────────────────────────────────
@@ -57,6 +58,8 @@ export type RootStackParamList = {
   TopEmployees: ReportRangeParams | undefined;
   /** Full ranked list of services by revenue for the given period. */
   TopServices: ReportRangeParams | undefined;
+  /** Observability + retry/discard UI for the per-record sync engine. */
+  SyncStatus: undefined;
 };
 
 export type RootTabParamList = {
@@ -142,6 +145,10 @@ export function AppNavigator() {
         <RootStack.Screen
           name="TopServices"
           component={TopServicesScreen}
+        />
+        <RootStack.Screen
+          name="SyncStatus"
+          component={SyncStatusScreen}
         />
       </RootStack.Navigator>
     </NavigationContainer>

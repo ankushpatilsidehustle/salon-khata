@@ -1,8 +1,9 @@
-import { database } from "@/database/sqlite-client";
+import { database, runInTransaction } from "@/database/sqlite-client";
 import type { SharedColumns } from "@/database/schema/shared-columns";
+import { markDirty } from "@/database/db-meta";
 import { newId } from "@/domain/id";
 import { getUtcTimestamp } from "@/domain/dates";
-import { DEV_DEVICE_ID } from "@/constants/dev";
+import { trackChange } from "@/sync/change-tracker";
 
 export type CommissionRuleRecord = SharedColumns & {
   salon_id: string;
@@ -75,20 +76,37 @@ export class CommissionRepository {
     const now = getUtcTimestamp();
 
     if (existing) {
-      database.runSync(
-        `UPDATE commission_rules
-         SET rule_type = ?, value = ?, updated_at = ?, sync_status = 'pending'
-         WHERE id = ?`,
-        [ruleType, value, now, existing.id]
-      );
+      runInTransaction(() => {
+        database.runSync(
+          `UPDATE commission_rules
+           SET rule_type = ?, value = ?, updated_at = ?
+           WHERE id = ?`,
+          [ruleType, value, now, existing.id]
+        );
+        trackChange({
+          entityType: "commission_rules",
+          entityId: existing.id,
+          salonId
+        });
+        markDirty();
+      });
     } else {
-      database.runSync(
-        `INSERT INTO commission_rules
-         (id, salon_id, employee_id, service_id, rule_type, value, is_active,
-          created_at, updated_at, deleted_at, sync_status, device_id)
-         VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, NULL, 'pending', ?)`,
-        [newId(), salonId, employeeId, serviceId, ruleType, value, now, now, DEV_DEVICE_ID]
-      );
+      const newRuleId = newId();
+      runInTransaction(() => {
+        database.runSync(
+          `INSERT INTO commission_rules
+           (id, salon_id, employee_id, service_id, rule_type, value, is_active,
+            created_at, updated_at, deleted_at)
+           VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, NULL)`,
+          [newRuleId, salonId, employeeId, serviceId, ruleType, value, now, now]
+        );
+        trackChange({
+          entityType: "commission_rules",
+          entityId: newRuleId,
+          salonId
+        });
+        markDirty();
+      });
     }
   }
 
@@ -97,11 +115,19 @@ export class CommissionRepository {
     const existing = this.findActiveRule(employeeId, serviceId);
     if (!existing) return;
     const now = getUtcTimestamp();
-    database.runSync(
-      `UPDATE commission_rules
-       SET is_active = 0, deleted_at = ?, updated_at = ?, sync_status = 'pending'
-       WHERE id = ?`,
-      [now, now, existing.id]
-    );
+    runInTransaction(() => {
+      database.runSync(
+        `UPDATE commission_rules
+         SET is_active = 0, deleted_at = ?, updated_at = ?
+         WHERE id = ?`,
+        [now, now, existing.id]
+      );
+      trackChange({
+        entityType: "commission_rules",
+        entityId: existing.id,
+        salonId: existing.salon_id
+      });
+      markDirty();
+    });
   }
 }

@@ -22,7 +22,7 @@ import { colors, radius, spacing, typography } from "@/design-system/tokens";
 import { calculateDailySummary } from "@/domain/report-service";
 import { formatMoney } from "@/domain/money";
 import { getUtcTimestamp } from "@/domain/dates";
-import { DEV_DEVICE_ID, DEV_SALON_ID } from "@/constants/dev";
+import { DEV_SALON_ID } from "@/constants/dev";
 import { IncomeRepository } from "@/repositories/income-repository";
 import type { IncomeTransactionSummary } from "@/repositories/income-repository";
 import { ExpenseRepository } from "@/repositories/expense-repository";
@@ -81,8 +81,7 @@ export function DashboardScreen() {
                 expenseRepo.markCreditPaid(
                   DEV_SALON_ID,
                   expense.id,
-                  getUtcTimestamp(),
-                  DEV_DEVICE_ID
+                  getUtcTimestamp()
                 );
                 reloadToday();
               } catch (err) {

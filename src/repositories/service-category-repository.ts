@@ -1,8 +1,9 @@
-import { database } from "@/database/sqlite-client";
+import { database, runInTransaction } from "@/database/sqlite-client";
 import type { SharedColumns } from "@/database/schema/shared-columns";
+import { markDirty } from "@/database/db-meta";
 import { newId } from "@/domain/id";
 import { getUtcTimestamp } from "@/domain/dates";
-import { DEV_DEVICE_ID } from "@/constants/dev";
+import { trackChange } from "@/sync/change-tracker";
 
 export type ServiceCategoryRecord = SharedColumns & {
   salon_id: string;
@@ -69,28 +70,35 @@ export class ServiceCategoryRepository {
     const id = newId();
     const now = getUtcTimestamp();
     const sortOrder = data.sortOrder ?? this.nextSortOrder(data.salonId);
-    database.runSync(
-      `INSERT INTO service_categories
-       (id, salon_id, name, is_active, sort_order, is_system,
-        created_at, updated_at, deleted_at, sync_status, device_id)
-       VALUES (?, ?, ?, 1, ?, ?, ?, ?, NULL, 'pending', ?)`,
-      [
-        id,
-        data.salonId,
-        data.name.trim(),
-        sortOrder,
-        data.isSystem ? 1 : 0,
-        now,
-        now,
-        DEV_DEVICE_ID
-      ]
-    );
+    runInTransaction(() => {
+      database.runSync(
+        `INSERT INTO service_categories
+         (id, salon_id, name, is_active, sort_order, is_system,
+          created_at, updated_at, deleted_at)
+         VALUES (?, ?, ?, 1, ?, ?, ?, ?, NULL)`,
+        [
+          id,
+          data.salonId,
+          data.name.trim(),
+          sortOrder,
+          data.isSystem ? 1 : 0,
+          now,
+          now
+        ]
+      );
+      trackChange({
+        entityType: "service_categories",
+        entityId: id,
+        salonId: data.salonId
+      });
+      markDirty();
+    });
     return this.getById(id, data.salonId)!;
   }
 
   update(id: string, salonId: string, data: UpdateServiceCategory): void {
     const now = getUtcTimestamp();
-    const fields: string[] = ["updated_at = ?", "sync_status = 'pending'"];
+    const fields: string[] = ["updated_at = ?"];
     const values: (string | number | null)[] = [now];
 
     if (data.name !== undefined) {
@@ -102,11 +110,15 @@ export class ServiceCategoryRepository {
       values.push(data.isActive ? 1 : 0);
     }
     values.push(id, salonId);
-    database.runSync(
-      `UPDATE service_categories SET ${fields.join(", ")}
-       WHERE id = ? AND salon_id = ? AND deleted_at IS NULL`,
-      values
-    );
+    runInTransaction(() => {
+      database.runSync(
+        `UPDATE service_categories SET ${fields.join(", ")}
+         WHERE id = ? AND salon_id = ? AND deleted_at IS NULL`,
+        values
+      );
+      trackChange({ entityType: "service_categories", entityId: id, salonId });
+      markDirty();
+    });
   }
 
   /**

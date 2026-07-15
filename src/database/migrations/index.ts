@@ -11,6 +11,11 @@ import { runMigration010 } from "./010-service-product-cost";
 import { runMigration011 } from "./011-customers";
 import { runMigration012 } from "./012-employee-advances";
 import { runMigration013 } from "./013-salon-owner-uid";
+import { runMigration014 } from "./014-drop-row-sync-add-db-meta";
+import { runMigration015 } from "./015-backup-history";
+import { runMigration016 } from "./016-sync-columns";
+import { runMigration017 } from "./017-sync-queue";
+import { runMigration018 } from "./018-sync-history";
 
 /** Run every migration in order. Safe to call on every app start. */
 export function runAllMigrations(): void {
@@ -27,4 +32,9 @@ export function runAllMigrations(): void {
   runMigration011();
   runMigration012();
   runMigration013();
+  runMigration014();
+  runMigration015();
+  runMigration016();
+  runMigration017();
+  runMigration018();
 }

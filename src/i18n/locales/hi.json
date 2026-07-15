@@ -519,11 +519,71 @@
     "title": "More",
     "staffAdvances": "Staff advances",
     "staffAdvancesSub": "Log cash given to employees between paydays",
+    "syncNow": "Sync now",
+    "syncNowSub": "Push local changes and pull the latest from cloud",
+    "syncStatus": "Sync status",
+    "syncStatusSub": "Queue depth, recent activity, failed records",
+    "exportSnapshot": "Export snapshot",
+    "exportSnapshotSub": "Emergency backup of the entire local database",
     "account": "Account",
     "logOut": "Log out",
     "logOutSub": "Sign out on this device",
     "deleteAccount": "Delete account",
     "deleteAccountSub": "Permanently remove your account and data"
+  },
+  "backup": {
+    "export": {
+      "title": "Export snapshot?",
+      "message": "Uploads a full backup of your local database as a safety net. Regular sync already keeps your records up to date — use this only for extra insurance.",
+      "confirm": "Export",
+      "busy": "A backup is already in progress",
+      "success": "Snapshot uploaded ({{size}})",
+      "skipped": "Backup skipped ({{reason}})",
+      "cancelled": "Backup cancelled",
+      "failed": "Backup failed: {{message}}"
+    }
+  },
+  "syncStatus": {
+    "title": "Sync status",
+    "lastSynced": "Last synced",
+    "never": "Never",
+    "pending_one": "{{count}} waiting",
+    "pending_other": "{{count}} waiting",
+    "syncing_one": "{{count}} in progress",
+    "syncing_other": "{{count}} in progress",
+    "failed_one": "{{count}} failed",
+    "failed_other": "{{count}} failed",
+    "deadLetters_one": "Failed records ({{count}})",
+    "deadLetters_other": "Failed records ({{count}})",
+    "recentConflicts": "Recent conflicts",
+    "recentActivity": "Recent activity",
+    "noActivity": "Nothing has synced yet",
+    "retry": "Retry",
+    "discard": "Discard",
+    "discardTitle": "Stop syncing this record?",
+    "discardMessage": "The record will stay on this device but won't sync until you edit it again.",
+    "discardConfirm": "Discard",
+    "localWon": "Local kept",
+    "remoteWon": "Cloud applied",
+    "time": {
+      "justNow": "just now",
+      "minutesAgo_one": "{{count}} min ago",
+      "minutesAgo_other": "{{count}} mins ago",
+      "hoursAgo_one": "{{count}} hour ago",
+      "hoursAgo_other": "{{count}} hours ago",
+      "daysAgo_one": "{{count}} day ago",
+      "daysAgo_other": "{{count}} days ago"
+    },
+    "trigger": {
+      "manual": "Sync now",
+      "app-background": "App backgrounded",
+      "app-foreground": "App opened",
+      "post-write-debounce": "After write",
+      "periodic": "Periodic",
+      "network-reconnect": "Reconnected",
+      "background-task": "Background",
+      "drain": "Drain"
+    }
   },
   "sync": {
     "line": {
@@ -534,6 +594,13 @@
     },
     "badge": {
       "notSynced": "Not synced"
+    },
+    "result": {
+      "offline": "Offline — will retry when you're back online",
+      "noWork": "Already up to date",
+      "done": "Synced {{pushed}} up, {{applied}} down",
+      "doneWithConflicts": "Synced with {{conflicts}} conflict(s) resolved",
+      "failed": "Sync failed. We'll retry automatically"
     }
   },
   "errors": {

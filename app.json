@@ -24,9 +24,13 @@
       [
         "expo-build-properties",
         {
-          "ios": { "useFrameworks": "static" }
+          "ios": {
+            "useFrameworks": "static"
+          }
         }
-      ]
+      ],
+      "expo-secure-store",
+      "expo-background-task"
     ]
   }
 }

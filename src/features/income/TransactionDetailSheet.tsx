@@ -7,7 +7,7 @@ import { BottomSheet } from "@/components/core/BottomSheet";
 import { Button } from "@/components/core/Button";
 import { ReceiptCard } from "@/components/domain/ReceiptCard";
 import { colors, radius, spacing, typography } from "@/design-system/tokens";
-import { DEV_DEVICE_ID, DEV_SALON_ID } from "@/constants/dev";
+import { DEV_SALON_ID } from "@/constants/dev";
 import { formatMoney } from "@/domain/money";
 import { getUtcTimestamp } from "@/domain/dates";
 import { IncomeRepository } from "@/repositories/income-repository";
@@ -84,8 +84,7 @@ export function TransactionDetailSheet({
               incomeRepo.softDelete(
                 DEV_SALON_ID,
                 loaded.transaction.id,
-                getUtcTimestamp(),
-                DEV_DEVICE_ID
+                getUtcTimestamp()
               );
               onDeleted();
               onClose();

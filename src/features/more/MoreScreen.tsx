@@ -7,10 +7,13 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { AppBar } from "@/components/core/AppBar";
 import { Button } from "@/components/core/Button";
+import { useSnackbar } from "@/components/core/SnackbarProvider";
 import { colors, radius, spacing, typography } from "@/design-system/tokens";
 import { resetAppData } from "@/database/reset";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { AuthError } from "@/firebase/auth";
+import { backupScheduler } from "@/backup/backup-scheduler";
+import { syncScheduler } from "@/sync/sync-scheduler";
 import type { RootStackParamList } from "@/application/AppNavigator";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -19,7 +22,99 @@ export function MoreScreen() {
   const { t } = useTranslation();
   const navigation = useNavigation<Nav>();
   const { signOut, deleteAccount } = useAuth();
+  const { showSnackbar } = useSnackbar();
   const [busy, setBusy] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+
+  async function handleSyncNow() {
+    if (syncing) return;
+    setSyncing(true);
+    try {
+      const outcome = await syncScheduler.runNow();
+      if (outcome.result === "skipped") {
+        showSnackbar(
+          outcome.reason === "offline"
+            ? t("sync.result.offline")
+            : t("sync.result.noWork")
+        );
+        return;
+      }
+      const { push, pull } = outcome;
+      const conflicts = push.conflicts + (pull?.conflicts ?? 0);
+      const errored = push.errors > 0 || (pull?.errors ?? 0) > 0;
+      if (errored && push.pushed === 0 && (pull?.applied ?? 0) === 0) {
+        showSnackbar({
+          message: t("sync.result.failed"),
+          variant: "error"
+        });
+        return;
+      }
+      if (push.pushed === 0 && (pull?.applied ?? 0) === 0 && conflicts === 0) {
+        showSnackbar(t("sync.result.noWork"));
+        return;
+      }
+      showSnackbar(
+        conflicts > 0
+          ? t("sync.result.doneWithConflicts", { conflicts })
+          : t("sync.result.done", {
+              pushed: push.pushed,
+              applied: pull?.applied ?? 0
+            })
+      );
+    } finally {
+      setSyncing(false);
+    }
+  }
+
+  async function handleExportSnapshot() {
+    if (busy || syncing) return;
+    Alert.alert(
+      t("backup.export.title"),
+      t("backup.export.message"),
+      [
+        { style: "cancel", text: t("common.cancel") },
+        {
+          onPress: () => void runExportSnapshot(),
+          text: t("backup.export.confirm")
+        }
+      ]
+    );
+  }
+
+  async function runExportSnapshot() {
+    setBusy(true);
+    try {
+      const outcome = await backupScheduler.runNow();
+      if (outcome === null) {
+        showSnackbar(t("backup.export.busy"));
+        return;
+      }
+      if (outcome.result === "success") {
+        showSnackbar(
+          t("backup.export.success", {
+            size: formatBytes(outcome.ciphertextSizeBytes)
+          })
+        );
+      } else if (outcome.result === "skipped") {
+        showSnackbar(
+          outcome.reason === "offline"
+            ? t("sync.result.offline")
+            : t("backup.export.skipped", { reason: outcome.reason })
+        );
+      } else if (outcome.result === "cancelled") {
+        showSnackbar(t("backup.export.cancelled"));
+      } else {
+        showSnackbar({
+          message: t("backup.export.failed", {
+            message: outcome.message
+          }),
+          variant: "error"
+        });
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
 
   function handleReset() {
     Alert.alert(
@@ -125,6 +220,27 @@ export function MoreScreen() {
           onPress={() => navigation.navigate("AdvancesList")}
         />
 
+        <Tile
+          icon="sync-outline"
+          label={t("more.syncNow")}
+          sub={t("more.syncNowSub")}
+          onPress={handleSyncNow}
+        />
+
+        <Tile
+          icon="pulse-outline"
+          label={t("more.syncStatus")}
+          sub={t("more.syncStatusSub")}
+          onPress={() => navigation.navigate("SyncStatus")}
+        />
+
+        <Tile
+          icon="cloud-upload-outline"
+          label={t("more.exportSnapshot")}
+          sub={t("more.exportSnapshotSub")}
+          onPress={handleExportSnapshot}
+        />
+
         <Text style={styles.sectionLabel}>{t("more.account")}</Text>
 
         <Tile
@@ -157,6 +273,17 @@ export function MoreScreen() {
       </ScrollView>
     </View>
   );
+}
+
+// ─── helpers ─────────────────────────────────────────────────────────────────
+
+/** Human-readable byte count for the export-snapshot success toast. */
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  const kb = bytes / 1024;
+  if (kb < 1024) return `${kb.toFixed(1)} KB`;
+  const mb = kb / 1024;
+  return `${mb.toFixed(1)} MB`;
 }
 
 // ─── Tile ────────────────────────────────────────────────────────────────────

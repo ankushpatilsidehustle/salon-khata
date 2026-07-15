@@ -1,8 +1,9 @@
-import { database } from "@/database/sqlite-client";
+import { database, runInTransaction } from "@/database/sqlite-client";
 import type { SharedColumns } from "@/database/schema/shared-columns";
+import { markDirty } from "@/database/db-meta";
 import { newId } from "@/domain/id";
 import { getUtcTimestamp } from "@/domain/dates";
-import { DEV_DEVICE_ID } from "@/constants/dev";
+import { trackChange } from "@/sync/change-tracker";
 
 export type ExpenseCategoryRecord = SharedColumns & {
   salon_id: string;
@@ -44,13 +45,21 @@ export class ExpenseCategoryRepository {
   insert(salonId: string, name: string, isSystem = false): ExpenseCategoryRecord {
     const id = newId();
     const now = getUtcTimestamp();
-    database.runSync(
-      `INSERT INTO expense_categories
-       (id, salon_id, name, is_system, is_active,
-        created_at, updated_at, deleted_at, sync_status, device_id)
-       VALUES (?, ?, ?, ?, 1, ?, ?, NULL, 'pending', ?)`,
-      [id, salonId, name.trim(), isSystem ? 1 : 0, now, now, DEV_DEVICE_ID]
-    );
+    runInTransaction(() => {
+      database.runSync(
+        `INSERT INTO expense_categories
+         (id, salon_id, name, is_system, is_active,
+          created_at, updated_at, deleted_at)
+         VALUES (?, ?, ?, ?, 1, ?, ?, NULL)`,
+        [id, salonId, name.trim(), isSystem ? 1 : 0, now, now]
+      );
+      trackChange({
+        entityType: "expense_categories",
+        entityId: id,
+        salonId
+      });
+      markDirty();
+    });
     return this.getById(id, salonId)!;
   }
 

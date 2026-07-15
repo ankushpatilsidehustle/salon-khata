@@ -1,0 +1,13 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "records",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "_sync.tombstone", "order": "ASCENDING" },
+        { "fieldPath": "_sync.serverUpdatedAt", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

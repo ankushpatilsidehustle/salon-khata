@@ -15,6 +15,10 @@ import { OnboardingNavigator } from "@/features/onboarding/OnboardingNavigator";
 import { AuthNavigator } from "@/features/auth/AuthNavigator";
 import { AuthProvider, useAuth } from "@/features/auth/AuthProvider";
 import { initializeAppCheck } from "@/firebase/app-check";
+import { loadDeviceIdentity } from "@/device/device-identity";
+import { startNetworkManager } from "@/network/network-manager";
+import { loadBackupPreferences } from "@/backup/backup-preferences";
+import { registerBackgroundSyncTask } from "@/sync/background-sync-task";
 
 const settingsRepo = new SettingsRepository();
 
@@ -28,9 +32,23 @@ export function AppRoot() {
     (async () => {
       try {
         runAllMigrations();
+        // Resolve the persistent install_id before anything else — the key
+        // vault and backup engine depend on it. Cheap on subsequent launches
+        // (a single Secure Store read).
+        await loadDeviceIdentity();
+        // Begin observing connectivity so the BackupScheduler (Phase 3) has
+        // a warm cache the moment it starts.
+        startNetworkManager();
+        // Hydrate backup preferences so both the foreground scheduler and
+        // the background-task worker see the user's wifi-only / enabled
+        // flags without a redundant AsyncStorage round-trip.
+        await loadBackupPreferences();
         // Kick off App Check before any auth request goes out. Errors are
         // swallowed inside initializeAppCheck (soft-fail).
         await initializeAppCheck();
+        // Register the OS-level per-record sync background worker. The
+        // Phase-7 file-backup engine is manual-only — no OS task registered.
+        void registerBackgroundSyncTask();
         if (!cancelled) setIsReady(true);
       } catch (error) {
         if (!cancelled) {

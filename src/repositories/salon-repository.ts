@@ -1,7 +1,8 @@
-import { database } from "@/database/sqlite-client";
+import { database, runInTransaction } from "@/database/sqlite-client";
 import type { SharedColumns } from "@/database/schema/shared-columns";
+import { markDirty } from "@/database/db-meta";
 import { getUtcTimestamp } from "@/domain/dates";
-import { DEV_DEVICE_ID } from "@/constants/dev";
+import { trackChange } from "@/sync/change-tracker";
 
 export type SalonType = "male" | "female" | "unisex";
 
@@ -59,35 +60,43 @@ export class SalonRepository {
 
   create(data: NewSalon): SalonRecord {
     const now = getUtcTimestamp();
-    database.runSync(
-      `INSERT INTO salons
-       (id, business_name, owner_name, mobile_number, currency, language,
-        salon_type, owner_uid, created_at, updated_at, deleted_at, sync_status, device_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 'pending', ?)`,
-      [
-        data.id,
-        data.businessName.trim(),
-        (data.ownerName ?? "").trim(),
-        (data.mobileNumber ?? "").trim(),
-        data.currency ?? "INR",
-        data.language,
-        data.salonType,
-        data.ownerUid ?? null,
-        now,
-        now,
-        DEV_DEVICE_ID
-      ]
-    );
+    runInTransaction(() => {
+      database.runSync(
+        `INSERT INTO salons
+         (id, business_name, owner_name, mobile_number, currency, language,
+          salon_type, owner_uid, created_at, updated_at, deleted_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
+        [
+          data.id,
+          data.businessName.trim(),
+          (data.ownerName ?? "").trim(),
+          (data.mobileNumber ?? "").trim(),
+          data.currency ?? "INR",
+          data.language,
+          data.salonType,
+          data.ownerUid ?? null,
+          now,
+          now
+        ]
+      );
+      // salons.id doubles as its own salon_id — the row is its own scope.
+      trackChange({ entityType: "salons", entityId: data.id, salonId: data.id });
+      markDirty();
+    });
     return this.getById(data.id)!;
   }
 
   updateSalonType(id: string, salonType: SalonType): void {
     const now = getUtcTimestamp();
-    database.runSync(
-      `UPDATE salons
-       SET salon_type = ?, updated_at = ?, sync_status = 'pending'
-       WHERE id = ? AND deleted_at IS NULL`,
-      [salonType, now, id]
-    );
+    runInTransaction(() => {
+      database.runSync(
+        `UPDATE salons
+         SET salon_type = ?, updated_at = ?
+         WHERE id = ? AND deleted_at IS NULL`,
+        [salonType, now, id]
+      );
+      trackChange({ entityType: "salons", entityId: id, salonId: id });
+      markDirty();
+    });
   }
 }

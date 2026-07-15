@@ -6,7 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { BottomSheet } from "@/components/core/BottomSheet";
 import { Button } from "@/components/core/Button";
 import { colors, radius, spacing, typography } from "@/design-system/tokens";
-import { DEV_DEVICE_ID, DEV_SALON_ID } from "@/constants/dev";
+import { DEV_SALON_ID } from "@/constants/dev";
 import { formatMoney } from "@/domain/money";
 import { getUtcTimestamp } from "@/domain/dates";
 import { ExpenseRepository } from "@/repositories/expense-repository";
@@ -69,8 +69,7 @@ export function ExpenseDetailSheet({
               expenseRepo.softDelete(
                 DEV_SALON_ID,
                 loaded.id,
-                getUtcTimestamp(),
-                DEV_DEVICE_ID
+                getUtcTimestamp()
               );
               onDeleted();
               onClose();

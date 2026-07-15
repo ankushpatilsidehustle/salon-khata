@@ -1,5 +1,7 @@
-import { database } from "@/database/sqlite-client";
+import { database, runInTransaction } from "@/database/sqlite-client";
 import type { SharedColumns } from "@/database/schema/shared-columns";
+import { markDirty } from "@/database/db-meta";
+import { trackChange } from "@/sync/change-tracker";
 
 export type EmployeeAdvanceRecord = SharedColumns & {
   salon_id: string;
@@ -26,8 +28,6 @@ export type EmployeeAdvanceDraft = {
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
-  sync_status: string;
-  device_id: string;
 };
 
 export type EmployeeOutstanding = {
@@ -101,83 +101,93 @@ export class EmployeeAdvanceRepository {
   }
 
   insert(draft: EmployeeAdvanceDraft): void {
-    database.runSync(
-      `INSERT INTO employee_advances (
-        id, salon_id, employee_id, employee_name_snapshot,
-        amount, advance_date, remarks, settled_at,
-        created_at, updated_at, deleted_at, sync_status, device_id
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        draft.id,
-        draft.salon_id,
-        draft.employee_id,
-        draft.employee_name_snapshot,
-        draft.amount,
-        draft.advance_date,
-        draft.remarks,
-        draft.settled_at,
-        draft.created_at,
-        draft.updated_at,
-        draft.deleted_at,
-        draft.sync_status,
-        draft.device_id
-      ]
-    );
+    runInTransaction(() => {
+      database.runSync(
+        `INSERT INTO employee_advances (
+          id, salon_id, employee_id, employee_name_snapshot,
+          amount, advance_date, remarks, settled_at,
+          created_at, updated_at, deleted_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          draft.id,
+          draft.salon_id,
+          draft.employee_id,
+          draft.employee_name_snapshot,
+          draft.amount,
+          draft.advance_date,
+          draft.remarks,
+          draft.settled_at,
+          draft.created_at,
+          draft.updated_at,
+          draft.deleted_at
+        ]
+      );
+      trackChange({
+        entityType: "employee_advances",
+        entityId: draft.id,
+        salonId: draft.salon_id
+      });
+      markDirty();
+    });
   }
 
   update(draft: EmployeeAdvanceDraft): void {
-    database.runSync(
-      `UPDATE employee_advances SET
-         employee_id = ?, employee_name_snapshot = ?,
-         amount = ?, advance_date = ?, remarks = ?, settled_at = ?,
-         updated_at = ?, sync_status = ?, device_id = ?
-       WHERE id = ? AND salon_id = ? AND deleted_at IS NULL`,
-      [
-        draft.employee_id,
-        draft.employee_name_snapshot,
-        draft.amount,
-        draft.advance_date,
-        draft.remarks,
-        draft.settled_at,
-        draft.updated_at,
-        draft.sync_status,
-        draft.device_id,
-        draft.id,
-        draft.salon_id
-      ]
-    );
+    runInTransaction(() => {
+      database.runSync(
+        `UPDATE employee_advances SET
+           employee_id = ?, employee_name_snapshot = ?,
+           amount = ?, advance_date = ?, remarks = ?, settled_at = ?,
+           updated_at = ?
+         WHERE id = ? AND salon_id = ? AND deleted_at IS NULL`,
+        [
+          draft.employee_id,
+          draft.employee_name_snapshot,
+          draft.amount,
+          draft.advance_date,
+          draft.remarks,
+          draft.settled_at,
+          draft.updated_at,
+          draft.id,
+          draft.salon_id
+        ]
+      );
+      trackChange({
+        entityType: "employee_advances",
+        entityId: draft.id,
+        salonId: draft.salon_id
+      });
+      markDirty();
+    });
   }
 
   /**
    * Mark an unsettled advance as reconciled. No-op on already-settled or
    * already-deleted rows so it's safe to call twice.
    */
-  markSettled(
-    salonId: string,
-    id: string,
-    now: string,
-    deviceId: string
-  ): void {
-    database.runSync(
-      `UPDATE employee_advances
-       SET settled_at = ?, updated_at = ?, sync_status = 'pending', device_id = ?
-       WHERE id = ? AND salon_id = ?
-         AND settled_at IS NULL AND deleted_at IS NULL`,
-      [now, now, deviceId, id, salonId]
-    );
+  markSettled(salonId: string, id: string, now: string): void {
+    runInTransaction(() => {
+      database.runSync(
+        `UPDATE employee_advances
+         SET settled_at = ?, updated_at = ?
+         WHERE id = ? AND salon_id = ?
+           AND settled_at IS NULL AND deleted_at IS NULL`,
+        [now, now, id, salonId]
+      );
+      trackChange({ entityType: "employee_advances", entityId: id, salonId });
+      markDirty();
+    });
   }
 
-  softDelete(
-    salonId: string,
-    id: string,
-    now: string,
-    deviceId: string
-  ): void {
-    database.runSync(
-      `UPDATE employee_advances
-       SET deleted_at = ?, updated_at = ?, sync_status = 'pending', device_id = ?
-       WHERE id = ? AND salon_id = ? AND deleted_at IS NULL`,
-      [now, now, deviceId, id, salonId]
-    );
+  softDelete(salonId: string, id: string, now: string): void {
+    runInTransaction(() => {
+      database.runSync(
+        `UPDATE employee_advances
+         SET deleted_at = ?, updated_at = ?
+         WHERE id = ? AND salon_id = ? AND deleted_at IS NULL`,
+        [now, now, id, salonId]
+      );
+      trackChange({ entityType: "employee_advances", entityId: id, salonId });
+      markDirty();
+    });
   }
 }

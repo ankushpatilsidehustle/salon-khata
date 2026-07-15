@@ -1,5 +1,7 @@
 import { database, runInTransaction } from "@/database/sqlite-client";
 import type { SharedColumns } from "@/database/schema/shared-columns";
+import { markDirty } from "@/database/db-meta";
+import { trackChange } from "@/sync/change-tracker";
 
 export type IncomeTransactionDraft = {
   transaction: Record<string, string | number | null>;
@@ -116,8 +118,8 @@ export class IncomeRepository {
           gross_amount, discount_type, discount_value, discount_amount,
           net_amount, commission_amount, remarks,
           customer_id, customer_name_snapshot, customer_phone_snapshot,
-          created_at, updated_at, deleted_at, sync_status, device_id
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          created_at, updated_at, deleted_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           draft.transaction.id,
           draft.transaction.salon_id,
@@ -137,9 +139,7 @@ export class IncomeRepository {
           draft.transaction.customer_phone_snapshot ?? null,
           draft.transaction.created_at,
           draft.transaction.updated_at,
-          draft.transaction.deleted_at,
-          draft.transaction.sync_status,
-          draft.transaction.device_id
+          draft.transaction.deleted_at
         ]
       );
 
@@ -152,8 +152,8 @@ export class IncomeRepository {
             employee_id, employee_name_snapshot,
             product_cost_snapshot,
             created_at, updated_at,
-            deleted_at, sync_status, device_id
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            deleted_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             item.id,
             item.salon_id,
@@ -175,12 +175,18 @@ export class IncomeRepository {
             item.product_cost_snapshot ?? 0,
             item.created_at,
             item.updated_at,
-            item.deleted_at,
-            item.sync_status,
-            item.device_id
+            item.deleted_at
           ]
         );
       }
+      // Items ride embedded on the parent transaction's push payload, so
+      // only the aggregate root is enqueued.
+      trackChange({
+        entityType: "income_transactions",
+        entityId: String(draft.transaction.id),
+        salonId: String(draft.transaction.salon_id)
+      });
+      markDirty();
     });
   }
 
@@ -304,8 +310,8 @@ export class IncomeRepository {
   /**
    * Replace an existing transaction's header + items in a single SQL
    * transaction. Items are hard-deleted and re-inserted with fresh ids —
-   * simpler than diffing and safe for MVP (sync engine treats the header's
-   * updated_at + sync_status='pending' as the change signal).
+   * simpler than diffing and safe for MVP (the header's updated_at is the
+   * change signal consumed by the backup engine's dirty flag).
    */
   updateIncomeTransaction(draft: IncomeTransactionDraft) {
     runInTransaction(() => {
@@ -316,7 +322,7 @@ export class IncomeRepository {
            gross_amount = ?, discount_type = ?, discount_value = ?, discount_amount = ?,
            net_amount = ?, commission_amount = ?, remarks = ?,
            customer_id = ?, customer_name_snapshot = ?, customer_phone_snapshot = ?,
-           updated_at = ?, sync_status = ?
+           updated_at = ?
          WHERE id = ? AND salon_id = ?`,
         [
           draft.transaction.employee_id,
@@ -334,7 +340,6 @@ export class IncomeRepository {
           draft.transaction.customer_name_snapshot ?? null,
           draft.transaction.customer_phone_snapshot ?? null,
           draft.transaction.updated_at,
-          draft.transaction.sync_status,
           draft.transaction.id,
           draft.transaction.salon_id
         ]
@@ -355,8 +360,8 @@ export class IncomeRepository {
             employee_id, employee_name_snapshot,
             product_cost_snapshot,
             created_at, updated_at,
-            deleted_at, sync_status, device_id
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            deleted_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             item.id,
             item.salon_id,
@@ -376,38 +381,47 @@ export class IncomeRepository {
             item.product_cost_snapshot ?? 0,
             item.created_at,
             item.updated_at,
-            item.deleted_at,
-            item.sync_status,
-            item.device_id
+            item.deleted_at
           ]
         );
       }
+      trackChange({
+        entityType: "income_transactions",
+        entityId: String(draft.transaction.id),
+        salonId: String(draft.transaction.salon_id)
+      });
+      markDirty();
     });
   }
 
   /**
    * Soft-delete a transaction and its items. Both rows get `deleted_at` set
-   * and `sync_status='pending'` so the sync engine can replicate the tombstone.
+   * so the backup engine can replicate the tombstone.
    */
   softDelete(
     salonId: string,
     id: string,
-    now: string,
-    deviceId: string
+    now: string
   ) {
     runInTransaction(() => {
       database.runSync(
         `UPDATE income_transactions
-         SET deleted_at = ?, updated_at = ?, sync_status = 'pending', device_id = ?
+         SET deleted_at = ?, updated_at = ?
          WHERE id = ? AND salon_id = ?`,
-        [now, now, deviceId, id, salonId]
+        [now, now, id, salonId]
       );
       database.runSync(
         `UPDATE income_transaction_items
-         SET deleted_at = ?, updated_at = ?, sync_status = 'pending', device_id = ?
+         SET deleted_at = ?, updated_at = ?
          WHERE transaction_id = ? AND salon_id = ?`,
-        [now, now, deviceId, id, salonId]
+        [now, now, id, salonId]
       );
+      trackChange({
+        entityType: "income_transactions",
+        entityId: id,
+        salonId
+      });
+      markDirty();
     });
   }
 

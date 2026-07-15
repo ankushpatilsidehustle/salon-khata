@@ -20,6 +20,14 @@ import {
   clearCurrentSalonId,
   setCurrentSalonId
 } from "@/session/current-salon";
+import { persistSalonId } from "@/session/session-storage";
+import { clearLockState } from "@/session/lock-state";
+import { backupScheduler } from "@/backup/backup-scheduler";
+import { unregisterBackgroundBackupTask } from "@/backup/background-task";
+import { syncScheduler } from "@/sync/sync-scheduler";
+import { unregisterBackgroundSyncTask } from "@/sync/background-sync-task";
+import { releaseLock } from "@/cloud/device-lock";
+import { ensureSalonMembership } from "@/cloud/salon-membership";
 
 /**
  * Auth lifecycle states:
@@ -62,24 +70,68 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [status, setStatus] = useState<AuthStatus>("loading");
   const [user, setUser] = useState<AuthUser | null>(null);
   const [salonId, setSalonId] = useState<string | null>(null);
+  // Track the last resolved salon id so `resolveSalonFor` can release its
+  // cloud lock on sign-out without depending on the `salonId` state (which
+  // would cause the Firebase-auth `useEffect` to re-subscribe every time
+  // the resolver identity changed).
+  const previousSalonIdRef = useRef<string | null>(null);
 
   // Recompute the salon-resolution for the given firebase user.
   const resolveSalonFor = useCallback((nextUser: AuthUser | null) => {
     if (!nextUser) {
+      const previousSalonId = previousSalonIdRef.current;
+      previousSalonIdRef.current = null;
       clearCurrentSalonId();
       setSalonId(null);
       setStatus("signed-out");
+      // Tear down backup subscriptions + persistent salon id + OS-level
+      // background task on sign-out so a signed-out device stops trying
+      // to upload. Best-effort release of the cloud device lock so
+      // another device can take over without waiting for the 24h lease
+      // to expire.
+      backupScheduler.stop();
+      syncScheduler.stop();
+      clearLockState();
+      void persistSalonId(null);
+      // Defensive — the Phase-7 backup engine no longer registers this
+      // task on boot, but a stale registration from a previous app
+      // version could still exist on the device. Cheap idempotent call.
+      void unregisterBackgroundBackupTask();
+      void unregisterBackgroundSyncTask();
+      if (previousSalonId) void releaseLock(previousSalonId);
       return;
     }
     const salon = salonRepo.findByOwnerUid(nextUser.uid);
     if (salon) {
+      previousSalonIdRef.current = salon.id;
       setCurrentSalonId(salon.id);
       setSalonId(salon.id);
       setStatus("signed-in");
+      // Mirror the resolved salon id to persistent storage so the
+      // background task worker can pick it up when the app isn't running,
+      // then start the scheduler for the foreground triggers.
+      void persistSalonId(salon.id);
+      backupScheduler.start(salon.id);
+      syncScheduler.start(salon.id);
+      // Ensure the /salons/{sid} top-level doc carries owner_uid +
+      // member_uids so Security Rules can authorize per-record sync
+      // writes. Idempotent; fire-and-forget — failure just means the
+      // next attempt will retry, and the app remains usable offline.
+      void ensureSalonMembership(salon.id, nextUser.uid).catch(() => {
+        // Non-fatal — rules will deny writes until we succeed, and the
+        // sync engine surfaces those as retryable errors in Sync Status.
+      });
     } else {
+      previousSalonIdRef.current = null;
       clearCurrentSalonId();
       setSalonId(null);
       setStatus("signed-in-no-salon");
+      // Onboarding hasn't completed yet — no salon means nothing to
+      // back up. The scheduler stays stopped until `refreshSalon()`.
+      backupScheduler.stop();
+      syncScheduler.stop();
+      clearLockState();
+      void persistSalonId(null);
     }
   }, []);
 
