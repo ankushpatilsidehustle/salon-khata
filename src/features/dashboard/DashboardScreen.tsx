@@ -8,15 +8,15 @@ import {
   View
 } from "react-native";
 import { useTranslation } from "react-i18next";
-import { useFocusEffect } from "@react-navigation/native";
-import { setStatusBarStyle } from "expo-status-bar";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 
 import { AppBar } from "@/components/core/AppBar";
 import { Button } from "@/components/core/Button";
 import { EmptyState } from "@/components/core/EmptyState";
+import { SectionHeader } from "@/components/core/SectionHeader";
+import { SegmentedControl } from "@/components/core/SegmentedControl";
 import { MoneyCard } from "@/components/domain/MoneyCard";
 import { colors, radius, spacing, typography } from "@/design-system/tokens";
 import { calculateDailySummary } from "@/domain/report-service";
@@ -27,12 +27,14 @@ import { IncomeRepository } from "@/repositories/income-repository";
 import type { IncomeTransactionSummary } from "@/repositories/income-repository";
 import { ExpenseRepository } from "@/repositories/expense-repository";
 import type { ExpenseRecord } from "@/repositories/expense-repository";
+import { SalonRepository } from "@/repositories/salon-repository";
 import type { RootStackParamList } from "@/application/AppNavigator";
 import { TransactionDetailSheet } from "@/features/income/TransactionDetailSheet";
 import { ExpenseDetailSheet } from "@/features/expenses/ExpenseDetailSheet";
 
 const incomeRepo = new IncomeRepository();
 const expenseRepo = new ExpenseRepository();
+const salonRepo = new SalonRepository();
 
 /** Local YYYY-MM-DD (matches `transaction_date` stored by IncomeEntryScreen). */
 function toLocalISODate(d: Date): string {
@@ -42,8 +44,18 @@ function toLocalISODate(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
+function formatDisplayDate(d: Date, locale: string): string {
+  return d.toLocaleDateString(locale.startsWith("hi") ? "hi-IN" : "en-IN", {
+    weekday: "short",
+    day: "numeric",
+    month: "short"
+  });
+}
+
+type ActivityTab = "income" | "expenses";
+
 export function DashboardScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
@@ -51,22 +63,25 @@ export function DashboardScreen() {
     []
   );
   const [expenses, setExpenses] = useState<ExpenseRecord[]>([]);
-  const [creditOwed, setCreditOwed] = useState<number>(0);
+  const [creditOwed, setCreditOwed] = useState(0);
+  const [businessName, setBusinessName] = useState(
+    t("dashboard.businessNameFallback")
+  );
   const [detailTxId, setDetailTxId] = useState<string | null>(null);
   const [detailExpenseId, setDetailExpenseId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"income" | "expenses">("income");
+  const [activeTab, setActiveTab] = useState<ActivityTab>("income");
 
   const reloadToday = useCallback(() => {
     const today = toLocalISODate(new Date());
     setTransactions(incomeRepo.listByDate(DEV_SALON_ID, today));
     setExpenses(expenseRepo.listByDate(DEV_SALON_ID, today));
     setCreditOwed(expenseRepo.totalCreditOutstanding(DEV_SALON_ID));
-  }, []);
+    const salon = salonRepo.getById(DEV_SALON_ID);
+    setBusinessName(
+      salon?.business_name?.trim() || t("dashboard.businessNameFallback")
+    );
+  }, [t]);
 
-  /**
-   * One-tap settle-up shortcut on credit rows. Confirms first, then marks
-   * the expense as paid and refreshes today's list + credit-owed banner.
-   */
   const handleMarkPaid = useCallback(
     (expense: ExpenseRecord) => {
       Alert.alert(
@@ -97,7 +112,18 @@ export function DashboardScreen() {
     [reloadToday, t]
   );
 
-  const businessName = t("dashboard.businessNameFallback");
+  useFocusEffect(
+    useCallback(() => {
+      reloadToday();
+    }, [reloadToday])
+  );
+
+  const todaySummary = calculateDailySummary({
+    commissionAmounts: transactions.map((tx) => tx.commission_amount),
+    expenseAmounts: expenses.map((e) => e.amount),
+    incomeAmounts: transactions.map((tx) => tx.net_amount)
+  });
+
   const initials = businessName
     .split(" ")
     .map((word) => word.charAt(0))
@@ -105,34 +131,15 @@ export function DashboardScreen() {
     .slice(0, 2)
     .toUpperCase();
 
-  // Light status bar icons to contrast against the brand purple AppBar, and
-  // reload today's transactions every time the tab is focused.
-  useFocusEffect(
-    useCallback(() => {
-      setStatusBarStyle("light");
-      reloadToday();
-      return () => setStatusBarStyle("dark");
-    }, [reloadToday])
-  );
-
-  // Aggregate today's totals from real transactions + expenses.
-  const todaySummary = calculateDailySummary({
-    commissionAmounts: transactions.map((tx) => tx.commission_amount),
-    expenseAmounts: expenses.map((e) => e.amount),
-    // Net revenue to the salon = what customers actually paid (after discount).
-    incomeAmounts: transactions.map((tx) => tx.net_amount)
-  });
-
   const hasTransactions = transactions.length > 0;
   const visibleTransactions = transactions.slice(0, 5);
-
   const hasExpenses = expenses.length > 0;
   const visibleExpenses = expenses.slice(0, 5);
+  const todayLabel = formatDisplayDate(new Date(), i18n.language);
 
   return (
     <View style={styles.root}>
       <AppBar
-        variant="brand"
         title={businessName}
         trailing={
           <View
@@ -150,6 +157,11 @@ export function DashboardScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        <View style={styles.snapshotHeader}>
+          <Text style={styles.snapshotLabel}>{t("dashboard.snapshotLabel")}</Text>
+          <Text style={styles.snapshotDate}>{todayLabel}</Text>
+        </View>
+
         <MoneyCard
           variant="hero"
           label={t("dashboard.income.today")}
@@ -183,7 +195,7 @@ export function DashboardScreen() {
           </Pressable>
         </View>
 
-        <View style={styles.netRow}>
+        <View style={styles.netBlock}>
           <MoneyCard
             label={t("dashboard.net.today")}
             amount={todaySummary.netCollection}
@@ -216,183 +228,154 @@ export function DashboardScreen() {
           </View>
         ) : null}
 
-        {/* ── Tabs ────────────────────────────────────────────────── */}
-        <View style={styles.tabBar}>
-          <Pressable
-            style={[
-              styles.tabItem,
-              activeTab === "income" && styles.tabItemActive
-            ]}
-            onPress={() => setActiveTab("income")}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: activeTab === "income" }}
-          >
-            <Text
-              style={[
-                styles.tabLabel,
-                activeTab === "income" && styles.tabLabelActive
-              ]}
-            >
-              {t("dashboard.recent.title")}
-            </Text>
-          </Pressable>
-          <Pressable
-            style={[
-              styles.tabItem,
-              activeTab === "expenses" && styles.tabItemActive
-            ]}
-            onPress={() => setActiveTab("expenses")}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: activeTab === "expenses" }}
-          >
-            <Text
-              style={[
-                styles.tabLabel,
-                activeTab === "expenses" && styles.tabLabelActive
-              ]}
-            >
-              {t("expenses.todayList")}
-            </Text>
-          </Pressable>
-        </View>
+        <SectionHeader title={t("dashboard.activityLabel")} />
 
-        {/* ── Income tab ──────────────────────────────────────────── */}
-        {activeTab === "income" ? (
-          hasTransactions ? (
-            <View style={styles.transactionList}>
-              {visibleTransactions.map((tx) => (
-                <Pressable
-                  key={tx.id}
-                  style={({ pressed }) => [
-                    styles.transactionRow,
-                    pressed && styles.transactionRowPressed
-                  ]}
-                  onPress={() => setDetailTxId(tx.id)}
-                  accessibilityRole="button"
-                  accessibilityLabel={tx.services_summary}
-                  testID={`dash-tx-${tx.id}`}
-                >
-                  <View style={styles.transactionHeader}>
-                    <Text style={styles.transactionName} numberOfLines={1}>
-                      {tx.employees_summary || tx.employee_name_snapshot}
-                    </Text>
-                    <View style={styles.transactionRight}>
-                      <Text style={styles.transactionAmount}>
+        <SegmentedControl
+          value={activeTab}
+          onChange={setActiveTab}
+          options={[
+            { value: "income", label: t("dashboard.tabIncome") },
+            { value: "expenses", label: t("dashboard.tabExpenses") }
+          ]}
+          testID="dash-activity-tabs"
+        />
+
+        <View style={styles.activityBody}>
+          {activeTab === "income" ? (
+            hasTransactions ? (
+              <View style={styles.listCard}>
+                {visibleTransactions.map((tx, index) => (
+                  <Pressable
+                    key={tx.id}
+                    style={({ pressed }) => [
+                      styles.row,
+                      index > 0 && styles.rowBorder,
+                      pressed && styles.rowPressed
+                    ]}
+                    onPress={() => setDetailTxId(tx.id)}
+                    accessibilityRole="button"
+                    accessibilityLabel={tx.services_summary}
+                    testID={`dash-tx-${tx.id}`}
+                  >
+                    <View style={styles.rowMain}>
+                      <Text style={styles.rowTitle} numberOfLines={1}>
+                        {tx.employees_summary || tx.employee_name_snapshot}
+                      </Text>
+                      <Text style={styles.rowAmount}>
                         {formatMoney(tx.net_amount)}
                       </Text>
-                      <Text style={styles.transactionMode}>
+                    </View>
+                    <View style={styles.rowSub}>
+                      <Text style={styles.rowMeta} numberOfLines={1}>
+                        {tx.services_summary || "—"}
+                      </Text>
+                      <Text style={styles.rowMeta}>
                         {tx.payment_mode.toUpperCase()}
                       </Text>
                     </View>
-                  </View>
-                  <Text style={styles.transactionServices} numberOfLines={1}>
-                    {tx.services_summary || "—"}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-          ) : (
-            <EmptyState
-              icon={t("dashboard.empty.icon")}
-              title={t("dashboard.empty.title")}
-              body={t("dashboard.empty.body")}
-              testID="dash-empty"
-            />
-          )
-        ) : null}
+                  </Pressable>
+                ))}
+              </View>
+            ) : (
+              <EmptyState
+                icon={t("dashboard.empty.icon")}
+                title={t("dashboard.empty.title")}
+                body={t("dashboard.empty.body")}
+                testID="dash-empty"
+              />
+            )
+          ) : null}
 
-        {/* ── Expenses tab ────────────────────────────────────────── */}
-        {activeTab === "expenses" ? (
-          hasExpenses ? (
-            <View style={styles.transactionList}>
-              {visibleExpenses.map((exp) => (
-                <Pressable
-                  key={exp.id}
-                  style={({ pressed }) => [
-                    styles.transactionRow,
-                    pressed && styles.transactionRowPressed
-                  ]}
-                  onPress={() => setDetailExpenseId(exp.id)}
-                  accessibilityRole="button"
-                  accessibilityLabel={exp.category_name_snapshot}
-                  testID={`dash-exp-${exp.id}`}
-                >
-                  <View style={styles.transactionHeader}>
-                    <Text style={styles.transactionName} numberOfLines={1}>
-                      {exp.category_name_snapshot}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.expenseAmount,
-                        exp.payment_mode === "credit" &&
-                          exp.settled_at === null &&
-                          styles.expenseAmountCredit
-                      ]}
-                    >
-                      −{formatMoney(exp.amount)}
-                    </Text>
-                  </View>
-                  <View style={styles.expenseSubRow}>
-                    {exp.remarks ? (
-                      <Text
-                        style={styles.transactionServices}
-                        numberOfLines={1}
-                      >
-                        {exp.remarks}
+          {activeTab === "expenses" ? (
+            hasExpenses ? (
+              <View style={styles.listCard}>
+                {visibleExpenses.map((exp, index) => (
+                  <Pressable
+                    key={exp.id}
+                    style={({ pressed }) => [
+                      styles.row,
+                      index > 0 && styles.rowBorder,
+                      pressed && styles.rowPressed
+                    ]}
+                    onPress={() => setDetailExpenseId(exp.id)}
+                    accessibilityRole="button"
+                    accessibilityLabel={exp.category_name_snapshot}
+                    testID={`dash-exp-${exp.id}`}
+                  >
+                    <View style={styles.rowMain}>
+                      <Text style={styles.rowTitle} numberOfLines={1}>
+                        {exp.category_name_snapshot}
                       </Text>
-                    ) : (
-                      <View style={{ flex: 1 }} />
-                    )}
-                    {exp.payment_mode === "credit" &&
-                    exp.settled_at === null ? (
-                      <>
-                        <View style={styles.creditPill}>
-                          <Text style={styles.creditPillText}>
-                            {t("expenses.creditBadge")}
+                      <Text
+                        style={[
+                          styles.expenseAmount,
+                          exp.payment_mode === "credit" &&
+                            exp.settled_at === null &&
+                            styles.expenseAmountCredit
+                        ]}
+                      >
+                        −{formatMoney(exp.amount)}
+                      </Text>
+                    </View>
+                    <View style={styles.rowSub}>
+                      {exp.remarks ? (
+                        <Text style={styles.rowMeta} numberOfLines={1}>
+                          {exp.remarks}
+                        </Text>
+                      ) : (
+                        <View style={styles.rowMetaSpacer} />
+                      )}
+                      {exp.payment_mode === "credit" &&
+                      exp.settled_at === null ? (
+                        <>
+                          <View style={styles.creditPill}>
+                            <Text style={styles.creditPillText}>
+                              {t("expenses.creditBadge")}
+                            </Text>
+                          </View>
+                          <Pressable
+                            onPress={() => handleMarkPaid(exp)}
+                            hitSlop={8}
+                            style={({ pressed }) => [
+                              styles.markPaidBtn,
+                              pressed && styles.markPaidBtnPressed
+                            ]}
+                            accessibilityRole="button"
+                            accessibilityLabel={t("expenses.markPaid")}
+                            testID={`dash-exp-${exp.id}-mark-paid`}
+                          >
+                            <Ionicons
+                              name="checkmark-circle-outline"
+                              size={14}
+                              color={colors.status.success}
+                            />
+                            <Text style={styles.markPaidBtnText}>
+                              {t("expenses.markPaid")}
+                            </Text>
+                          </Pressable>
+                        </>
+                      ) : exp.payment_mode === "credit" &&
+                        exp.settled_at !== null ? (
+                        <View style={styles.paidPill}>
+                          <Text style={styles.paidPillText}>
+                            {t("expenses.paidBadge")}
                           </Text>
                         </View>
-                        <Pressable
-                          onPress={() => handleMarkPaid(exp)}
-                          hitSlop={8}
-                          style={({ pressed }) => [
-                            styles.markPaidBtn,
-                            pressed && styles.markPaidBtnPressed
-                          ]}
-                          accessibilityRole="button"
-                          accessibilityLabel={t("expenses.markPaid")}
-                          testID={`dash-exp-${exp.id}-mark-paid`}
-                        >
-                          <Ionicons
-                            name="checkmark-circle-outline"
-                            size={14}
-                            color={colors.status.success}
-                          />
-                          <Text style={styles.markPaidBtnText}>
-                            {t("expenses.markPaid")}
-                          </Text>
-                        </Pressable>
-                      </>
-                    ) : exp.payment_mode === "credit" &&
-                      exp.settled_at !== null ? (
-                      <View style={styles.paidPill}>
-                        <Text style={styles.paidPillText}>
-                          {t("expenses.paidBadge")}
-                        </Text>
-                      </View>
-                    ) : null}
-                  </View>
-                </Pressable>
-              ))}
-            </View>
-          ) : (
-            <EmptyState
-              icon="💸"
-              title={t("expenses.todayNone")}
-              body={t("expenses.noCategories")}
-              testID="dash-expenses-empty"
-            />
-          )
-        ) : null}
+                      ) : null}
+                    </View>
+                  </Pressable>
+                ))}
+              </View>
+            ) : (
+              <EmptyState
+                icon="💸"
+                title={t("expenses.todayNone")}
+                body={t("expenses.noCategories")}
+                testID="dash-expenses-empty"
+              />
+            )
+          ) : null}
+        </View>
 
         <View style={styles.syncLineWrapper}>
           <Text style={styles.syncLine} accessibilityLiveRegion="polite">
@@ -406,7 +389,9 @@ export function DashboardScreen() {
         transactionId={detailTxId}
         onClose={() => setDetailTxId(null)}
         onDeleted={reloadToday}
-        onEdit={(id) => navigation.navigate("IncomeEntry", { transactionId: id })}
+        onEdit={(id) =>
+          navigation.navigate("IncomeEntry", { transactionId: id })
+        }
       />
 
       <ExpenseDetailSheet
@@ -414,7 +399,9 @@ export function DashboardScreen() {
         expenseId={detailExpenseId}
         onClose={() => setDetailExpenseId(null)}
         onDeleted={reloadToday}
-        onEdit={(id) => navigation.navigate("ExpenseEntry", { expenseId: id })}
+        onEdit={(id) =>
+          navigation.navigate("ExpenseEntry", { expenseId: id })
+        }
       />
     </View>
   );
@@ -436,11 +423,23 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.2)"
+    backgroundColor: colors.interactive.selected
   },
   avatarInitials: {
     ...typography.bodyEmphasis,
-    color: colors.text.inverse
+    color: colors.brand.primary
+  },
+  snapshotHeader: {
+    marginBottom: spacing[3],
+    gap: spacing[1]
+  },
+  snapshotLabel: {
+    ...typography.overline,
+    color: colors.text.secondary
+  },
+  snapshotDate: {
+    ...typography.h3,
+    color: colors.text.primary
   },
   peerRow: {
     flexDirection: "row",
@@ -456,7 +455,7 @@ const styles = StyleSheet.create({
     marginTop: spacing[1],
     marginLeft: spacing[1]
   },
-  netRow: {
+  netBlock: {
     marginTop: spacing[3],
     gap: spacing[1]
   },
@@ -469,74 +468,53 @@ const styles = StyleSheet.create({
     marginTop: spacing[2],
     alignSelf: "flex-start"
   },
-  transactionList: {
-    gap: spacing[2]
+  activityBody: {
+    marginTop: spacing[3]
   },
-  transactionRow: {
+  listCard: {
     backgroundColor: colors.surface.default,
-    borderRadius: 12,
-    paddingHorizontal: spacing[3],
-    paddingVertical: spacing[2],
-    gap: 2
+    borderRadius: radius.md,
+    overflow: "hidden"
   },
-  transactionRowPressed: {
+  row: {
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
+    gap: spacing[1]
+  },
+  rowBorder: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border.subtle
+  },
+  rowPressed: {
     backgroundColor: colors.interactive.pressed
   },
-  transactionHeader: {
+  rowMain: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center"
+    alignItems: "center",
+    gap: spacing[3]
   },
-  transactionName: {
-    ...typography.bodySmall,
+  rowTitle: {
+    ...typography.bodyEmphasis,
     color: colors.text.primary,
-    fontWeight: "600",
-    flex: 1,
-    marginRight: spacing[2]
+    flex: 1
   },
-  transactionRight: {
-    alignItems: "flex-end"
-  },
-  transactionAmount: {
+  rowAmount: {
     ...typography.moneyBody,
     color: colors.text.primary
   },
-  transactionMode: {
-    ...typography.caption,
-    color: colors.text.muted
-  },
-  transactionServices: {
-    ...typography.caption,
-    color: colors.text.muted
-  },
-  tabBar: {
+  rowSub: {
     flexDirection: "row",
-    backgroundColor: colors.background.subtle,
-    borderRadius: radius.md,
-    padding: 3,
-    marginBottom: spacing[3]
-  },
-  tabItem: {
-    flex: 1,
     alignItems: "center",
-    paddingVertical: spacing[2],
-    borderRadius: radius.md - 1
+    gap: spacing[2]
   },
-  tabItemActive: {
-    backgroundColor: colors.surface.default,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 2,
-    elevation: 2
+  rowMeta: {
+    ...typography.caption,
+    color: colors.text.muted,
+    flexShrink: 1
   },
-  tabLabel: {
-    ...typography.bodySmall,
-    color: colors.text.secondary
-  },
-  tabLabelActive: {
-    color: colors.brand.primary,
-    fontWeight: "700"
+  rowMetaSpacer: {
+    flex: 1
   },
   expenseAmount: {
     ...typography.moneyBody,
@@ -545,36 +523,27 @@ const styles = StyleSheet.create({
   expenseAmountCredit: {
     color: colors.status.warning
   },
-  expenseSubRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing[2]
-  },
   creditPill: {
     paddingHorizontal: spacing[2],
     paddingVertical: 2,
     borderRadius: radius.full,
-    backgroundColor: colors.status.dangerBg,
-    alignSelf: "flex-start"
+    backgroundColor: colors.status.dangerBg
   },
   creditPillText: {
-    ...typography.caption,
+    ...typography.overline,
     color: colors.status.danger,
-    fontWeight: "700",
-    letterSpacing: 0.5
+    letterSpacing: 0.4
   },
   paidPill: {
     paddingHorizontal: spacing[2],
     paddingVertical: 2,
     borderRadius: radius.full,
-    backgroundColor: colors.status.successBg,
-    alignSelf: "flex-start"
+    backgroundColor: colors.status.successBg
   },
   paidPillText: {
-    ...typography.caption,
+    ...typography.overline,
     color: colors.status.success,
-    fontWeight: "700",
-    letterSpacing: 0.5
+    letterSpacing: 0.4
   },
   markPaidBtn: {
     flexDirection: "row",
@@ -599,6 +568,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: spacing[2],
+    marginTop: spacing[3],
     padding: spacing[3],
     borderRadius: radius.md,
     backgroundColor: colors.status.dangerBg,

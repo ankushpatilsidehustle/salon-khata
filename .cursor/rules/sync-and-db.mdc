@@ -1,0 +1,32 @@
+---
+description: Sync, backup, and database conventions
+globs: src/{sync,backup,cloud,database,repositories}/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Sync / DB conventions
+
+## Two engines
+
+1. **Per-record sync** (`src/sync/`) — Firestore, automatic, LWW conflicts.
+2. **File backup** (`src/backup/` + `src/cloud/`) — encrypted whole-DB DR snapshot; manual export.
+
+Do not mix their responsibilities. New-device restore is primarily pull via per-record sync.
+
+## Migrations
+
+- Add numbered files under `src/database/migrations/` and register in `index.ts`.
+- Migrations must be idempotent (safe on every boot).
+- Business tables need shared + sync columns (see `shared-columns.ts` / migration 016).
+
+## Repositories
+
+- One aggregate per `*-repository.ts`.
+- Use `sqlite-client` helpers + `runInTransaction` for multi-row writes.
+- Emit/`db:dirty` (or existing change-tracker hooks) so sync can pick up changes.
+
+## Docs
+
+- Design: `docs/sync-engine.md`
+- Shipped detail: `docs/sync-engine-implementation.md`
+- Schema: `docs/database-schema.md`

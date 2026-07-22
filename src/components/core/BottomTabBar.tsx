@@ -143,14 +143,14 @@ const styles = StyleSheet.create({
     opacity: 0.7
   },
   tabLabel: {
-    ...typography.caption,
-    fontSize: 11,
-    lineHeight: 14,
+    ...typography.overline,
+    textTransform: "none",
     color: colors.text.secondary
   },
   tabLabelActive: {
-    color: colors.brand.accent,
-    fontWeight: "700"
+    ...typography.overline,
+    textTransform: "none",
+    color: colors.brand.accent
   },
   centerSlot: {
     flex: 1,

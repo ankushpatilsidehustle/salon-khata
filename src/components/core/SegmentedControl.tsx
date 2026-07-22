@@ -67,11 +67,12 @@ const styles = StyleSheet.create({
   },
   label: {
     ...typography.bodySmall,
-    fontWeight: "500",
     color: colors.text.secondary
   },
   labelActive: {
-    color: colors.brand.primary,
-    fontWeight: "700"
+    ...typography.bodyEmphasis,
+    fontSize: typography.bodySmall.fontSize,
+    lineHeight: typography.bodySmall.lineHeight,
+    color: colors.brand.primary
   }
 });

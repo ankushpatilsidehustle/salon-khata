@@ -62,8 +62,8 @@ const styles = StyleSheet.create({
     opacity: 0.7
   },
   actionLabel: {
-    ...typography.button,
-    fontSize: 14,
+    ...typography.bodySmall,
+    fontWeight: "700",
     color: colors.brand.primary
   }
 });

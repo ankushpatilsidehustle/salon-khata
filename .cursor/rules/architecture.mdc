@@ -1,0 +1,31 @@
+---
+description: Salon Khata architecture boundaries and layer import rules
+alwaysApply: true
+---
+
+# Architecture boundaries
+
+Offline-first Expo app. Local SQLite is the source of truth; Firebase is sync/auth/backup.
+
+## Layers
+
+- `features/` — screens only; compose UI; call repositories/domain
+- `components/` — reusable UI; no repositories or Firebase
+- `domain/` — pure TS business logic; no React, no SQLite
+- `repositories/` — SQLite only; no screens
+- `sync/` — queue/push/pull/conflicts; not feature UI
+- `firebase/` — Auth + App Check wrappers only
+- `application/` — AppRoot, navigators, event-bus
+
+## Rules
+
+- Never query SQLite from a screen — use a repository.
+- Commit writes locally before any network call.
+- Money is integer paise; IDs are UUID strings; soft-delete via `deleted_at`.
+- Visible strings go through i18n keys (`en.json` / `hi.json`).
+- Do not create `src/app/` (conflicts with Expo Router detection).
+- Path alias: `@/*` → `src/*`.
+
+## Index
+
+See `AGENTS.md` for the full codebase map. Prefer `docs/implementation-status.md` over older design docs when they disagree.

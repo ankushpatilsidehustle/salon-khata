@@ -1,0 +1,30 @@
+---
+description: Feature screen and design-system UI conventions
+globs: src/{features,components,design-system}/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# UI conventions
+
+## Features
+
+- One folder per feature under `src/features/`.
+- Wire routes in `AppNavigator` or the feature’s own navigator.
+- Prefer existing sheets/screens patterns (form sheets, detail sheets).
+
+## Design system
+
+- Import tokens from `@/design-system/tokens` (or theme).
+- Use **namespaced** colors only: `colors.brand.primary`, `colors.status.danger` — no flat `colors.primary`.
+- Money display: typography money variants (tabular nums) / `MoneyCard`.
+- Reuse `src/components/core/*` before inventing new primitives.
+
+## i18n
+
+- No hardcoded user-visible strings.
+- Keys: semantic, stable (`income.selectService`, not `text1`).
+
+## Product feel
+
+- Fast consumer-payments feel, not accounting ERP chrome.
+- Daily ops must work offline; sync status is visible but non-blocking.

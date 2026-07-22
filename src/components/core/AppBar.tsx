@@ -4,7 +4,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { colors, spacing, typography } from "@/design-system/tokens";
 
-/** `default` — neutral canvas background; `brand` — primary purple header. */
+/**
+ * Shared screen header for the whole app.
+ * Title uses H2 (20/28/700) per design-system. Prefer `default` on all
+ * primary screens so headers look identical across tabs and stacks.
+ */
 export type AppBarVariant = "default" | "brand";
 
 type AppBarProps = {
@@ -15,27 +19,48 @@ type AppBarProps = {
   variant?: AppBarVariant;
 };
 
-const variantConfig: Record<AppBarVariant, { bg: string; titleColor: string }> = {
+const variantConfig: Record<
+  AppBarVariant,
+  { bg: string; titleColor: string; borderColor: string }
+> = {
   default: {
     bg: colors.background.default,
-    titleColor: colors.text.primary
+    titleColor: colors.text.primary,
+    borderColor: colors.border.subtle
   },
   brand: {
     bg: colors.brand.primary,
-    titleColor: colors.text.inverse
+    titleColor: colors.text.inverse,
+    borderColor: colors.brand.primaryPressed
   }
 };
 
-export function AppBar({ leading, title, trailing, variant = "default" }: AppBarProps) {
+export function AppBar({
+  leading,
+  title,
+  trailing,
+  variant = "default"
+}: AppBarProps) {
   const insets = useSafeAreaInsets();
   const vc = variantConfig[variant];
   return (
-    // Outer view fills behind the status bar with the correct background color.
-    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: vc.bg }]}>
-      {/* Inner row has a fixed 56 dp height — independent of the top inset. */}
+    <View
+      style={[
+        styles.container,
+        {
+          paddingTop: insets.top,
+          backgroundColor: vc.bg,
+          borderBottomColor: vc.borderColor
+        }
+      ]}
+    >
       <View style={styles.row}>
         <View style={styles.side}>{leading ?? null}</View>
-        <Text style={styles.title} accessibilityRole="header" numberOfLines={1}>
+        <Text
+          style={[styles.title, { color: vc.titleColor }]}
+          accessibilityRole="header"
+          numberOfLines={1}
+        >
           {title}
         </Text>
         <View style={[styles.side, styles.trailing]}>{trailing ?? null}</View>
@@ -46,8 +71,8 @@ export function AppBar({ leading, title, trailing, variant = "default" }: AppBar
 
 const styles = StyleSheet.create({
   container: {
-    // backgroundColor is set dynamically via variantConfig.
-    paddingHorizontal: spacing[4]
+    paddingHorizontal: spacing[4],
+    borderBottomWidth: StyleSheet.hairlineWidth
   },
   row: {
     alignItems: "center",
@@ -64,7 +89,6 @@ const styles = StyleSheet.create({
   },
   title: {
     ...typography.h2,
-    color: colors.text.primary,
     flex: 1,
     marginHorizontal: spacing[3]
   }

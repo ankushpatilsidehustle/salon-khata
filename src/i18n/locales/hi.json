@@ -138,6 +138,10 @@
     "title": "Today",
     "subtitle": "Your salon notebook, ready even without internet.",
     "businessNameFallback": "Salon Khata",
+    "snapshotLabel": "Today's snapshot",
+    "activityLabel": "Today's activity",
+    "tabIncome": "Income",
+    "tabExpenses": "Expenses",
     "income": {
       "today": "Today's income"
     },
