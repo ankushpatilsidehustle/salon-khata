@@ -207,6 +207,7 @@ Period helpers in `src/domain/period.ts` — ISO week is Monday-anchored;
 
 Tiles:
 - Staff advances → `AdvancesList`
+- **Subscription & referral** → trial/plan status, referral code, plan catalog
 - **Sync now** (per-record sync engine) — snackbar with outcome
 - **Sync status** (screen) → queue depth, activity, dead-letters
 - **Export snapshot** (DR file backup) — confirm alert → snackbar
@@ -218,6 +219,24 @@ Account:
 Dev-only section (gated on `__DEV__`):
 - Reset app data — closes + deletes the SQLite DB and calls
   `DevSettings.reload()`. Wired via `src/database/reset.ts`.
+
+### 2.11b Subscription, trial & referral (Phase 1)
+
+Full PRD: [`docs/subscription/PRD-subscription-referral.md`](subscription/PRD-subscription-referral.md).
+
+Shipped locally:
+
+- Migration `019` — `subscription_plans`, `salon_subscriptions`,
+  `subscription_payments`, `referral_codes`, `referrals`
+- Domain entitlements in `src/domain/subscription/`
+- Repositories + `ensureSalonBillingBootstrap` (onboarding + AuthProvider)
+- `SubscriptionProvider` + More → Subscription screen
+- Income entry soft-lock: after trial/paid window, only owner staff
+  assignable on bills
+- Optional referral code on Business Setup (once per salon)
+- Sync entity types registered for salon-scoped subscription tables
+- Firestore rules stubs for `/referral_index` + top-level `/referrals`
+- Payment gateway **not** implemented — `activateOrRenew` is the hook
 
 ### 2.12 Global overlays
 

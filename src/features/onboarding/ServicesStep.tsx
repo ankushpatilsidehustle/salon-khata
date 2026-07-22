@@ -34,6 +34,9 @@ import {
 import type { OnboardingStackParamList } from "./OnboardingNavigator";
 import { useOnboardingDone } from "./OnboardingNavigator";
 import { StepHeader } from "./components/StepHeader";
+import { ensureSalonBillingBootstrap } from "@/repositories/subscription-bootstrap";
+import { ReferralRepository } from "@/repositories/referral-repository";
+import { normalizeReferralCode } from "@/domain/subscription";
 
 type Props = NativeStackScreenProps<OnboardingStackParamList, "Services">;
 
@@ -43,6 +46,7 @@ const salonRepo = new SalonRepository();
 const employeeRepo = new EmployeeRepository();
 const serviceRepo = new ServiceRepository();
 const categoryRepo = new ServiceCategoryRepository();
+const referralRepo = new ReferralRepository();
 
 function ownerGenderFor(salonType: SalonType): EmployeeGender {
   if (salonType === "male") return "male";
@@ -68,7 +72,8 @@ export function ServicesStep({ navigation, route }: Props) {
     salonType,
     businessName,
     ownerName,
-    alsoDoesServices
+    alsoDoesServices,
+    referralCode
   } = route.params;
 
   const lists = useMemo(() => getServicesForSalonType(salonType), [salonType]);
@@ -151,6 +156,20 @@ export function ServicesStep({ navigation, route }: Props) {
         insertSide(menRows);
         insertSide(womenRows);
       });
+
+      // Billing bootstrap is intentionally outside the seed transaction —
+      // it has its own atomic writes and must not nest expo-sqlite txs.
+      ensureSalonBillingBootstrap(salonId);
+
+      const trimmedReferral = normalizeReferralCode(referralCode ?? "");
+      if (trimmedReferral.length > 0) {
+        const result = referralRepo.applyCode(salonId, trimmedReferral);
+        if (!result.ok && result.reason !== "already_applied") {
+          // Non-blocking — salon is usable; user can retry from Subscription.
+          // eslint-disable-next-line no-console
+          console.warn("[onboarding] referral apply failed", result.reason);
+        }
+      }
 
       // Publish the session salon id before AuthProvider re-resolves.
       setCurrentSalonId(salonId);

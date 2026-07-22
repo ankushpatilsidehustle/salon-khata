@@ -49,6 +49,8 @@ import {
 import { SalonRepository } from "@/repositories/salon-repository";
 import { ReceiptCard } from "@/components/domain/ReceiptCard";
 import type { RootStackParamList } from "@/application/AppNavigator";
+import { useSubscription } from "@/features/subscription/SubscriptionProvider";
+import { filterBillingEmployees } from "@/features/subscription/billing-employees";
 import { AddServicesSheet } from "./AddServicesSheet";
 import type { ServiceSelection } from "./AddServicesSheet";
 import { useShareReceipt } from "./useShareReceipt";
@@ -140,6 +142,7 @@ function formatDateLabel(iso: string): string {
 export function IncomeEntryScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const { entitlements } = useSubscription();
 
   const editingId = route.params?.transactionId ?? null;
   const isEditing = !!editingId;
@@ -231,6 +234,12 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
       for (const s of all) map.set(s.id, s);
       setServicesById(map);
     }, [])
+  );
+
+  /** Staff selectable on this bill given current subscription entitlements. */
+  const billingEmployees = useMemo(
+    () => filterBillingEmployees(employees, entitlements),
+    [employees, entitlements]
   );
 
   // Hydrate the form from an existing transaction when in edit mode. Runs
@@ -370,7 +379,14 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
   );
 
   const canSave =
-    billItems.length > 0 && billItems.every((i) => !!i.employeeId);
+    billItems.length > 0 &&
+    billItems.every((item) => {
+      if (entitlements.assignStaffOnBill) return !!item.employeeId;
+      // Soft-lock: owner employee required when present; otherwise allow
+      // owner-operated bills with no staff row (onboarding skipped owner emp).
+      if (!item.employeeId) return billingEmployees.length === 0;
+      return billingEmployees.some((e) => e.id === item.employeeId);
+    });
   const selectedIds = useMemo(
     () => billItems.map((i) => i.serviceId),
     [billItems]
@@ -404,6 +420,12 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
     const previousDefault = employeeId;
     const newEmployee = employees.find((e) => e.id === id);
     if (!newEmployee) return;
+    if (
+      !entitlements.assignStaffOnBill &&
+      newEmployee.is_owner !== 1
+    ) {
+      return;
+    }
     setEmployeeId(id);
     setBillItems((prev) =>
       prev.map((item) => {
@@ -430,10 +452,29 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
     }
   }
 
+  // Soft-lock: auto-bind the owner employee when staff assignment is blocked.
+  useEffect(() => {
+    if (entitlements.assignStaffOnBill) return;
+    if (billingEmployees.length === 0) return;
+    const owner = billingEmployees[0];
+    if (employeeId === owner.id) return;
+    if (employeeId && billingEmployees.some((e) => e.id === employeeId)) {
+      return;
+    }
+    handleSelectEmployee(owner.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entitlements.assignStaffOnBill, billingEmployees, employeeId]);
+
   /** Reassign a single service line to a specific employee. */
   function changeItemEmployee(serviceId: string, nextEmployeeId: string) {
     const nextEmployee = employees.find((e) => e.id === nextEmployeeId);
     if (!nextEmployee) return;
+    if (
+      !entitlements.assignStaffOnBill &&
+      nextEmployee.is_owner !== 1
+    ) {
+      return;
+    }
     setBillItems((prev) =>
       prev.map((item) => {
         if (item.serviceId !== serviceId) return item;
@@ -652,7 +693,14 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
   function handleSaveFromSelections(selections: ServiceSelection[]) {
     if (saving) return;
     const items = buildBillItems(selections);
-    if (items.length === 0 || items.some((i) => !i.employeeId)) return;
+    if (items.length === 0) return;
+    const staffOk = entitlements.assignStaffOnBill
+      ? items.every((i) => !!i.employeeId)
+      : items.every((i) => {
+          if (!i.employeeId) return billingEmployees.length === 0;
+          return billingEmployees.some((e) => e.id === i.employeeId);
+        });
+    if (!staffOk) return;
     setBillItems(items);
     setServicesSheetOpen(false);
     saveBill(items);
@@ -676,8 +724,15 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
 
       // Transaction-level employee: prefer the top-level shortcut selection;
       // otherwise fall back to the first line's employee.
-      const primaryEmployeeId = employeeId || items[0].employeeId;
-      const primaryEmployee = employees.find((e) => e.id === primaryEmployeeId)!;
+      const primaryEmployeeId = employeeId || items[0].employeeId || null;
+      const primaryEmployee = primaryEmployeeId
+        ? employees.find((e) => e.id === primaryEmployeeId) ?? null
+        : null;
+      const salon = salonRepo.getById(DEV_SALON_ID);
+      const ownerFallbackName =
+        salon?.owner_name?.trim() ||
+        salon?.business_name?.trim() ||
+        t("subscription.ownerFallbackName");
       const now = getUtcTimestamp();
       const txId = editingId ?? newId();
       const createdAt = editingCreatedAtRef.current ?? now;
@@ -707,7 +762,8 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
           id: txId,
           salon_id: DEV_SALON_ID,
           employee_id: primaryEmployeeId,
-          employee_name_snapshot: primaryEmployee.name,
+          employee_name_snapshot:
+            primaryEmployee?.name ?? ownerFallbackName,
           transaction_date: billDate,
           payment_mode: paymentMode,
           gross_amount: gross,
@@ -739,8 +795,11 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
             commission_rule_type_snapshot: effective?.rule_type ?? null,
             commission_rule_value_snapshot: effective?.value ?? null,
             commission_amount: item.commissionAmount,
-            employee_id: item.employeeId,
-            employee_name_snapshot: item.employeeName,
+            employee_id: item.employeeId || null,
+            employee_name_snapshot:
+              item.employeeName ||
+              lineEmployee?.name ||
+              ownerFallbackName,
             product_cost_snapshot: item.unitProductCost,
             created_at: now,
             updated_at: now,
@@ -952,15 +1011,31 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
           {/* ── Employee ───────────────────────────────────────────── */}
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>{t("income.whoServed")}</Text>
-            {employees.length === 0 ? (
-              <Text style={styles.emptyHint}>{t("income.noEmployees")}</Text>
+            {!entitlements.assignStaffOnBill ? (
+              <View style={styles.subscriptionBanner}>
+                <Ionicons
+                  name="lock-closed-outline"
+                  size={14}
+                  color={colors.status.warning}
+                />
+                <Text style={styles.subscriptionBannerText}>
+                  {t("subscription.billingStaffLocked")}
+                </Text>
+              </View>
+            ) : null}
+            {billingEmployees.length === 0 ? (
+              <Text style={styles.emptyHint}>
+                {entitlements.assignStaffOnBill
+                  ? t("income.noEmployees")
+                  : t("subscription.billingOwnerOnlyHint")}
+              </Text>
             ) : (
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.chipRow}
               >
-                {employees.map((emp) => {
+                {billingEmployees.map((emp) => {
                   const isSelected = employeeId === emp.id;
                   return (
                     <Pressable
@@ -1382,7 +1457,7 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
         initialSelectedIds={selectedIds}
         initialEmployeeByServiceId={initialEmployeeByServiceId}
         customerGender={customerGender}
-        employees={employees}
+        employees={billingEmployees}
         defaultEmployeeId={employeeId}
       />
 
@@ -1405,7 +1480,7 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
               style={styles.pickerList}
               contentContainerStyle={styles.pickerListContent}
             >
-              {employees.map((emp) => {
+              {billingEmployees.map((emp) => {
                 const current =
                   pickingEmployeeForItemId !== null &&
                   billItems.find(
@@ -1559,6 +1634,19 @@ const styles = StyleSheet.create({
   emptyHint: {
     ...typography.bodySmall,
     color: colors.text.muted
+  },
+  subscriptionBanner: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: spacing[2],
+    padding: spacing[3],
+    borderRadius: radius.sm,
+    backgroundColor: colors.status.warningBg
+  },
+  subscriptionBannerText: {
+    ...typography.caption,
+    color: colors.text.secondary,
+    flex: 1
   },
   chipRow: {
     flexDirection: "row",

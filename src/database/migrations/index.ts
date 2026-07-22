@@ -16,6 +16,7 @@ import { runMigration015 } from "./015-backup-history";
 import { runMigration016 } from "./016-sync-columns";
 import { runMigration017 } from "./017-sync-queue";
 import { runMigration018 } from "./018-sync-history";
+import { runMigration019 } from "./019-subscription-referral";
 
 /** Run every migration in order. Safe to call on every app start. */
 export function runAllMigrations(): void {
@@ -37,4 +38,5 @@ export function runAllMigrations(): void {
   runMigration016();
   runMigration017();
   runMigration018();
+  runMigration019();
 }

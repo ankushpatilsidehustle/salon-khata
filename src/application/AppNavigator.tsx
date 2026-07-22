@@ -16,6 +16,7 @@ import { TopServicesScreen } from "@/features/reports/TopServicesScreen";
 import { AdvanceEntryScreen } from "@/features/advances/AdvanceEntryScreen";
 import { AdvancesListScreen } from "@/features/advances/AdvancesListScreen";
 import { SyncStatusScreen } from "@/features/sync/SyncStatusScreen";
+import { SubscriptionScreen } from "@/features/subscription/SubscriptionScreen";
 import type { PeriodMode } from "@/domain/period";
 
 // ─── types ───────────────────────────────────────────────────────────────────
@@ -60,6 +61,8 @@ export type RootStackParamList = {
   TopServices: ReportRangeParams | undefined;
   /** Observability + retry/discard UI for the per-record sync engine. */
   SyncStatus: undefined;
+  /** Trial / plan status, referral code, upcoming paid plans. */
+  Subscription: undefined;
 };
 
 export type RootTabParamList = {
@@ -149,6 +152,10 @@ export function AppNavigator() {
         <RootStack.Screen
           name="SyncStatus"
           component={SyncStatusScreen}
+        />
+        <RootStack.Screen
+          name="Subscription"
+          component={SubscriptionScreen}
         />
       </RootStack.Navigator>
     </NavigationContainer>

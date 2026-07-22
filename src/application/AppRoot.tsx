@@ -14,6 +14,7 @@ import { SettingsRepository } from "@/repositories/settings-repository";
 import { OnboardingNavigator } from "@/features/onboarding/OnboardingNavigator";
 import { AuthNavigator } from "@/features/auth/AuthNavigator";
 import { AuthProvider, useAuth } from "@/features/auth/AuthProvider";
+import { SubscriptionProvider } from "@/features/subscription/SubscriptionProvider";
 import { initializeAppCheck } from "@/firebase/app-check";
 import { loadDeviceIdentity } from "@/device/device-identity";
 import { startNetworkManager } from "@/network/network-manager";
@@ -113,7 +114,11 @@ function AuthGate() {
   if (status === "signed-in-no-salon") {
     return <OnboardingNavigator onDone={refreshSalon} />;
   }
-  return <AppNavigator />;
+  return (
+    <SubscriptionProvider>
+      <AppNavigator />
+    </SubscriptionProvider>
+  );
 }
 
 function BootSplash({ label }: { label: string }) {

@@ -208,7 +208,8 @@ export function AddServicesSheet({
   );
   const allSelectedHaveEmployee =
     totalSelected > 0 &&
-    selectedServices.every((svc) => !!employeeByServiceId.get(svc.id));
+    (employees.length === 0 ||
+      selectedServices.every((svc) => !!employeeByServiceId.get(svc.id)));
   const canUseSaveShortcut =
     !!onSaveAndClose && totalSelected > 0 && allSelectedHaveEmployee;
 

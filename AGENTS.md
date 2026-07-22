@@ -83,6 +83,7 @@ Salon id = Firebase `user.uid`. Set via `src/session/current-salon.ts` (`DEV_SAL
 | Reports | `src/features/reports/` | Period selector; commission / top lists |
 | More | `src/features/more/` | Sync, export, account, dev reset |
 | Sync status UI | `src/features/sync/` | Queue depth / dead letters |
+| Subscription | `src/features/subscription/` | Trial/plan entitlements, referral code UI |
 
 ---
 
@@ -90,7 +91,9 @@ Salon id = Firebase `user.uid`. Set via `src/session/current-salon.ts` (`DEV_SAL
 
 Migrations: `src/database/migrations/` (001–018, idempotent). Client: `src/database/sqlite-client.ts`.
 
-**Business tables:** `salons`, `services`, `service_categories`, `employees`, `commission_rules`, `income_transactions`, `income_transaction_items`, `expenses`, `expense_categories`, `customers`, `employee_advances`
+**Business tables:** `salons`, `services`, `service_categories`, `employees`, `commission_rules`, `income_transactions`, `income_transaction_items`, `expenses`, `expense_categories`, `customers`, `employee_advances`, `salon_subscriptions`, `subscription_payments`, `referral_codes`, `referrals`
+
+**Catalog (local):** `subscription_plans`
 
 **Infra tables:** `db_meta`, `sync_queue`, `sync_state`, `conflict_log`, `sync_history`, `backup_history`
 
@@ -100,9 +103,10 @@ Shared row shape: `id`, `created_at`, `updated_at`, `deleted_at` + sync columns 
 
 Repos: one per aggregate under `src/repositories/*-repository.ts`.
 
-Domain services: `commission-service.ts`, `report-service.ts`, `money.ts`, `dates.ts`, `period.ts`, `phone.ts`, `id.ts`.
+Domain services: `commission-service.ts`, `report-service.ts`, `money.ts`, `dates.ts`, `period.ts`, `phone.ts`, `id.ts`, `subscription/` (entitlements + lifecycle).
 
-Schema detail: [`docs/database-schema.md`](docs/database-schema.md).
+Schema detail: [`docs/database-schema.md`](docs/database-schema.md).  
+Subscription PRD: [`docs/subscription/PRD-subscription-referral.md`](docs/subscription/PRD-subscription-referral.md).
 
 ---
 

@@ -91,6 +91,23 @@ service cloud.firestore {
       }
     }
 
+    // ── global referral index (Cloud Functions / Admin write only) ───────
+    // Clients may read to resolve a code while online; mutations go through
+    // Admin SDK so uniqueness + anti-abuse rules stay server-side.
+    match /referral_index/{code} {
+      allow read: if authed();
+      allow write: if false;
+    }
+
+    // Authoritative cross-salon referral claims (Admin / callable only).
+    match /referrals/{referralId} {
+      allow read: if authed() && (
+        resource.data.referrer_salon_id == request.auth.uid ||
+        resource.data.referred_salon_id == request.auth.uid
+      );
+      allow write: if false;
+    }
+
     // Everything else is denied. Explicit terminal rule so no future
     // top-level collection accidentally becomes readable.
     match /{document=**} {

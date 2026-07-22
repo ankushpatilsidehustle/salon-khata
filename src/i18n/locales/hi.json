@@ -523,6 +523,8 @@
     "title": "More",
     "staffAdvances": "Staff advances",
     "staffAdvancesSub": "Log cash given to employees between paydays",
+    "subscription": "Subscription & referral",
+    "subscriptionSub": "Trial status, plans, and your referral code",
     "syncNow": "Sync now",
     "syncNowSub": "Push local changes and pull the latest from cloud",
     "syncStatus": "Sync status",
@@ -534,6 +536,42 @@
     "logOutSub": "Sign out on this device",
     "deleteAccount": "Delete account",
     "deleteAccountSub": "Permanently remove your account and data"
+  },
+  "subscription": {
+    "title": "Subscription",
+    "currentPlan": "Current plan",
+    "remainingDays_one": "{{count}} day remaining",
+    "remainingDays_other": "{{count}} days remaining",
+    "validUntil": "Valid until {{date}}",
+    "expiredBanner": "Your trial has ended. You can still bill as the owner — subscribe to assign staff again.",
+    "billingStaffLocked": "Staff assignment is locked. Subscribe to assign employees on bills.",
+    "billingOwnerOnlyHint": "Owner-only billing is active. Add yourself as an employee, or subscribe to unlock staff.",
+    "ownerFallbackName": "Owner",
+    "featuresTitle": "What's included",
+    "features": {
+      "assignStaff": "Assign staff while billing",
+      "reports": "View reports & history",
+      "manageStaff": "Manage staff records",
+      "premium": "Premium features"
+    },
+    "referral": {
+      "title": "Referral",
+      "yourCode": "Your referral code",
+      "share": "Share code",
+      "shareMessage": "Join Salon Khata with my referral code: {{code}}",
+      "hint": "Friends can enter this once during setup. Rewards come later."
+    },
+    "plansTitle": "Plans",
+    "planDuration": "{{days}} days",
+    "paymentsComingSoon": "Payments are coming soon. Plan prices are shown for reference.",
+    "refresh": "Refresh status",
+    "status": {
+      "trial": "Free trial",
+      "active": "Active",
+      "grace": "Grace period",
+      "expired": "Expired",
+      "none": "No plan"
+    }
   },
   "backup": {
     "export": {
@@ -689,6 +727,9 @@
       "ownerName": "Your name",
       "ownerNamePlaceholder": "e.g. Priya",
       "ownerNameHelper": "Optional — used on receipts and reports.",
+      "referralCode": "Referral code (optional)",
+      "referralCodePlaceholder": "e.g. PRIYA7K2",
+      "referralCodeHelper": "If a friend invited you, enter their code once here.",
       "iDoServices": "I also do services",
       "iDoServicesHelper": "Add me as an employee so I can be picked on bills.",
       "iDoServicesNeedsName": "Add your name above to enable this.",

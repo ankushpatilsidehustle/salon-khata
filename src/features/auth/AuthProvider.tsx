@@ -28,6 +28,7 @@ import { syncScheduler } from "@/sync/sync-scheduler";
 import { unregisterBackgroundSyncTask } from "@/sync/background-sync-task";
 import { releaseLock } from "@/cloud/device-lock";
 import { ensureSalonMembership } from "@/cloud/salon-membership";
+import { ensureSalonBillingBootstrap } from "@/repositories/subscription-bootstrap";
 
 /**
  * Auth lifecycle states:
@@ -107,6 +108,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setCurrentSalonId(salon.id);
       setSalonId(salon.id);
       setStatus("signed-in");
+      // Trial + referral code bootstrap is local and idempotent. Must run
+      // before feature screens read entitlements.
+      try {
+        ensureSalonBillingBootstrap(salon.id);
+      } catch (err) {
+        // Non-fatal — screens fall back to locked entitlements until retry.
+        // eslint-disable-next-line no-console
+        console.warn("[auth] billing bootstrap failed", err);
+      }
       // Mirror the resolved salon id to persistent storage so the
       // background task worker can pick it up when the app isn't running,
       // then start the scheduler for the foreground triggers.
