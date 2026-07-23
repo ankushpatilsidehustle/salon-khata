@@ -6,7 +6,7 @@ import { OtpScreen } from "./OtpScreen";
 import type { PhoneConfirmation } from "@/firebase/auth";
 
 export type AuthStackParamList = {
-  Phone: undefined;
+  Phone: { prefillPhone?: string } | undefined;
   Otp: { e164Phone: string; confirmation: PhoneConfirmation };
 };
 

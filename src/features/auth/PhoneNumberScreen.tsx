@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
+import { Ionicons } from "@expo/vector-icons";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import { colors, radius, spacing, typography } from "@/design-system/tokens";
@@ -22,13 +23,18 @@ type Props = NativeStackScreenProps<AuthStackParamList, "Phone">;
 
 const COUNTRY_CODE = "+91";
 
-export function PhoneNumberScreen({ navigation }: Props) {
+export function PhoneNumberScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
-  const [phone, setPhone] = useState("");
+  const [phone, setPhone] = useState(route.params?.prefillPhone ?? "");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Keep only digits and cap at 10 (India NDC).
+  // Returning from OTP "Change" with a prefilled number.
+  useEffect(() => {
+    const prefill = route.params?.prefillPhone;
+    if (prefill) setPhone(prefill);
+  }, [route.params?.prefillPhone]);
+
   function handlePhoneChange(next: string) {
     const digits = next.replace(/\D/g, "").slice(0, 10);
     setPhone(digits);
@@ -67,6 +73,21 @@ export function PhoneNumberScreen({ navigation }: Props) {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <View style={styles.content}>
+          <View style={styles.brandRow}>
+            <View style={styles.brandIcon}>
+              <Ionicons name="cut-outline" size={28} color={colors.brand.primary} />
+            </View>
+            <Text style={styles.brandName}>{t("app.name")}</Text>
+          </View>
+
+          <View style={styles.heroIcon}>
+            <Ionicons
+              name="phone-portrait-outline"
+              size={36}
+              color={colors.brand.primary}
+            />
+          </View>
+
           <Text style={styles.title}>{t("auth.phone.title")}</Text>
           <Text style={styles.subtitle}>{t("auth.phone.subtitle")}</Text>
 
@@ -84,6 +105,8 @@ export function PhoneNumberScreen({ navigation }: Props) {
               autoFocus
               maxLength={10}
               accessibilityLabel={t("auth.phone.a11yLabel")}
+              returnKeyType="done"
+              onSubmitEditing={handleSubmit}
             />
           </View>
 
@@ -97,7 +120,7 @@ export function PhoneNumberScreen({ navigation }: Props) {
             onPress={handleSubmit}
             disabled={!canSubmit}
             accessibilityRole="button"
-            accessibilityLabel={t("auth.phone.continue")}
+            accessibilityLabel={t("auth.phone.sendOtp")}
             style={({ pressed }) => [
               styles.cta,
               !canSubmit && styles.ctaDisabled,
@@ -107,7 +130,7 @@ export function PhoneNumberScreen({ navigation }: Props) {
             {submitting ? (
               <ActivityIndicator color={colors.text.inverse} />
             ) : (
-              <Text style={styles.ctaLabel}>{t("auth.phone.continue")}</Text>
+              <Text style={styles.ctaLabel}>{t("auth.phone.sendOtp")}</Text>
             )}
           </Pressable>
           <Text style={styles.legal}>{t("auth.phone.legal")}</Text>
@@ -145,18 +168,45 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: spacing[5],
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[4],
     gap: spacing[3]
+  },
+  brandRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing[2],
+    marginBottom: spacing[4]
+  },
+  brandIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.md,
+    backgroundColor: colors.brand.accentLight,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  brandName: {
+    ...typography.h3,
+    color: colors.brand.primary
+  },
+  heroIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: radius.lg,
+    backgroundColor: colors.brand.accentLight,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing[1]
   },
   title: {
     ...typography.h1,
-    color: colors.text.primary,
-    marginTop: spacing[6]
+    color: colors.text.primary
   },
   subtitle: {
     ...typography.body,
     color: colors.text.secondary,
-    marginBottom: spacing[4]
+    marginBottom: spacing[3]
   },
   inputRow: {
     flexDirection: "row",
@@ -194,7 +244,7 @@ const styles = StyleSheet.create({
   helperText: {
     ...typography.caption,
     color: colors.text.muted,
-    marginTop: spacing[2]
+    marginTop: spacing[1]
   },
   footer: {
     padding: spacing[5],

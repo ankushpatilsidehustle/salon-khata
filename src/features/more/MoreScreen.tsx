@@ -12,6 +12,7 @@ import { colors, radius, spacing, typography } from "@/design-system/tokens";
 import { resetAppData } from "@/database/reset";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { AuthError } from "@/firebase/auth";
+import { formatE164ForDisplay } from "@/domain/phone";
 import { backupScheduler } from "@/backup/backup-scheduler";
 import { syncScheduler } from "@/sync/sync-scheduler";
 import type { RootStackParamList } from "@/application/AppNavigator";
@@ -21,7 +22,7 @@ type Nav = NativeStackNavigationProp<RootStackParamList>;
 export function MoreScreen() {
   const { t } = useTranslation();
   const navigation = useNavigation<Nav>();
-  const { signOut, deleteAccount } = useAuth();
+  const { signOut, deleteAccount, user } = useAuth();
   const { showSnackbar } = useSnackbar();
   const [busy, setBusy] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -250,6 +251,26 @@ export function MoreScreen() {
 
         <Text style={styles.sectionLabel}>{t("more.account")}</Text>
 
+        {user?.phoneNumber ? (
+          <View style={styles.credentialCard}>
+            <View style={styles.credentialIcon}>
+              <Ionicons
+                name="call-outline"
+                size={20}
+                color={colors.brand.primary}
+              />
+            </View>
+            <View style={styles.credentialCopy}>
+              <Text style={styles.credentialLabel}>
+                {t("more.mobileCredential")}
+              </Text>
+              <Text style={styles.credentialValue}>
+                {formatE164ForDisplay(user.phoneNumber)}
+              </Text>
+            </View>
+          </View>
+        ) : null}
+
         <Tile
           icon="log-out-outline"
           label={t("more.logOut")}
@@ -349,6 +370,36 @@ const styles = StyleSheet.create({
     ...typography.overline,
     color: colors.text.muted,
     marginTop: spacing[4]
+  },
+  credentialCard: {
+    alignItems: "center",
+    backgroundColor: colors.surface.default,
+    borderColor: colors.border.subtle,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: spacing[3],
+    padding: spacing[3]
+  },
+  credentialIcon: {
+    alignItems: "center",
+    backgroundColor: colors.brand.accentLight,
+    borderRadius: radius.full,
+    height: 36,
+    justifyContent: "center",
+    width: 36
+  },
+  credentialCopy: {
+    flex: 1,
+    gap: 2
+  },
+  credentialLabel: {
+    ...typography.caption,
+    color: colors.text.muted
+  },
+  credentialValue: {
+    ...typography.bodyEmphasis,
+    color: colors.text.primary
   },
   tile: {
     alignItems: "center",

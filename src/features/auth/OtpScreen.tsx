@@ -29,6 +29,13 @@ type Props = NativeStackScreenProps<AuthStackParamList, "Otp">;
 const OTP_LENGTH = 6;
 const RESEND_COOLDOWN_SEC = 30;
 
+/** Strip country code to the 10-digit local mobile for the Phone screen prefill. */
+function localDigitsFromE164(e164: string): string {
+  const digits = e164.replace(/\D/g, "");
+  if (digits.length >= 10) return digits.slice(-10);
+  return digits;
+}
+
 export function OtpScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
   const { e164Phone } = route.params;
@@ -43,8 +50,8 @@ export function OtpScreen({ navigation, route }: Props) {
   const [cooldown, setCooldown] = useState(RESEND_COOLDOWN_SEC);
 
   const inputRef = useRef<TextInput>(null);
+  const submittedCodeRef = useRef<string | null>(null);
 
-  // Countdown for the resend link.
   useEffect(() => {
     if (cooldown <= 0) return;
     const id = setInterval(() => {
@@ -58,17 +65,23 @@ export function OtpScreen({ navigation, route }: Props) {
       const digits = next.replace(/\D/g, "").slice(0, OTP_LENGTH);
       setCode(digits);
       if (error) setError(null);
+      // Allow re-submit after editing a previously failed code.
+      if (submittedCodeRef.current && digits !== submittedCodeRef.current) {
+        submittedCodeRef.current = null;
+      }
     },
     [error]
   );
 
   const handleSubmit = useCallback(async () => {
     if (code.length !== OTP_LENGTH || submitting) return;
+    if (submittedCodeRef.current === code) return;
+    submittedCodeRef.current = code;
     setSubmitting(true);
     setError(null);
     try {
       await verifyOtp(confirmation, code);
-      // Success — `onAuthStateChanged` in AuthProvider will swap the navigator.
+      // Success — AuthProvider's onAuthStateChanged swaps the navigator.
     } catch (err) {
       const message =
         err instanceof AuthError
@@ -79,12 +92,12 @@ export function OtpScreen({ navigation, route }: Props) {
     }
   }, [code, submitting, confirmation, t]);
 
-  // Auto-submit when 6 digits are entered.
+  // Auto-login as soon as all 6 digits are entered.
   useEffect(() => {
     if (code.length === OTP_LENGTH && !submitting) {
       void handleSubmit();
     }
-    // Intentionally omitting handleSubmit from deps to avoid double-fire on rebind.
+    // Intentionally omit handleSubmit to avoid double-fire on rebind.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [code]);
 
@@ -96,6 +109,7 @@ export function OtpScreen({ navigation, route }: Props) {
       const next = await signInWithPhone(e164Phone);
       setConfirmation(next);
       setCode("");
+      submittedCodeRef.current = null;
       setCooldown(RESEND_COOLDOWN_SEC);
       inputRef.current?.focus();
     } catch (err) {
@@ -109,7 +123,14 @@ export function OtpScreen({ navigation, route }: Props) {
     }
   }
 
+  function handleChangeNumber() {
+    navigation.navigate("Phone", {
+      prefillPhone: localDigitsFromE164(e164Phone)
+    });
+  }
+
   const boxes = Array.from({ length: OTP_LENGTH });
+  const displayPhone = formatE164ForDisplay(e164Phone);
 
   return (
     <SafeAreaView style={styles.root} edges={["top", "left", "right", "bottom"]}>
@@ -131,7 +152,14 @@ export function OtpScreen({ navigation, route }: Props) {
         <View style={styles.content}>
           <Text style={styles.title}>{t("auth.otp.title")}</Text>
           <Text style={styles.subtitle}>
-            {t("auth.otp.subtitle", { phone: formatE164ForDisplay(e164Phone) })}
+            {t("auth.otp.subtitle", { phone: displayPhone })}{" "}
+            <Text
+              style={styles.changeLink}
+              onPress={handleChangeNumber}
+              accessibilityRole="link"
+            >
+              {t("auth.otp.change")}
+            </Text>
           </Text>
 
           <Pressable
@@ -142,11 +170,16 @@ export function OtpScreen({ navigation, route }: Props) {
           >
             {boxes.map((_, idx) => {
               const char = code[idx] ?? "";
-              const active = idx === code.length;
+              const active = idx === code.length && !submitting;
+              const filled = char.length > 0;
               return (
                 <View
                   key={idx}
-                  style={[styles.box, active && styles.boxActive]}
+                  style={[
+                    styles.box,
+                    filled && styles.boxFilled,
+                    active && styles.boxActive
+                  ]}
                 >
                   <Text style={styles.boxChar}>{char}</Text>
                 </View>
@@ -154,7 +187,7 @@ export function OtpScreen({ navigation, route }: Props) {
             })}
           </Pressable>
 
-          {/* Hidden real input drives the boxes. */}
+          {/* Hidden real input drives the boxes (SMS auto-fill supported). */}
           <TextInput
             ref={inputRef}
             value={code}
@@ -165,6 +198,7 @@ export function OtpScreen({ navigation, route }: Props) {
             style={styles.hiddenInput}
             textContentType="oneTimeCode"
             autoComplete="sms-otp"
+            editable={!submitting}
           />
 
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -198,6 +232,7 @@ export function OtpScreen({ navigation, route }: Props) {
             onPress={handleSubmit}
             disabled={code.length !== OTP_LENGTH || submitting}
             accessibilityRole="button"
+            accessibilityLabel={t("auth.otp.verify")}
             style={({ pressed }) => [
               styles.cta,
               (code.length !== OTP_LENGTH || submitting) && styles.ctaDisabled,
@@ -248,7 +283,8 @@ const styles = StyleSheet.create({
     flex: 1
   },
   header: {
-    padding: spacing[4]
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3]
   },
   content: {
     flex: 1,
@@ -263,6 +299,10 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.text.secondary,
     marginBottom: spacing[4]
+  },
+  changeLink: {
+    ...typography.bodyEmphasis,
+    color: colors.text.link
   },
   boxesRow: {
     flexDirection: "row",
@@ -279,6 +319,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface.default,
     alignItems: "center",
     justifyContent: "center"
+  },
+  boxFilled: {
+    borderColor: colors.border.strong,
+    backgroundColor: colors.surface.raised
   },
   boxActive: {
     borderColor: colors.brand.primary,
