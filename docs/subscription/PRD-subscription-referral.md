@@ -31,7 +31,8 @@ Salon Khata is free to adopt, but staff-assignment during billing is the premium
 
 - Razorpay / Play Billing / App Store IAP
 - Multi-salon orgs, seats, or per-employee seats
-- Complex reward fulfillment UI (store reward intent only)
+- Complex reward fulfillment UI (store reward intent only) — **updated:**
+  fulfillment is Cloud Function–driven; Subscription screen explains the rule
 - Blocking login or wiping data on expiry
 - Hard-locking reports or historical records
 
@@ -84,6 +85,10 @@ Salon Khata is free to adopt, but staff-assignment during billing is the premium
 - FR-R3: Self-referral rejected.
 - FR-R4: Duplicate referred_salon rejected.
 - FR-R5: Track referrer, referred, dates, status; rewards in JSON.
+- FR-R6: Referrers may invite **unlimited** salons (no cap on outbound referrals).
+- FR-R7: When a referred salon activates a **paid** plan, the referrer receives **+30 days** (1 free month) stacked onto their current access window.
+- FR-R8: FR-R7 applies on **every** paid subscription/renewal by that referred salon (idempotent per `externalPaymentId`).
+- FR-R9: Claim + reward fulfillment are **Firebase-authoritative**; SQLite only caches via sync pull.
 
 **Plans**
 
@@ -252,17 +257,35 @@ Backfill: `AuthProvider` calls the same ensure on sign-in (idempotent).
 
 ## 6. Referral lifecycle
 
+**Product rule:** Share your code as often as you want. Each time a referred salon **pays for a plan**, you earn **+1 free month**.
+
 ```text
-Salon A created → referral_codes row + cloud referral_index upsert (on sync/online)
+Salon A created
+  → local referral_codes row
+  → sync push
+  → Cloud Function syncReferralIndex upserts /referral_index/{CODE}
+
 Salon B onboarding enters A's code
-  → reject if B already has a referrals row
-  → reject if code maps to B (self)
-  → online: claim via Cloud Function / Firestore transaction
-  → offline: store pending local referral; reconcile when online
-  → status pending → qualified (rules TBD, e.g. first bill) → rewarded
+  → client writes /referral_claim_requests/{id} (online)
+  → Cloud Function processReferralClaimRequest:
+       reject self / duplicate / missing code
+       create /referrals/{id} + /referral_by_referred/{B}
+       mirror referral entity into A and B salon sync trees
+  → status = pending (reward not granted yet)
+
+Salon B pays (Razorpay webhook / recordPaidSubscription)
+  → Cloud Function grantReferralRewardForPaidSubscription:
+       write B's paid salon_subscriptions (+ payment ledger)
+       if referral exists AND grant not already recorded for this paymentId:
+         extend A's access by +30 days (activated_by=referral_reward)
+         write grant under /referrals/{id}/reward_grants/{paymentId}
+         set referral status=rewarded, reward_count += 1
+  → A's device pulls new salon_subscriptions on next sync → entitlements unlock
 ```
 
-Rewards stay in `reward_json` until a later reward engine applies them (e.g. append subscription days via `activateOrRenewPlan`).
+Firebase owns uniqueness and reward math. Local SQLite never invents referral rewards.
+
+Idempotency key: `externalPaymentId` (one free month per successful paid event, not per button mash).
 
 ---
 
@@ -346,8 +369,9 @@ React: `SubscriptionProvider` caches entitlements and refreshes on focus / `db:d
 
 | Endpoint / callable | Purpose |
 | --- | --- |
-| `claimReferral({ code, referredSalonId })` | Atomic cross-salon claim |
-| `activateSubscriptionFromPayment({...})` | Webhook/admin → renew |
+| `claimReferral` / `processReferralClaimRequest` | Atomic cross-salon claim |
+| `recordPaidSubscription` (+ webhook) | Paid activation + referrer +30d grant |
+| `syncReferralIndex` | Mirror codes → `/referral_index` |
 | `GET /catalog/plans` | Optional remote plan UPSERT |
 
 Client payment SDK is out of scope; it only needs to call `activateOrRenew` after success.

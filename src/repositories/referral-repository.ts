@@ -44,8 +44,9 @@ export type ApplyReferralResult =
 
 const DEFAULT_REWARD: ReferralReward = {
   type: "subscription_days",
-  days: 7,
-  status: "pending"
+  days: 30,
+  status: "pending",
+  trigger: "referred_paid_subscription"
 };
 
 export class ReferralRepository {

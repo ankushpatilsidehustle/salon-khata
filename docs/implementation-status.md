@@ -233,10 +233,13 @@ Shipped locally:
 - `SubscriptionProvider` + More → Subscription screen
 - Income entry soft-lock: after trial/paid window, only owner staff
   assignable on bills
-- Optional referral code on Business Setup (once per salon)
+- Optional referral code on Business Setup (Firebase claim when online)
+- **Referral reward:** +1 free month to referrer on every referred paid
+  subscription — granted by Cloud Functions (`recordPaidSubscription`),
+  synced down to SQLite (not computed locally)
 - Sync entity types registered for salon-scoped subscription tables
-- Firestore rules stubs for `/referral_index` + top-level `/referrals`
-- Payment gateway **not** implemented — `activateOrRenew` is the hook
+- Firestore rules stubs for `/referral_index`, `/referrals`, claim queue
+- Payment gateway **not** implemented — webhook hook is ready
 
 ### 2.12 Global overlays
 

@@ -147,6 +147,14 @@ export class SubscriptionPlanRepository {
     );
   }
 
+  /**
+   * Cloud-authored subscriptions may store `plan_id` as the stable plan
+   * code (`monthly`, `trial`, …). Resolve by id first, then by code.
+   */
+  getByIdOrCode(idOrCode: string): SubscriptionPlanRecord | null {
+    return this.getById(idOrCode) ?? this.getByCode(idOrCode);
+  }
+
   listEnabled(): SubscriptionPlanRecord[] {
     return database.getAllSync<SubscriptionPlanRecord>(
       `SELECT * FROM subscription_plans

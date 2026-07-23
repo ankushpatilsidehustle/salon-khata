@@ -559,7 +559,8 @@
       "yourCode": "Your referral code",
       "share": "Share code",
       "shareMessage": "Join Salon Khata with my referral code: {{code}}",
-      "hint": "Friends can enter this once during setup. Rewards come later."
+      "hint": "Share freely — when each friend buys a plan, you get 1 free month. Unlimited referrals.",
+      "rewardRule": "Reward: +1 month free every time a referred salon subscribes."
     },
     "plansTitle": "Plans",
     "planDuration": "{{days}} days",

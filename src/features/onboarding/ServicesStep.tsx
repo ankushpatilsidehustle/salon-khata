@@ -35,8 +35,9 @@ import type { OnboardingStackParamList } from "./OnboardingNavigator";
 import { useOnboardingDone } from "./OnboardingNavigator";
 import { StepHeader } from "./components/StepHeader";
 import { ensureSalonBillingBootstrap } from "@/repositories/subscription-bootstrap";
-import { ReferralRepository } from "@/repositories/referral-repository";
+import { claimReferralOnline } from "@/cloud/referral-claim";
 import { normalizeReferralCode } from "@/domain/subscription";
+import { syncScheduler } from "@/sync/sync-scheduler";
 
 type Props = NativeStackScreenProps<OnboardingStackParamList, "Services">;
 
@@ -46,7 +47,6 @@ const salonRepo = new SalonRepository();
 const employeeRepo = new EmployeeRepository();
 const serviceRepo = new ServiceRepository();
 const categoryRepo = new ServiceCategoryRepository();
-const referralRepo = new ReferralRepository();
 
 function ownerGenderFor(salonType: SalonType): EmployeeGender {
   if (salonType === "male") return "male";
@@ -161,18 +161,26 @@ export function ServicesStep({ navigation, route }: Props) {
       // it has its own atomic writes and must not nest expo-sqlite txs.
       ensureSalonBillingBootstrap(salonId);
 
+      // Publish referral code + claim online. Firebase is authoritative for
+      // cross-salon referral claims and later reward grants.
+      setCurrentSalonId(salonId);
+      void syncScheduler.start(salonId);
+      void syncScheduler.runNow().catch(() => {});
+
       const trimmedReferral = normalizeReferralCode(referralCode ?? "");
       if (trimmedReferral.length > 0) {
-        const result = referralRepo.applyCode(salonId, trimmedReferral);
-        if (!result.ok && result.reason !== "already_applied") {
-          // Non-blocking — salon is usable; user can retry from Subscription.
-          // eslint-disable-next-line no-console
-          console.warn("[onboarding] referral apply failed", result.reason);
-        }
+        void claimReferralOnline({
+          code: trimmedReferral,
+          referredSalonId: salonId
+        }).then((result) => {
+          if (!result.ok && result.reason !== "already_applied") {
+            // Non-blocking — salon is usable; user can retry from Subscription.
+            // eslint-disable-next-line no-console
+            console.warn("[onboarding] referral claim failed", result.reason);
+          }
+        });
       }
 
-      // Publish the session salon id before AuthProvider re-resolves.
-      setCurrentSalonId(salonId);
       showSnackbar(t("onboarding.welcome", { name: businessName }));
       onDone();
     } catch (err) {

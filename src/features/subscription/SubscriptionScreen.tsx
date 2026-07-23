@@ -152,6 +152,9 @@ export function SubscriptionScreen() {
             {t("subscription.referral.share")}
           </Button>
           <Text style={styles.codeHint}>{t("subscription.referral.hint")}</Text>
+          <Text style={styles.codeHint}>
+            {t("subscription.referral.rewardRule")}
+          </Text>
         </View>
 
         <Text style={styles.sectionTitle}>{t("subscription.plansTitle")}</Text>

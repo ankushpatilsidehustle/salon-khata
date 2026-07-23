@@ -44,12 +44,28 @@ export function getEntitlementsForSalon(
   if (!latest) {
     return lockedEntitlements();
   }
-  const plan = planRepo.getById(latest.plan_id);
+  const plan = planRepo.getByIdOrCode(latest.plan_id);
+  let planCode = plan?.code ?? null;
+  let planName = plan?.name ?? null;
+  if (!plan) {
+    try {
+      const meta = JSON.parse(latest.metadata_json || "{}") as {
+        plan_code?: string;
+      };
+      if (meta.plan_code) {
+        const byMeta = planRepo.getByCode(meta.plan_code);
+        planCode = byMeta?.code ?? meta.plan_code;
+        planName = byMeta?.name ?? null;
+      }
+    } catch {
+      // ignore malformed metadata
+    }
+  }
   return resolveEntitlements({
     subscription: latest,
     planFeaturesJson: plan?.features_json,
-    planCode: plan?.code ?? null,
-    planName: plan?.name ?? null,
+    planCode,
+    planName,
     now
   });
 }
