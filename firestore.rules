@@ -91,6 +91,48 @@ service cloud.firestore {
       }
     }
 
+    // ── global referral index (Cloud Functions / Admin write only) ───────
+    match /referral_index/{code} {
+      allow read: if authed();
+      allow write: if false;
+    }
+
+    // Authoritative cross-salon referral claims (Admin / callable only).
+    match /referrals/{referralId} {
+      allow read: if authed() && (
+        resource.data.referrer_salon_id == request.auth.uid ||
+        resource.data.referred_salon_id == request.auth.uid
+      );
+      allow write: if false;
+
+      match /reward_grants/{grantId} {
+        allow read: if authed() && (
+          get(/databases/$(database)/documents/referrals/$(referralId))
+            .data.referrer_salon_id == request.auth.uid ||
+          get(/databases/$(database)/documents/referrals/$(referralId))
+            .data.referred_salon_id == request.auth.uid
+        );
+        allow write: if false;
+      }
+    }
+
+    // Uniqueness helper for one claim per referred salon (Admin write only).
+    match /referral_by_referred/{referredSalonId} {
+      allow read: if authed() && referredSalonId == request.auth.uid;
+      allow write: if false;
+    }
+
+    // Client enqueue for online referral claims. Function processes + writes
+    // the authoritative /referrals doc. Caller may only create for self.
+    match /referral_claim_requests/{requestId} {
+      allow create: if authed() &&
+        request.resource.data.referred_salon_id == request.auth.uid &&
+        request.resource.data.status == 'queued';
+      allow read: if authed() &&
+        resource.data.referred_salon_id == request.auth.uid;
+      allow update, delete: if false;
+    }
+
     // Everything else is denied. Explicit terminal rule so no future
     // top-level collection accidentally becomes readable.
     match /{document=**} {

@@ -87,6 +87,44 @@ export class EmployeeRepository {
     );
   }
 
+  /** Active owner employee row, if onboarding created one. */
+  findOwner(salonId: string): EmployeeRecord | null {
+    return (
+      database.getFirstSync<EmployeeRecord>(
+        `SELECT * FROM employees
+         WHERE salon_id = ? AND is_owner = 1 AND deleted_at IS NULL
+         ORDER BY is_active DESC, created_at ASC
+         LIMIT 1`,
+        [salonId]
+      ) ?? null
+    );
+  }
+
+  /**
+   * Idempotent: returns the owner employee, creating a minimal active
+   * owner row when onboarding skipped "I also do services". Needed because
+   * `income_transactions.employee_id` is NOT NULL.
+   */
+  ensureOwnerEmployee(
+    salonId: string,
+    name: string
+  ): EmployeeRecord {
+    const existing = this.findOwner(salonId);
+    if (existing) {
+      if (existing.is_active !== 1) {
+        this.update(existing.id, salonId, { isActive: true });
+        return this.getById(existing.id, salonId)!;
+      }
+      return existing;
+    }
+    const trimmed = name.trim() || "Owner";
+    return this.insert({
+      salonId,
+      name: trimmed,
+      isOwner: true
+    });
+  }
+
   insert(data: NewEmployee): EmployeeRecord {
     const id = newId();
     const now = getUtcTimestamp();
