@@ -39,8 +39,8 @@ onboarding (first time) → main tabs.
 | `src/firebase/app-check.ts` | `initializeAppCheck()` — Debug provider under `__DEV__`, Play Integrity / DeviceCheck in prod; prints debug token to console |
 | `src/features/auth/AuthProvider.tsx` | Context. States: `loading | signed-out | signed-in-no-salon | signed-in`. 3 s splash timeout guard. Also starts sync scheduler + backup scheduler + membership on sign-in |
 | `src/features/auth/AuthNavigator.tsx` | Native stack: `Phone` → `Otp` |
-| `src/features/auth/PhoneNumberScreen.tsx` | +91 prefix, 10-digit input |
-| `src/features/auth/OtpScreen.tsx` | 6 boxes + auto-submit on 6th digit, 30 s resend cooldown, iOS/Android SMS auto-fill |
+| `src/features/auth/PhoneNumberScreen.tsx` | Brand + icon, +91 prefix, 10-digit input, Send OTP |
+| `src/features/auth/OtpScreen.tsx` | 6 boxes + auto-submit on 6th digit, Change number, 30 s resend, SMS auto-fill |
 | `src/domain/phone.ts` | `toE164`, `formatE164ForDisplay` |
 
 Sign-out and Delete-account are surfaced on `MoreScreen` under an
