@@ -1,0 +1,755 @@
+{
+  "app": {
+    "name": "Salon Khata"
+  },
+  "common": {
+    "loading": "लोड होत आहे",
+    "save": "जतन करा",
+    "offlineReady": "ऑफलाइन चालते",
+    "profile": "प्रोफाइल",
+    "back": "मागे जा",
+    "cancel": "रद्द करा",
+    "delete": "हटवा",
+    "discard": "सोडून द्या",
+    "done": "पूर्ण",
+    "clear": "साफ करा",
+    "active": "सक्रिय",
+    "inactive": "निष्क्रिय",
+    "discardChanges": "बदल सोडून द्यायचे?",
+    "discardChangesMessage": "तुमचे न जतन केलेले बदल आहेत. तुम्हाला ते नक्की सोडून द्यायचे आहेत का?"
+  },
+  "entries": {
+    "title": "व्यवस्थापन",
+    "tabTitle": "व्यवस्थापन",
+    "hub": {
+      "employees": { "sub": "कर्मचारी जोडा आणि व्यवस्थापित करा" },
+      "services": { "sub": "हेअरकट, ट्रीटमेंट्स आणि अधिक" },
+      "commission": {
+      "label": "कमिशन",
+      "sub": "कर्मचारी आणि सेवेनुसार दर ठरवा"
+    },
+      "customers": {
+        "label": "ग्राहक",
+        "sub": "तुमचे नियमित ग्राहक आणि त्यांचा भेट इतिहास"
+      },
+      "expenses": {
+        "label": "खर्च",
+        "sub": "Wave 5 मध्ये येत आहे"
+      }
+    }
+  },
+  "employees": {
+    "title": "कर्मचारी",
+    "active": "सक्रिय",
+    "inactive": "निष्क्रिय",
+    "empty": {
+      "icon": "👥",
+      "title": "अजून कर्मचारी नाहीत",
+      "body": "उत्पन्न आणि कमिशन ट्रॅक करायला तुमचे कर्मचारी जोडा."
+    },
+    "add": "कर्मचारी जोडा",
+    "edit": "कर्मचारी संपादित करा",
+    "name": "नाव",
+    "nameRequired": "नाव आवश्यक आहे",
+    "namePlaceholder": "उदा. Priya, Rahul",
+    "address": "पत्ता",
+    "addressPlaceholder": "घर / रस्ता / शहर (ऐच्छिक)",
+    "mobile": "मोबाइल नंबर",
+    "mobilePlaceholder": "10-अंकी नंबर",
+    "gender": "लिंग",
+    "genderOptions": {
+      "male": "पुरुष",
+      "female": "स्त्री",
+      "other": "इतर"
+    },
+    "joiningDate": "रुजू होण्याची तारीख",
+    "joiningDatePlaceholder": "तारीख निवडा",
+    "compensation": {
+      "label": "पगार किंवा कमिशन",
+      "salary": "पगार",
+      "commission": "कमिशन",
+      "hint": "या कर्मचाऱ्याला पैसे कसे दिले जातात ते निवडा (ऐच्छिक)."
+    },
+    "salaryAmount": "मासिक पगार (₹)",
+    "salaryPlaceholder": "उदा. 15000",
+    "salaryRequired": "वैध पगाराची रक्कम भरा",
+    "commissionPercent": "कमिशन (%)",
+    "commissionPlaceholder": "उदा. 40",
+    "commissionRequired": "0 ते 100 दरम्यान टक्केवारी भरा",
+    "perServiceRules": {
+      "title": "सेवेनुसार कमिशन",
+      "subtitle": "विशिष्ट सेवांसाठी डिफॉल्ट बदला (उदा. 35% हेड मसाज, 50% केराटिन).",
+      "countZero": "कोणतेही बदल नाहीत — सर्व सेवांसाठी डिफॉल्ट लागू",
+      "countOne": "1 बदल सेट केला",
+      "countMany": "{{count}} बदल सेट केले",
+      "hintAddMode": "सेवेनुसार दर सेट करण्यासाठी आधी कर्मचारी जतन करा."
+    },
+    "activeLabel": "सक्रिय",
+    "deleteAction": "कर्मचारी हटवा",
+    "deleteConfirm": {
+      "title": "कर्मचारी हटवायचा?",
+      "message": "यामुळे कर्मचारी काढला जाईल. आधीचे व्यवहार बदलणार नाहीत."
+    },
+    "saved": "कर्मचारी जतन केला",
+    "deleted": "कर्मचारी हटवला",
+    "ownerBadge": "मालक",
+    "ownerHint": "सेटअपदरम्यान आपोआप तयार केले — हे तुम्ही आहात."
+  },
+  "services": {
+    "title": "सेवा",
+    "uncategorized": "वर्ग नसलेले",
+    "filter": {
+      "all": "सर्व"
+    },
+    "empty": {
+      "icon": "✂️",
+      "title": "अजून सेवा नाहीत",
+      "body": "हेअरकट, ट्रीटमेंट्स आणि इतर सेवा जोडा."
+    },
+    "add": "सेवा जोडा",
+    "edit": "सेवा संपादित करा",
+    "name": "सेवेचे नाव",
+    "nameRequired": "सेवेचे नाव आवश्यक आहे",
+    "namePlaceholder": "उदा. Haircut, Facial",
+    "category": "वर्ग",
+    "categoryPlaceholder": "वर्ग निवडा",
+    "categoryRequired": "कृपया वर्ग निवडा",
+    "malePrice": "पुरुष किंमत (₹)",
+    "femalePrice": "स्त्री किंमत (₹)",
+    "priceAtLeastOne": "किमान एक किंमत भरा",
+    "priceHint": "त्या लिंगासाठी सेवा दिली जात नसेल तर किंमत रिकामी ठेवा.",
+    "pricePlaceholder": "0",
+    "productCost": "प्रति युनिट उत्पादन खर्च (₹)",
+    "productCostHint": "ऐच्छिक. टक्केवारी नियमांमध्ये कमिशनपूर्वी वजा होणारा साहित्य खर्च (कलर, वॅक्स, किट).",
+    "activeLabel": "सक्रिय",
+    "saved": "सेवा जतन केली",
+    "deleted": "सेवा हटवली"
+  },
+  "categories": {
+    "pick": "वर्ग निवडा",
+    "add": "वर्ग जोडा",
+    "name": "वर्गाचे नाव",
+    "nameRequired": "वर्गाचे नाव आवश्यक आहे",
+    "namePlaceholder": "उदा. Hair, Facial, Bridal",
+    "activeLabel": "सक्रिय",
+    "empty": "अजून वर्ग नाहीत"
+  },
+  "dashboard": {
+    "title": "आज",
+    "subtitle": "तुमची salon वही, इंटरनेट नसतानाही तयार.",
+    "businessNameFallback": "Salon Khata",
+    "snapshotLabel": "आजचा आढावा",
+    "activityLabel": "आजची हालचाल",
+    "tabIncome": "उत्पन्न",
+    "tabExpenses": "खर्च",
+    "income": {
+      "today": "आजचे उत्पन्न"
+    },
+    "expenses": {
+      "today": "आजचा खर्च"
+    },
+    "commission": {
+      "today": "कर्मचारी कमिशन",
+      "hint": "कर्मचारीनुसार तपशीलासाठी टॅप करा"
+    },
+    "net": {
+      "today": "निव्वळ जमा",
+      "formula": "उत्पन्न − खर्च − कमिशन"
+    },
+    "todayIncome": "आजचे उत्पन्न",
+    "todayExpenses": "आजचा खर्च",
+    "netCollection": "निव्वळ जमा",
+    "employeeCommission": "कर्मचारी कमिशन",
+    "recentTransactions": "अलीकडील व्यवहार",
+    "emptyTransactions": "अजून व्यवहार नाहीत",
+    "recent": {
+      "title": "अलीकडील व्यवहार",
+      "viewAll": "सर्व पहा (आज {{count}})"
+    },
+    "empty": {
+      "title": "अजून उत्पन्न नाही",
+      "body": "आजची एकूण रक्कम पाहण्यासाठी तुमची पहिली नोंद जोडा.",
+      "icon": "📥"
+    },
+    "delta": {
+      "up": "कालच्या तुलनेत {{amount}}",
+      "down": "कालच्या तुलनेत {{amount}}"
+    }
+  },
+  "commissionSummary": {
+    "title": "कमिशन",
+    "totalLabel": "एकूण कमिशन",
+    "sectionPerEmployee": "कर्मचारीनुसार",
+    "lineCount_one": "{{count}} बिल",
+    "lineCount_other": "{{count}} बिले",
+    "empty": {
+      "title": "या कालावधीत कमिशन नाही",
+      "body": "बिल नोंदवल्यावर कमिशन येथे दिसेल."
+    }
+  },
+  "employeeCommissionDetail": {
+    "title": "{{name}}",
+    "totalLabel": "{{name}} चे कमिशन",
+    "servicesSection": "केलेल्या सेवा",
+    "ruleFixed": "{{amount}} ठरलेले",
+    "rulePercent": "{{percent}}% {{lineAmount}} पैकी",
+    "rulePercentWithProduct": "{{percent}}% {{netAmount}} पैकी ({{lineAmount}} − {{productCost}} भाग)",
+    "ruleNone": "कमिशन नियम नाही",
+    "quantityMultiplier": "× {{quantity}}",
+    "customerLabel": "ग्राहक: {{name}}",
+    "noCustomer": "Walk-in",
+    "empty": {
+      "title": "या कालावधीत बिले नाहीत",
+      "body": "या कर्मचाऱ्याने केलेल्या सेवा येथे दिसतील."
+    }
+  },
+  "reports": {
+    "title": "रिपोर्ट्स",
+    "period": {
+      "day": "दिवस",
+      "week": "आठवडा",
+      "month": "महिना",
+      "custom": "कस्टम",
+      "prev": "मागील कालावधी",
+      "next": "पुढील कालावधी",
+      "customTitle": "कस्टम कालावधी",
+      "startDate": "सुरुवातीची तारीख",
+      "endDate": "शेवटची तारीख",
+      "rangeInvalid": "सुरुवातीची तारीख शेवटच्या तारखेच्या आधी किंवा त्याच दिवशी असावी."
+    },
+    "metrics": {
+      "income": "उत्पन्न",
+      "expenses": "खर्च",
+      "net": "निव्वळ जमा",
+      "netFormula": "उत्पन्न − खर्च − कमिशन",
+      "commission": "कर्मचारी कमिशन",
+      "commissionHint": "कर्मचारीनुसार तपशीलासाठी टॅप करा",
+      "billCount": "बिले",
+      "avgBill": "सरासरी बिल मूल्य",
+      "billStats": "बिल आकडेवारी",
+      "topEmployees": "टॉप कर्मचारी",
+      "topServices": "टॉप सेवा",
+      "paymentSplit": "पेमेंट विभागणी",
+      "newVsRepeat": "ग्राहक",
+      "transactions": "व्यवहार",
+      "viewAll": "सर्व पहा",
+      "cash": "रोख",
+      "upi": "UPI",
+      "card": "कार्ड",
+      "credit": "उधारी",
+      "other": "इतर",
+      "walkIn": "Walk-in",
+      "walkIn_bill_one": "{{count}} walk-in बिल",
+      "walkIn_bill_other": "{{count}} walk-in बिले",
+      "newCustomer": "नवीन",
+      "repeatCustomer": "पुन्हा आलेले",
+      "share": "{{percent}}%",
+      "billCountLabel_one": "{{count}} बिल",
+      "billCountLabel_other": "{{count}} बिले",
+      "qtyLabel_one": "{{count}} विकले",
+      "qtyLabel_other": "{{count}} विकले"
+    },
+    "empty": {
+      "title": "या कालावधीत हालचाल नाही",
+      "body": "येथे पाहण्यासाठी उत्पन्न नोंद किंवा खर्च जोडा.",
+      "cta": "उत्पन्न जोडा"
+    },
+    "topEmployeesScreen": {
+      "title": "टॉप कर्मचारी",
+      "empty": {
+        "title": "या कालावधीत कमाई नाही",
+        "body": "बिले नोंदवल्यावर टॉप कमावणारे येथे दिसतील."
+      }
+    },
+    "topServicesScreen": {
+      "title": "टॉप सेवा",
+      "empty": {
+        "title": "या कालावधीत सेवा विकल्या नाहीत",
+        "body": "टॉप सेवा ट्रॅक करायला बिल जोडा."
+      }
+    }
+  },
+  "customers": {
+    "title": "ग्राहक",
+    "add": "ग्राहक जोडा",
+    "edit": "ग्राहक संपादित करा",
+    "search": "नाव किंवा फोन शोधा",
+    "empty": {
+      "icon": "👤",
+      "title": "अजून ग्राहक नाहीत",
+      "body": "तुमची यादी तयार करण्यासाठी ग्राहक जोडा किंवा फोन नंबरसह बिल नोंदवा."
+    },
+    "form": {
+      "name": "नाव",
+      "namePlaceholder": "उदा. Priya, Rahul",
+      "phone": "फोन",
+      "phonePlaceholder": "10-अंकी नंबर",
+      "nameRequired": "नाव आवश्यक आहे",
+      "phoneRequired": "10-अंकी फोन नंबर भरा",
+      "duplicate": "या फोनसह ग्राहक आधीच आहे",
+      "duplicateJump": "विद्यमान उघडा"
+    },
+    "stats": {
+      "visits_one": "{{count}} भेट",
+      "visits_other": "{{count}} भेटी",
+      "noVisits": "अजून भेटी नाहीत",
+      "totalSpend": "एकूण खर्च",
+      "lastVisit": "शेवटची भेट",
+      "lastVisitOn": "शेवटची भेट {{date}}"
+    },
+    "actions": {
+      "call": "कॉल करा",
+      "whatsapp": "WhatsApp",
+      "edit": "संपादित करा",
+      "delete": "हटवा"
+    },
+    "pastBills": "मागील बिले",
+    "pastBillsEmpty": "या ग्राहकासाठी अजून मागील बिले नाहीत.",
+    "saved": "ग्राहक जतन केला",
+    "deleted": "ग्राहक हटवला",
+    "deleteConfirm": {
+      "title": "ग्राहक हटवायचा?",
+      "message": "त्यांची मुख्य नोंद हटवली जाईल पण मागील बिले तुमच्या इतिहासात राहतील."
+    },
+    "callUnavailable": "या डिव्हाइसवर फोन डायलर उघडता येत नाही.",
+    "whatsappUnavailable": "या डिव्हाइसवर WhatsApp इंस्टॉल केलेले नाही."
+  },
+  "income": {
+    "add": "उत्पन्न जोडा",
+    "addIncome": "उत्पन्न जोडा",
+    "newBill": "नवीन बिल",
+    "editBill": "बिल संपादित करा",
+    "updateBill": "बिल अपडेट करा",
+    "previewTitle": "बिल जतन झाले! ग्राहकाला पाठवायचे?",
+    "whoServed": "सेवा कोणी दिली?",
+    "noEmployees": "बिल नोंदवण्यासाठी आधी कर्मचारी जोडा",
+    "customer": "ग्राहक",
+    "male": "पुरुष",
+    "female": "स्त्री",
+    "genderHint": "किंमतीवर परिणाम होतो",
+    "date": "बिल तारीख",
+    "services": "सेवा",
+    "addServices": "सेवा जोडा",
+    "editSelection": "निवड संपादित करा",
+    "addSelected": "निवडलेल्या सेवा जोडा",
+    "addSelectedCount": "{{count}} सेवा जोडा",
+    "addSelectedCount_other": "{{count}} सेवा जोडा",
+    "noServices": "आधी सेवा जोडा",
+    "noServicesTitle": "सक्रिय सेवा नाहीत",
+    "noServicesBody": "येथे निवडण्यासाठी Services स्क्रीनवरून सेवा जोडा.",
+    "each": "प्रत्येकी",
+    "bill": "बिल",
+    "subtotal": "उपएकूण",
+    "commission": "कमिशन (मालकाने द्यायचे)",
+    "commissionShort": "कमि. {{amount}}",
+    "discount": "सूट",
+    "discountPercent": "% टक्केवारी",
+    "discountFlat": "₹ ठरलेली रक्कम",
+    "discountApplied": "सूट लागू झाली",
+    "discountInvalid": "वैध सूट मूल्य भरा",
+    "discountMax": "सूट 100% पेक्षा जास्त असू शकत नाही",
+    "total": "एकूण",
+    "paymentMode": "पेमेंट",
+    "modes": {
+      "cash": "रोख",
+      "upi": "UPI",
+      "credit": "उधारी",
+      "card": "कार्ड",
+      "other": "इतर"
+    },
+    "creditRequiresCustomerTitle": "उधारीसाठी ग्राहक आवश्यक",
+    "creditRequiresCustomerHint": "उधारीची बिले नंतर वसुली करता यावी म्हणून ग्राहक आवश्यक असतो.",
+    "creditRequiresCustomerBody": "उधारीचे बिल जतन करण्यापूर्वी ग्राहकाचा फोन आणि नाव जोडा.",
+    "saveBill": "बिल जतन करा",
+    "saved": "बिल जतन झाले!",
+    "saveFailed": "बिल जतन करता आले नाही",
+    "selectEmployee": "कर्मचारी निवडा",
+    "selectService": "सेवा निवडा",
+    "assignedTo": "ज्यांना दिले",
+    "changeEmployee": "कर्मचारी बदला",
+    "customerSection": "ग्राहक जोडा (ऐच्छिक)",
+    "customerSectionSet": "ग्राहक: {{label}}",
+    "customerPhone": "फोन",
+    "customerPhonePlaceholder": "10-अंकी नंबर",
+    "customerName": "नाव",
+    "customerNamePlaceholder": "उदा. Priya, Rahul",
+    "customerMatched": "विद्यमान ग्राहक",
+    "detail": {
+      "title": "बिल",
+      "edit": "संपादित करा",
+      "delete": "हटवा",
+      "deleteConfirmTitle": "हे बिल हटवायचे?",
+      "deleteConfirmBody": "यामुळे बिल आणि त्याचे कमिशन आजच्या एकूण रकमेतून काढले जाईल. हे परत करता येणार नाही.",
+      "deleteConfirmCta": "हटवा",
+      "deleted": "बिल हटवले",
+      "deleteFailed": "बिल हटवता आले नाही",
+      "billTime": "{{time}} वाजता नोंदवले"
+    }
+  },
+  "receipt": {
+    "title": "पावती",
+    "date": "तारीख",
+    "customer": "ग्राहक",
+    "servedBy": "सेवा दिली",
+    "service": "सेवा",
+    "qty": "प्रमाण",
+    "amount": "रक्कम",
+    "subtotal": "उपएकूण",
+    "discount": "सूट",
+    "total": "एकूण",
+    "paidBy": "पेमेंटद्वारे",
+    "thankYou": "भेट दिल्याबद्दल धन्यवाद!",
+    "shareOnWhatsapp": "WhatsApp वर शेअर करा",
+    "shareReceipt": "पावती शेअर करा",
+    "shareTitle": "पावती पाठवा",
+    "shareFailed": "पावती शेअर करता आली नाही",
+    "shareUnavailable": "या डिव्हाइसवर शेअरिंग उपलब्ध नाही",
+    "whatsappNotInstalled": "या डिव्हाइसवर WhatsApp इंस्टॉल केलेले नाही"
+  },
+  "commission": {
+    "setRules": "कमिशन नियम सेट करा",
+    "sheetTitle": "कमिशन · {{name}}",
+    "noServices": "सक्रिय सेवा नाहीत. कमिशन दर सेट करण्यासाठी सेवा जोडा.",
+    "noRule": "कमिशन नाही",
+    "typePercent": "सेवेचे %",
+    "typeFixed": "प्रति सेवा ₹ ठरलेले",
+    "valueRequired": "0 पेक्षा मोठे मूल्य भरा",
+    "percentMax": "टक्केवारी 100% पेक्षा जास्त असू शकत नाही",
+    "defaultLabel": "डिफॉल्ट",
+    "defaultCommission": "प्रत्येक सेवेवर {{percent}}%",
+    "defaultSalary": "पगारदार — खाली नियम सेट केले नसल्यास कमिशन नाही",
+    "defaultNone": "डिफॉल्ट सेट नाही — खाली नियम सेट असेल तेथेच कमिशन लागू",
+    "defaultHint": "विशिष्ट सेवेसाठी डिफॉल्ट बदलण्यासाठी खाली नियम सेट करा.",
+    "usesDefaultBadge": "{{percent}}% (डिफॉल्ट)"
+  },
+  "expense": {
+    "add": "खर्च जोडा"
+  },
+  "expenses": {
+    "addExpense": "खर्च जोडा",
+    "newExpense": "नवीन खर्च",
+    "editExpense": "खर्च संपादित करा",
+    "saveExpense": "खर्च जतन करा",
+    "updateExpense": "खर्च अपडेट करा",
+    "amount": "रक्कम",
+    "amountPlaceholder": "0.00",
+    "amountRequired": "0 पेक्षा मोठी रक्कम भरा",
+    "amountInvalid": "वैध रक्कम भरा",
+    "category": "वर्ग",
+    "categoryRequired": "वर्ग निवडा",
+    "newCategory": "नवीन वर्ग",
+    "newCategoryPrompt": "वर्गाचे नाव भरा",
+    "categoryNamePlaceholder": "उदा. Repairs",
+    "categoryEmpty": "अजून वर्ग नाहीत",
+    "noCategories": "खर्च नोंदवायला वर्ग जोडा.",
+    "date": "तारीख",
+    "remarks": "टीप (ऐच्छिक)",
+    "remarksPlaceholder": "टीप जोडा",
+    "paymentMode": "याद्वारे भरले",
+    "modes": {
+      "cash": "रोख",
+      "upi": "UPI",
+      "credit": "उधारी"
+    },
+    "creditHint": "विक्रेत्याला द्यायचे पैसे म्हणून ट्रॅक करा.",
+    "creditOwed": "उधारीवर देय: {{amount}}",
+    "creditBadge": "उधारी",
+    "paidBadge": "भरले",
+    "markPaid": "भरले म्हणून मार्क करा",
+    "markPaidConfirmTitle": "ही उधारी भरली म्हणून मार्क करायची?",
+    "markPaidConfirmBody": "यामुळे ती तुमच्या बाकी रकमेतून काढली जाईल.",
+    "markPaidConfirmCta": "भरले म्हणून मार्क करा",
+    "markedPaid": "भरले म्हणून मार्क केले",
+    "markPaidFailed": "भरले म्हणून मार्क करता आले नाही",
+    "saved": "खर्च जतन केला",
+    "updated": "खर्च अपडेट केला",
+    "saveFailed": "खर्च जतन करता आला नाही",
+    "todayTotal": "आजचा खर्च",
+    "todayNone": "आज खर्च नाही",
+    "todayList": "आजचे खर्च",
+    "viewAll": "सर्व पहा ({{count}})",
+    "detail": {
+      "title": "खर्च",
+      "edit": "संपादित करा",
+      "delete": "हटवा",
+      "deleteConfirmTitle": "हा खर्च हटवायचा?",
+      "deleteConfirmBody": "यामुळे खर्च आजच्या एकूण रकमेतून काढला जाईल. तुम्ही तो नंतर सेटिंग्जमधून पुनर्संचयित करू शकता.",
+      "deleteConfirmCta": "हटवा",
+      "deleted": "खर्च हटवला",
+      "deleteFailed": "खर्च हटवता आला नाही",
+      "loggedAt": "{{time}} वाजता नोंदवले"
+    }
+  },
+  "advances": {
+    "title": "कर्मचारी अॅडव्हान्स",
+    "add": "अॅडव्हान्स जोडा",
+    "newAdvance": "नवीन अॅडव्हान्स",
+    "editAdvance": "अॅडव्हान्स संपादित करा",
+    "saveAdvance": "अॅडव्हान्स जतन करा",
+    "updateAdvance": "अॅडव्हान्स अपडेट करा",
+    "employee": "कर्मचारी",
+    "employeeRequired": "कर्मचारी निवडा",
+    "noEmployees": "अॅडव्हान्स नोंदवण्यासाठी आधी कर्मचारी जोडा.",
+    "amount": "रक्कम",
+    "amountPlaceholder": "0.00",
+    "amountRequired": "0 पेक्षा मोठी रक्कम भरा",
+    "date": "तारीख",
+    "remarks": "टीप (ऐच्छिक)",
+    "remarksPlaceholder": "उदा. साप्ताहिक पगार अॅडव्हान्स",
+    "saveFailed": "अॅडव्हान्स जतन करता आला नाही",
+    "outstandingBadge": "बाकी",
+    "paidBadge": "भरले",
+    "outstandingTotal": "बाकी: {{amount}}",
+    "sectionOutstanding": "बाकी",
+    "sectionSettled": "सेटल केलेले",
+    "emptyTitle": "अजून अॅडव्हान्स नाहीत",
+    "emptyBody": "कर्मचारी वह्या स्वच्छ ठेवण्यासाठी रोख अॅडव्हान्स नोंदवा.",
+    "markPaid": "सेटल म्हणून मार्क करा",
+    "markPaidConfirmTitle": "हा अॅडव्हान्स सेटल म्हणून मार्क करायचा?",
+    "markPaidConfirmBody": "यामुळे तो बाकी एकूण रकमेतून काढला जाईल.",
+    "markPaidConfirmCta": "सेटल मार्क करा",
+    "markPaidFailed": "सेटल म्हणून मार्क करता आले नाही",
+    "detail": {
+      "title": "अॅडव्हान्स",
+      "edit": "संपादित करा",
+      "delete": "हटवा",
+      "deleteConfirmTitle": "हा अॅडव्हान्स हटवायचा?",
+      "deleteConfirmBody": "यामुळे अॅडव्हान्स लेजरमधून काढला जाईल. हे परत करता येणार नाही.",
+      "deleteConfirmCta": "हटवा",
+      "deleteFailed": "अॅडव्हान्स हटवता आला नाही"
+    }
+  },
+  "more": {
+    "title": "अधिक",
+    "staffAdvances": "कर्मचारी अॅडव्हान्स",
+    "staffAdvancesSub": "पगाराच्या दिवसांदरम्यान कर्मचाऱ्यांना दिलेली रोख रक्कम नोंदवा",
+    "subscription": "सबस्क्रिप्शन आणि रेफरल",
+    "subscriptionSub": "ट्रायल स्थिती, प्लॅन्स आणि तुमचा रेफरल कोड",
+    "syncNow": "आता सिंक करा",
+    "syncNowSub": "स्थानिक बदल क्लाउडवर पाठवा आणि नवीनतम डेटा आणा",
+    "syncStatus": "सिंक स्थिती",
+    "syncStatusSub": "क्यूची संख्या, अलीकडील हालचाल, अयशस्वी रेकॉर्ड",
+    "exportSnapshot": "स्नॅपशॉट एक्सपोर्ट करा",
+    "exportSnapshotSub": "संपूर्ण स्थानिक डेटाबेसचा आपत्कालीन बॅकअप",
+    "account": "खाते",
+    "signedInAs": "या नावाने साइन इन",
+    "mobileCredential": "तुमचे salon लॉगिन",
+    "logOut": "लॉग आउट",
+    "logOutSub": "या डिव्हाइसवरून साइन आउट करा",
+    "deleteAccount": "खाते हटवा",
+    "deleteAccountSub": "तुमचे खाते आणि डेटा कायमचा काढा"
+  },
+  "subscription": {
+    "title": "सबस्क्रिप्शन",
+    "currentPlan": "सध्याचा प्लॅन",
+    "remainingDays_one": "{{count}} दिवस बाकी",
+    "remainingDays_other": "{{count}} दिवस बाकी",
+    "validUntil": "{{date}} पर्यंत वैध",
+    "expiredBanner": "तुमची ट्रायल संपली आहे. तुम्ही मालक म्हणून अजूनही बिल करू शकता — पुन्हा कर्मचारी नियुक्त करण्यासाठी सबस्क्राइब करा.",
+    "billingStaffLocked": "कर्मचारी नियुक्ती लॉक आहे. बिलांवर कर्मचारी नियुक्त करण्यासाठी सबस्क्राइब करा.",
+    "billingOwnerOnlyHint": "फक्त मालक बिलिंग सक्रिय आहे. स्वतःला कर्मचारी म्हणून जोडा किंवा कर्मचारी अनलॉक करण्यासाठी सबस्क्राइब करा.",
+    "ownerFallbackName": "मालक",
+    "featuresTitle": "काय समाविष्ट आहे",
+    "features": {
+      "assignStaff": "बिलिंग करताना कर्मचारी नियुक्त करा",
+      "reports": "रिपोर्ट्स आणि इतिहास पहा",
+      "manageStaff": "कर्मचारी रेकॉर्ड व्यवस्थापित करा",
+      "premium": "प्रीमियम फीचर्स"
+    },
+    "referral": {
+      "title": "रेफरल",
+      "yourCode": "तुमचा रेफरल कोड",
+      "share": "कोड शेअर करा",
+      "shareMessage": "माझ्या रेफरल कोडसह Salon Khata मध्ये सामील व्हा: {{code}}",
+      "hint": "मोकळेपणाने शेअर करा — प्रत्येक मित्राने प्लॅन घेतल्यावर तुम्हाला 1 महिना मोफत मिळतो. अमर्यादित रेफरल्स.",
+      "rewardRule": "बक्षीस: रेफर केलेल्या salon ने सबस्क्राइब केले की प्रत्येक वेळी +1 महिना मोफत."
+    },
+    "plansTitle": "प्लॅन्स",
+    "planDuration": "{{days}} दिवस",
+    "paymentsComingSoon": "पेमेंट्स लवकरच येत आहेत. प्लॅन किंमती संदर्भासाठी दाखवल्या आहेत.",
+    "refresh": "स्थिती रिफ्रेश करा",
+    "status": {
+      "trial": "मोफत ट्रायल",
+      "active": "सक्रिय",
+      "grace": "ग्रेस कालावधी",
+      "expired": "कालबाह्य",
+      "none": "प्लॅन नाही"
+    }
+  },
+  "backup": {
+    "export": {
+      "title": "स्नॅपशॉट एक्सपोर्ट करायचा?",
+      "message": "सुरक्षेसाठी तुमच्या स्थानिक डेटाबेसचा पूर्ण बॅकअप अपलोड करतो. नियमित सिंक आधीच तुमचे रेकॉर्ड अद्ययावत ठेवतो — फक्त अतिरिक्त सुरक्षिततेसाठी हे वापरा.",
+      "confirm": "एक्सपोर्ट",
+      "busy": "बॅकअप आधीच चालू आहे",
+      "success": "स्नॅपशॉट अपलोड झाला ({{size}})",
+      "skipped": "बॅकअप वगळला ({{reason}})",
+      "cancelled": "बॅकअप रद्द झाला",
+      "failed": "बॅकअप अयशस्वी: {{message}}"
+    }
+  },
+  "syncStatus": {
+    "title": "सिंक स्थिती",
+    "lastSynced": "शेवटचा सिंक",
+    "never": "कधीच नाही",
+    "pending_one": "{{count}} प्रतीक्षेत",
+    "pending_other": "{{count}} प्रतीक्षेत",
+    "syncing_one": "{{count}} चालू",
+    "syncing_other": "{{count}} चालू",
+    "failed_one": "{{count}} अयशस्वी",
+    "failed_other": "{{count}} अयशस्वी",
+    "deadLetters_one": "अयशस्वी रेकॉर्ड ({{count}})",
+    "deadLetters_other": "अयशस्वी रेकॉर्ड ({{count}})",
+    "recentConflicts": "अलीकडील संघर्ष",
+    "recentActivity": "अलीकडील हालचाल",
+    "noActivity": "अजून काहीही सिंक झालेले नाही",
+    "retry": "पुन्हा प्रयत्न करा",
+    "discard": "सोडून द्या",
+    "discardTitle": "हा रेकॉर्ड सिंक करणे थांबवायचे?",
+    "discardMessage": "रेकॉर्ड या डिव्हाइसवर राहील पण तुम्ही तो पुन्हा संपादित करेपर्यंत सिंक होणार नाही.",
+    "discardConfirm": "सोडून द्या",
+    "localWon": "स्थानिक ठेवले",
+    "remoteWon": "क्लाउड लागू झाले",
+    "time": {
+      "justNow": "आत्ताच",
+      "minutesAgo_one": "{{count}} मिनिटापूर्वी",
+      "minutesAgo_other": "{{count}} मिनिटांपूर्वी",
+      "hoursAgo_one": "{{count}} तासापूर्वी",
+      "hoursAgo_other": "{{count}} तासांपूर्वी",
+      "daysAgo_one": "{{count}} दिवसापूर्वी",
+      "daysAgo_other": "{{count}} दिवसांपूर्वी"
+    },
+    "trigger": {
+      "manual": "आता सिंक करा",
+      "app-background": "App बॅकग्राउंडमध्ये गेले",
+      "app-foreground": "App उघडले",
+      "post-write-debounce": "लेखनानंतर",
+      "periodic": "नियतकालिक",
+      "network-reconnect": "पुन्हा कनेक्ट झाले",
+      "background-task": "बॅकग्राउंड",
+      "drain": "ड्रेन"
+    }
+  },
+  "sync": {
+    "line": {
+      "neverSynced": "अजून सिंक झाले नाही · रेकॉर्ड या डिव्हाइसवर जतन होतात",
+      "synced": "शेवटचा सिंक {{relative}}",
+      "syncing": "सिंक होत आहे…",
+      "offline": "शेवटचा सिंक {{relative}} · ऑफलाइन"
+    },
+    "badge": {
+      "notSynced": "सिंक झाले नाही"
+    },
+    "result": {
+      "offline": "ऑफलाइन — तुम्ही परत ऑनलाइन आल्यावर पुन्हा प्रयत्न होईल",
+      "noWork": "आधीच अद्ययावत",
+      "done": "{{pushed}} वर सिंक, {{applied}} खाली लागू",
+      "doneWithConflicts": "{{conflicts}} संघर्ष सोडवून सिंक झाले",
+      "failed": "सिंक अयशस्वी. आम्ही आपोआप पुन्हा प्रयत्न करू"
+    }
+  },
+  "errors": {
+    "startupTitle": "Salon Khata सुरू करता आले नाही",
+    "unknown": "काहीतरी चूक झाली"
+  },
+  "auth": {
+    "phone": {
+      "title": "तुमचा मोबाइल नंबर भरा",
+      "subtitle": "तुमची पडताळणी करण्यासाठी आम्ही SMS ने 6-अंकी कोड पाठवू.",
+      "placeholder": "10-अंकी मोबाइल नंबर",
+      "helper": "हा मोबाइल नंबर या salon साठी तुमचा लॉगिन आहे.",
+      "continue": "पुढे सुरू ठेवा",
+      "sendOtp": "OTP पाठवा",
+      "legal": "पुढे सुरू ठेवल्यास तुम्ही आमच्या अटी आणि गोपनीयता धोरणाशी सहमत आहात.",
+      "a11yLabel": "मोबाइल नंबर"
+    },
+    "otp": {
+      "title": "6-अंकी कोड भरा",
+      "subtitle": "{{phone}} वर पाठवला.",
+      "change": "बदला",
+      "verify": "पडताळा",
+      "resend": "कोड पुन्हा पाठवा",
+      "resending": "पुन्हा पाठवत आहे…",
+      "resendIn": "{{seconds}}s मध्ये पुन्हा पाठवा",
+      "a11yLabel": "सहा अंकी पडताळणी कोड"
+    },
+    "signOut": {
+      "title": "लॉग आउट करायचे?",
+      "message": "तुम्हाला तुमच्या मोबाइल नंबरने पुन्हा साइन इन करावे लागेल. तुमचा salon डेटा या डिव्हाइसवर राहील.",
+      "confirm": "लॉग आउट",
+      "failed": "लॉग आउट करता आले नाही. कृपया पुन्हा प्रयत्न करा."
+    },
+    "delete": {
+      "title": "तुमचे खाते हटवायचे?",
+      "message": "यामुळे तुमचे खाते कायमचे हटेल आणि या डिव्हाइसवर साठवलेले प्रत्येक बिल, कर्मचारी, सेवा आणि ग्राहक पुसले जातील. हे परत करता येणार नाही.",
+      "confirm": "कायमचे हटवा",
+      "requiresRecentLogin": "सुरक्षेसाठी, तुमचे खाते हटवण्यासाठी कृपया पुन्हा साइन इन करा.",
+      "failed": "खाते हटवता आले नाही. कृपया पुन्हा प्रयत्न करा."
+    },
+    "errors": {
+      "invalidPhone": "कृपया वैध 10-अंकी मोबाइल नंबर भरा.",
+      "invalidCode": "तुम्ही भरलेला कोड बरोबर नाही. पुन्हा प्रयत्न करा.",
+      "codeExpired": "तो कोड कालबाह्य झाला आहे. नवीन कोड पुन्हा पाठवा.",
+      "tooManyRequests": "खूप जास्त प्रयत्न झाले. कृपया काही मिनिटांनी पुन्हा प्रयत्न करा.",
+      "network": "इंटरनेट कनेक्शन नाही. तुम्ही परत ऑनलाइन आल्यावर पुन्हा प्रयत्न करा.",
+      "quotaExceeded": "सेवा तात्पुरती उपलब्ध नाही. कृपया नंतर पुन्हा प्रयत्न करा.",
+      "sessionExpired": "तुमचे सत्र संपले. कृपया पुन्हा साइन इन करा.",
+      "unknown": "काहीतरी चूक झाली. कृपया पुन्हा प्रयत्न करा."
+    }
+  },
+  "onboarding": {
+    "step": "पायरी {{current}} पैकी {{total}}",
+    "next": "पुढे",
+    "back": "मागे",
+    "language": {
+      "title": "तुमची भाषा निवडा",
+      "subtitle": "तुम्ही हे नंतर Settings मधून बदलू शकता.",
+      "english": "English",
+      "hindi": "हिन्दी"
+    },
+    "salonType": {
+      "title": "तुम्ही कोणत्या प्रकारचा salon चालवता?",
+      "subtitle": "यामुळे नवीन बिलांसाठी डिफॉल्ट ग्राहक प्रकार आणि सुरुवातीची सेवा यादी सेट होते.",
+      "male": {
+        "title": "पुरुषांचा salon",
+        "body": "हेअरकट, दाढी, शेव्ह"
+      },
+      "female": {
+        "title": "महिलांचा salon / पार्लर",
+        "body": "हेअरकट, फेशियल, थ्रेडिंग"
+      },
+      "unisex": {
+        "title": "युनिसेक्स salon",
+        "body": "सर्वांसाठी सेवा"
+      }
+    },
+    "business": {
+      "title": "तुमच्या salon बद्दल सांगा",
+      "subtitle": "फक्त मूलभूत माहिती — तुम्ही हे कधीही संपादित करू शकता.",
+      "businessName": "Salon चे नाव",
+      "businessNamePlaceholder": "उदा. Style Studio",
+      "businessNameRequired": "Salon चे नाव आवश्यक आहे",
+      "ownerName": "तुमचे नाव",
+      "ownerNamePlaceholder": "उदा. Priya",
+      "ownerNameHelper": "ऐच्छिक — पावत्या आणि रिपोर्ट्सवर वापरले जाते.",
+      "referralCode": "रेफरल कोड (ऐच्छिक)",
+      "referralCodePlaceholder": "उदा. PRIYA7K2",
+      "referralCodeHelper": "मित्राने तुम्हाला आमंत्रित केले असल्यास, त्यांचा कोड येथे एकदाच भरा.",
+      "iDoServices": "मी देखील सेवा करतो/करते",
+      "iDoServicesHelper": "मला कर्मचारी म्हणून जोडा जेणेकरून बिलांवर मला निवडता येईल.",
+      "iDoServicesNeedsName": "हे सक्षम करण्यासाठी वर तुमचे नाव जोडा.",
+      "finish": "सेटअप पूर्ण करा",
+      "saveFailed": "सेटअप पूर्ण करता आला नाही"
+    },
+    "services": {
+      "title": "तुमच्या सेवांच्या किंमती सेट करा",
+      "subtitle": "तुमच्या salon प्रकारासाठी सर्वात सामान्य सेवा आम्ही जोडल्या आहेत. तुम्ही देत असलेल्या सेवांच्या किंमती भरा — बाकी रिकाम्या ठेवा आणि नंतर अपडेट करा.",
+      "menSection": "पुरुषांच्या सेवा",
+      "womenSection": "महिलांच्या सेवा",
+      "pricePlaceholder": "0",
+      "footnote": "सर्व सेवा तुमच्या कॅटलॉगमध्ये जोडल्या जातील. रिकाम्या किंमती ₹0 म्हणून जतन होतील.",
+      "footerHint": "तुम्ही Services स्क्रीनवरून किंमती कधीही संपादित करू शकता."
+    },
+    "welcome": "स्वागत आहे, {{name}}!"
+  }
+}
