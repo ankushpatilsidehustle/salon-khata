@@ -22,12 +22,16 @@
     "title": "Manage",
     "tabTitle": "Manage",
     "hub": {
-      "employees": { "sub": "Add & manage staff" },
-      "services": { "sub": "Haircuts, treatments & more" },
+      "employees": {
+        "sub": "Add & manage staff"
+      },
+      "services": {
+        "sub": "Haircuts, treatments & more"
+      },
       "commission": {
-      "label": "Commission",
-      "sub": "Set rates per employee & service"
-    },
+        "label": "Commission",
+        "sub": "Set rates per employee & service"
+      },
       "customers": {
         "label": "Customers",
         "sub": "Your regulars & their visit history"
@@ -532,12 +536,19 @@
     "exportSnapshot": "Export snapshot",
     "exportSnapshotSub": "Emergency backup of the entire local database",
     "account": "Account",
+    "language": "Language",
+    "languageSub": "Choose the app language",
     "signedInAs": "Signed in as",
     "mobileCredential": "Your salon login",
     "logOut": "Log out",
     "logOutSub": "Sign out on this device",
     "deleteAccount": "Delete account",
     "deleteAccountSub": "Permanently remove your account and data"
+  },
+  "settings": {
+    "language": {
+      "title": "Language"
+    }
   },
   "subscription": {
     "title": "Subscription",
@@ -703,9 +714,14 @@
     "back": "Back",
     "language": {
       "title": "Choose your language",
-      "subtitle": "You can change this later from Settings.",
+      "subtitle": "You can change this later from Account.",
       "english": "English",
-      "hindi": "हिन्दी"
+      "hindi": "हिन्दी",
+      "marathi": "मराठी",
+      "gujarati": "ગુજરાતી",
+      "bengali": "বাংলা",
+      "tamil": "தமிழ்",
+      "kannada": "ಕನ್ನಡ"
     },
     "salonType": {
       "title": "What kind of salon do you run?",

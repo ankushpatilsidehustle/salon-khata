@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 
 import "@/i18n";
 import { i18n } from "@/i18n";
+import { isAppLanguageCode } from "@/i18n/languages";
 import { SnackbarProvider } from "@/components/core/SnackbarProvider";
 import { colors, spacing, typography } from "@/design-system/tokens";
 import { runAllMigrations } from "@/database/migrations";
@@ -100,7 +101,7 @@ function AuthGate() {
   useEffect(() => {
     if (status !== "signed-in" || !salonId) return;
     const lang = settingsRepo.getSalonLanguage(salonId);
-    if (lang && lang !== i18n.language) {
+    if (isAppLanguageCode(lang) && lang !== i18n.language) {
       void i18n.changeLanguage(lang);
     }
   }, [status, salonId]);

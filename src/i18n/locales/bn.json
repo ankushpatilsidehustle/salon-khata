@@ -1,0 +1,771 @@
+{
+  "app": {
+    "name": "Salon Khata"
+  },
+  "common": {
+    "loading": "লোড হচ্ছে",
+    "save": "সেভ করুন",
+    "offlineReady": "অফলাইনেও চলে",
+    "profile": "প্রোফাইল",
+    "back": "ফিরে যান",
+    "cancel": "বাতিল করুন",
+    "delete": "মুছুন",
+    "discard": "বাতিল করুন",
+    "done": "হয়ে গেছে",
+    "clear": "সাফ করুন",
+    "active": "সক্রিয়",
+    "inactive": "নিষ্ক্রিয়",
+    "discardChanges": "পরিবর্তনগুলি বাতিল করবেন?",
+    "discardChangesMessage": "আপনার সেভ না করা পরিবর্তন আছে। আপনি কি নিশ্চিত এগুলি বাতিল করতে চান?"
+  },
+  "entries": {
+    "title": "পরিচালনা",
+    "tabTitle": "পরিচালনা",
+    "hub": {
+      "employees": {
+        "sub": "স্টাফ যোগ ও পরিচালনা করুন"
+      },
+      "services": {
+        "sub": "হেয়ারকাট, ট্রিটমেন্ট ও আরও পরিষেবা"
+      },
+      "commission": {
+        "label": "কমিশন",
+        "sub": "প্রতি কর্মী ও পরিষেবার জন্য রেট সেট করুন"
+      },
+      "customers": {
+        "label": "কাস্টমার",
+        "sub": "আপনার নিয়মিত কাস্টমার ও তাঁদের ভিজিট হিস্ট্রি"
+      },
+      "expenses": {
+        "label": "খরচ",
+        "sub": "Wave 5-এ আসছে"
+      }
+    }
+  },
+  "employees": {
+    "title": "কর্মী",
+    "active": "সক্রিয়",
+    "inactive": "নিষ্ক্রিয়",
+    "empty": {
+      "icon": "👥",
+      "title": "এখনও কোনও কর্মী নেই",
+      "body": "আয় ও কমিশন ট্র্যাক করা শুরু করতে আপনার স্টাফ যোগ করুন।"
+    },
+    "add": "কর্মী যোগ করুন",
+    "edit": "কর্মী এডিট করুন",
+    "name": "নাম",
+    "nameRequired": "নাম আবশ্যক",
+    "namePlaceholder": "যেমন Priya, Rahul",
+    "address": "ঠিকানা",
+    "addressPlaceholder": "বাড়ি / রাস্তা / শহর (ঐচ্ছিক)",
+    "mobile": "মোবাইল নম্বর",
+    "mobilePlaceholder": "10-সংখ্যার নম্বর",
+    "gender": "লিঙ্গ",
+    "genderOptions": {
+      "male": "পুরুষ",
+      "female": "মহিলা",
+      "other": "অন্যান্য"
+    },
+    "joiningDate": "যোগদানের তারিখ",
+    "joiningDatePlaceholder": "একটি তারিখ বাছুন",
+    "compensation": {
+      "label": "বেতন বা কমিশন",
+      "salary": "বেতন",
+      "commission": "কমিশন",
+      "hint": "এই কর্মীকে কীভাবে পেমেন্ট করা হবে তা বাছুন (ঐচ্ছিক)।"
+    },
+    "salaryAmount": "মাসিক বেতন (₹)",
+    "salaryPlaceholder": "যেমন 15000",
+    "salaryRequired": "একটি বৈধ বেতনের অঙ্ক লিখুন",
+    "commissionPercent": "কমিশন (%)",
+    "commissionPlaceholder": "যেমন 40",
+    "commissionRequired": "0 থেকে 100-এর মধ্যে শতাংশ লিখুন",
+    "perServiceRules": {
+      "title": "প্রতি পরিষেবার কমিশন",
+      "subtitle": "নির্দিষ্ট পরিষেবার জন্য ডিফল্ট বদলে দিন (যেমন 35% হেড ম্যাসাজ, 50% কেরাটিন)।",
+      "countZero": "কোনও ওভাররাইড নেই — সব পরিষেবায় ডিফল্ট প্রযোজ্য",
+      "countOne": "1টি ওভাররাইড সেট করা হয়েছে",
+      "countMany": "{{count}}টি ওভাররাইড সেট করা হয়েছে",
+      "hintAddMode": "প্রতি পরিষেবার রেট সেট করতে আগে কর্মীটি সেভ করুন।"
+    },
+    "activeLabel": "সক্রিয়",
+    "deleteAction": "কর্মী মুছুন",
+    "deleteConfirm": {
+      "title": "কর্মী মুছবেন?",
+      "message": "এতে কর্মীটি সরিয়ে দেওয়া হবে। আগের লেনদেনে কোনও প্রভাব পড়বে না।"
+    },
+    "saved": "কর্মী সেভ হয়েছে",
+    "deleted": "কর্মী মুছে দেওয়া হয়েছে",
+    "ownerBadge": "মালিক",
+    "ownerHint": "সেটআপের সময় অটো-তৈরি — এটি আপনি।"
+  },
+  "services": {
+    "title": "পরিষেবা",
+    "uncategorized": "বিভাগহীন",
+    "filter": {
+      "all": "সব"
+    },
+    "empty": {
+      "icon": "✂️",
+      "title": "এখনও কোনও পরিষেবা নেই",
+      "body": "হেয়ারকাট, ট্রিটমেন্ট এবং অন্যান্য পরিষেবা যোগ করুন।"
+    },
+    "add": "পরিষেবা যোগ করুন",
+    "edit": "পরিষেবা এডিট করুন",
+    "name": "পরিষেবার নাম",
+    "nameRequired": "পরিষেবার নাম আবশ্যক",
+    "namePlaceholder": "যেমন Haircut, Facial",
+    "category": "বিভাগ",
+    "categoryPlaceholder": "বিভাগ নির্বাচন করুন",
+    "categoryRequired": "অনুগ্রহ করে একটি বিভাগ নির্বাচন করুন",
+    "malePrice": "পুরুষদের দাম (₹)",
+    "femalePrice": "মহিলাদের দাম (₹)",
+    "priceAtLeastOne": "কমপক্ষে একটি দাম লিখুন",
+    "priceHint": "কোনও লিঙ্গের জন্য পরিষেবাটি না থাকলে সেই দামের ঘর ফাঁকা রাখুন।",
+    "pricePlaceholder": "0",
+    "productCost": "প্রতি ইউনিট প্রোডাক্ট খরচ (₹)",
+    "productCostHint": "ঐচ্ছিক। শতাংশ কমিশন নিয়মে কমিশন হিসেবের আগে মেটেরিয়াল খরচ (কালার, ওয়্যাক্স, কিট) বাদ দেওয়া হয়।",
+    "activeLabel": "সক্রিয়",
+    "saved": "পরিষেবা সেভ হয়েছে",
+    "deleted": "পরিষেবা মুছে দেওয়া হয়েছে"
+  },
+  "categories": {
+    "pick": "বিভাগ বাছুন",
+    "add": "বিভাগ যোগ করুন",
+    "name": "বিভাগের নাম",
+    "nameRequired": "বিভাগের নাম আবশ্যক",
+    "namePlaceholder": "যেমন Hair, Facial, Bridal",
+    "activeLabel": "সক্রিয়",
+    "empty": "এখনও কোনও বিভাগ নেই"
+  },
+  "dashboard": {
+    "title": "আজ",
+    "subtitle": "আপনার স্যালনের খাতা, ইন্টারনেট না থাকলেও প্রস্তুত।",
+    "businessNameFallback": "Salon Khata",
+    "snapshotLabel": "আজকের সারাংশ",
+    "activityLabel": "আজকের কার্যকলাপ",
+    "tabIncome": "আয়",
+    "tabExpenses": "খরচ",
+    "income": {
+      "today": "আজকের আয়"
+    },
+    "expenses": {
+      "today": "আজকের খরচ"
+    },
+    "commission": {
+      "today": "স্টাফ কমিশন",
+      "hint": "প্রতি কর্মীর হিসেব দেখতে ট্যাপ করুন"
+    },
+    "net": {
+      "today": "নেট কালেকশন",
+      "formula": "আয় − খরচ − কমিশন"
+    },
+    "todayIncome": "আজকের আয়",
+    "todayExpenses": "আজকের খরচ",
+    "netCollection": "নেট কালেকশন",
+    "employeeCommission": "কর্মী কমিশন",
+    "recentTransactions": "সাম্প্রতিক লেনদেন",
+    "emptyTransactions": "এখনও কোনও লেনদেন নেই",
+    "recent": {
+      "title": "সাম্প্রতিক লেনদেন",
+      "viewAll": "সব দেখুন (আজ {{count}}টি)"
+    },
+    "empty": {
+      "title": "এখনও কোনও আয় নেই",
+      "body": "আজকের মোট হিসেব দেখতে আপনার প্রথম এন্ট্রি যোগ করুন।",
+      "icon": "📥"
+    },
+    "delta": {
+      "up": "গতকালের তুলনায় {{amount}}",
+      "down": "গতকালের তুলনায় {{amount}}"
+    }
+  },
+  "commissionSummary": {
+    "title": "কমিশন",
+    "totalLabel": "মোট কমিশন",
+    "sectionPerEmployee": "প্রতি কর্মী",
+    "lineCount_one": "{{count}}টি বিল",
+    "lineCount_other": "{{count}}টি বিল",
+    "empty": {
+      "title": "এই সময়ে কোনও কমিশন নেই",
+      "body": "বিল রেকর্ড করা হলে কমিশন এখানে দেখা যাবে।"
+    }
+  },
+  "employeeCommissionDetail": {
+    "title": "{{name}}",
+    "totalLabel": "{{name}}-এর কমিশন",
+    "servicesSection": "করা পরিষেবা",
+    "ruleFixed": "{{amount}} ফ্ল্যাট",
+    "rulePercent": "{{percent}}% {{lineAmount}}-এর",
+    "rulePercentWithProduct": "{{percent}}% {{netAmount}}-এর ({{lineAmount}} − {{productCost}} পার্টস)",
+    "ruleNone": "কোনও কমিশন নিয়ম নেই",
+    "quantityMultiplier": "× {{quantity}}",
+    "customerLabel": "কাস্টমার: {{name}}",
+    "noCustomer": "ওয়াক-ইন",
+    "empty": {
+      "title": "এই সময়ে কোনও বিল নেই",
+      "body": "এই কর্মী যে পরিষেবা করবেন, তা এখানে দেখা যাবে।"
+    }
+  },
+  "reports": {
+    "title": "রিপোর্ট",
+    "period": {
+      "day": "দিন",
+      "week": "সপ্তাহ",
+      "month": "মাস",
+      "custom": "কাস্টম",
+      "prev": "আগের সময়কাল",
+      "next": "পরের সময়কাল",
+      "customTitle": "কাস্টম রেঞ্জ",
+      "startDate": "শুরুর তারিখ",
+      "endDate": "শেষ তারিখ",
+      "rangeInvalid": "শুরুর তারিখ শেষ তারিখের একই দিন বা তার আগে হতে হবে।"
+    },
+    "metrics": {
+      "income": "আয়",
+      "expenses": "খরচ",
+      "net": "নেট কালেকশন",
+      "netFormula": "আয় − খরচ − কমিশন",
+      "commission": "স্টাফ কমিশন",
+      "commissionHint": "প্রতি কর্মীর হিসেব দেখতে ট্যাপ করুন",
+      "billCount": "বিল",
+      "avgBill": "গড় বিল মূল্য",
+      "billStats": "বিল পরিসংখ্যান",
+      "topEmployees": "শীর্ষ কর্মী",
+      "topServices": "শীর্ষ পরিষেবা",
+      "paymentSplit": "পেমেন্ট ভাগ",
+      "newVsRepeat": "কাস্টমার",
+      "transactions": "লেনদেন",
+      "viewAll": "সব দেখুন",
+      "cash": "ক্যাশ",
+      "upi": "UPI",
+      "card": "কার্ড",
+      "credit": "ক্রেডিট",
+      "other": "অন্যান্য",
+      "walkIn": "ওয়াক-ইন",
+      "walkIn_bill_one": "{{count}}টি ওয়াক-ইন বিল",
+      "walkIn_bill_other": "{{count}}টি ওয়াক-ইন বিল",
+      "newCustomer": "নতুন",
+      "repeatCustomer": "রিপিট",
+      "share": "{{percent}}%",
+      "billCountLabel_one": "{{count}}টি বিল",
+      "billCountLabel_other": "{{count}}টি বিল",
+      "qtyLabel_one": "{{count}}টি বিক্রি",
+      "qtyLabel_other": "{{count}}টি বিক্রি"
+    },
+    "empty": {
+      "title": "এই সময়ে কোনও কার্যকলাপ নেই",
+      "body": "এখানে দেখতে আয়ের এন্ট্রি বা খরচ যোগ করুন।",
+      "cta": "আয় যোগ করুন"
+    },
+    "topEmployeesScreen": {
+      "title": "শীর্ষ কর্মী",
+      "empty": {
+        "title": "এই সময়ে কোনও রেভিনিউ নেই",
+        "body": "বিল রেকর্ড হলে সবচেয়ে বেশি আয় করা কর্মীরা এখানে দেখা যাবে।"
+      }
+    },
+    "topServicesScreen": {
+      "title": "শীর্ষ পরিষেবা",
+      "empty": {
+        "title": "এই সময়ে কোনও পরিষেবা বিক্রি হয়নি",
+        "body": "শীর্ষ পরিষেবা ট্র্যাক করা শুরু করতে একটি বিল যোগ করুন।"
+      }
+    }
+  },
+  "customers": {
+    "title": "কাস্টমার",
+    "add": "কাস্টমার যোগ করুন",
+    "edit": "কাস্টমার এডিট করুন",
+    "search": "নাম বা ফোন খুঁজুন",
+    "empty": {
+      "icon": "👤",
+      "title": "এখনও কোনও কাস্টমার নেই",
+      "body": "আপনার তালিকা তৈরি করতে কাস্টমার যোগ করুন বা ফোন নম্বরসহ বিল রেকর্ড করুন।"
+    },
+    "form": {
+      "name": "নাম",
+      "namePlaceholder": "যেমন Priya, Rahul",
+      "phone": "ফোন",
+      "phonePlaceholder": "10-সংখ্যার নম্বর",
+      "nameRequired": "নাম আবশ্যক",
+      "phoneRequired": "10-সংখ্যার ফোন নম্বর লিখুন",
+      "duplicate": "এই ফোন নম্বরের কাস্টমার ইতিমধ্যে আছে",
+      "duplicateJump": "বিদ্যমানটি খুলুন"
+    },
+    "stats": {
+      "visits_one": "{{count}}টি ভিজিট",
+      "visits_other": "{{count}}টি ভিজিট",
+      "noVisits": "এখনও কোনও ভিজিট নেই",
+      "totalSpend": "মোট খরচ",
+      "lastVisit": "শেষ ভিজিট",
+      "lastVisitOn": "শেষ ভিজিট {{date}}"
+    },
+    "actions": {
+      "call": "কল করুন",
+      "whatsapp": "WhatsApp",
+      "edit": "এডিট",
+      "delete": "মুছুন"
+    },
+    "pastBills": "আগের বিল",
+    "pastBillsEmpty": "এই কাস্টমারের এখনও কোনও আগের বিল নেই।",
+    "saved": "কাস্টমার সেভ হয়েছে",
+    "deleted": "কাস্টমার মুছে দেওয়া হয়েছে",
+    "deleteConfirm": {
+      "title": "কাস্টমার মুছবেন?",
+      "message": "তাঁদের মাস্টার রো সরানো হবে, তবে আগের বিলগুলি আপনার হিস্ট্রিতে থাকবে।"
+    },
+    "callUnavailable": "এই ডিভাইসে ফোন ডায়ালার খোলা যাচ্ছে না।",
+    "whatsappUnavailable": "এই ডিভাইসে WhatsApp ইনস্টল নেই।"
+  },
+  "income": {
+    "add": "আয় যোগ করুন",
+    "addIncome": "আয় যোগ করুন",
+    "newBill": "নতুন বিল",
+    "editBill": "বিল এডিট করুন",
+    "updateBill": "বিল আপডেট করুন",
+    "previewTitle": "বিল সেভ হয়েছে! কাস্টমারকে পাঠাবেন?",
+    "whoServed": "কে পরিষেবা দিয়েছেন?",
+    "noEmployees": "বিল রেকর্ড করতে আগে কর্মী যোগ করুন",
+    "customer": "কাস্টমার",
+    "male": "পুরুষ",
+    "female": "মহিলা",
+    "genderHint": "দামের উপর প্রভাব ফেলে",
+    "date": "বিলের তারিখ",
+    "services": "পরিষেবা",
+    "addServices": "পরিষেবা যোগ করুন",
+    "editSelection": "নির্বাচন এডিট করুন",
+    "addSelected": "নির্বাচিত পরিষেবা যোগ করুন",
+    "addSelectedCount": "{{count}}টি পরিষেবা যোগ করুন",
+    "addSelectedCount_other": "{{count}}টি পরিষেবা যোগ করুন",
+    "noServices": "আগে পরিষেবা যোগ করুন",
+    "noServicesTitle": "কোনও সক্রিয় পরিষেবা নেই",
+    "noServicesBody": "এখানে নির্বাচন করতে Services স্ক্রিন থেকে পরিষেবা যোগ করুন।",
+    "each": "প্রতিটি",
+    "bill": "বিল",
+    "subtotal": "সাবটোটাল",
+    "commission": "কমিশন (মালিকের দেওয়া)",
+    "commissionShort": "কমিশন {{amount}}",
+    "discount": "ডিসকাউন্ট",
+    "discountPercent": "% শতাংশ",
+    "discountFlat": "₹ ফ্ল্যাট অঙ্ক",
+    "discountApplied": "ডিসকাউন্ট প্রযোজ্য হয়েছে",
+    "discountInvalid": "একটি বৈধ ডিসকাউন্ট মান লিখুন",
+    "discountMax": "ডিসকাউন্ট 100%-এর বেশি হতে পারে না",
+    "total": "মোট",
+    "paymentMode": "পেমেন্ট",
+    "modes": {
+      "cash": "ক্যাশ",
+      "upi": "UPI",
+      "credit": "ক্রেডিট",
+      "card": "কার্ড",
+      "other": "অন্যান্য"
+    },
+    "creditRequiresCustomerTitle": "ক্রেডিটের জন্য কাস্টমার আবশ্যক",
+    "creditRequiresCustomerHint": "ক্রেডিট বিলের জন্য কাস্টমার দরকার, যাতে পরে টাকা সংগ্রহ করতে পারেন।",
+    "creditRequiresCustomerBody": "ক্রেডিট বিল সেভ করার আগে কাস্টমারের ফোন ও নাম যোগ করুন।",
+    "saveBill": "বিল সেভ করুন",
+    "saved": "বিল সেভ হয়েছে!",
+    "saveFailed": "বিল সেভ করা যায়নি",
+    "selectEmployee": "কর্মী নির্বাচন করুন",
+    "selectService": "পরিষেবা নির্বাচন করুন",
+    "assignedTo": "যাঁর নামে দেওয়া হয়েছে",
+    "changeEmployee": "কর্মী বদলান",
+    "customerSection": "কাস্টমার যোগ করুন (ঐচ্ছিক)",
+    "customerSectionSet": "কাস্টমার: {{label}}",
+    "customerPhone": "ফোন",
+    "customerPhonePlaceholder": "10-সংখ্যার নম্বর",
+    "customerName": "নাম",
+    "customerNamePlaceholder": "যেমন Priya, Rahul",
+    "customerMatched": "বিদ্যমান কাস্টমার",
+    "detail": {
+      "title": "বিল",
+      "edit": "এডিট",
+      "delete": "মুছুন",
+      "deleteConfirmTitle": "এই বিলটি মুছবেন?",
+      "deleteConfirmBody": "এতে আজকের মোট হিসেব থেকে বিল ও তার কমিশন সরানো হবে। এটি ফেরানো যাবে না।",
+      "deleteConfirmCta": "মুছুন",
+      "deleted": "বিল মুছে দেওয়া হয়েছে",
+      "deleteFailed": "বিল মুছতে পারা যায়নি",
+      "billTime": "{{time}}-এ রেকর্ড করা হয়েছে"
+    }
+  },
+  "receipt": {
+    "title": "রসিদ",
+    "date": "তারিখ",
+    "customer": "কাস্টমার",
+    "servedBy": "পরিষেবা দিয়েছেন",
+    "service": "পরিষেবা",
+    "qty": "পরিমাণ",
+    "amount": "অঙ্ক",
+    "subtotal": "সাবটোটাল",
+    "discount": "ডিসকাউন্ট",
+    "total": "মোট",
+    "paidBy": "যেভাবে পেমেন্ট",
+    "thankYou": "ভিজিট করার জন্য ধন্যবাদ!",
+    "shareOnWhatsapp": "WhatsApp-এ শেয়ার করুন",
+    "shareReceipt": "রসিদ শেয়ার করুন",
+    "shareTitle": "রসিদ পাঠান",
+    "shareFailed": "রসিদ শেয়ার করা যায়নি",
+    "shareUnavailable": "এই ডিভাইসে শেয়ারিং উপলব্ধ নয়",
+    "whatsappNotInstalled": "এই ডিভাইসে WhatsApp ইনস্টল নেই"
+  },
+  "commission": {
+    "setRules": "কমিশন নিয়ম সেট করুন",
+    "sheetTitle": "কমিশন · {{name}}",
+    "noServices": "কোনও সক্রিয় পরিষেবা নেই। কমিশন রেট সেট করতে পরিষেবা যোগ করুন।",
+    "noRule": "কোনও কমিশন নেই",
+    "typePercent": "পরিষেবার %",
+    "typeFixed": "প্রতি পরিষেবায় ₹ ফ্ল্যাট",
+    "valueRequired": "0-এর বেশি একটি মান লিখুন",
+    "percentMax": "শতাংশ 100%-এর বেশি হতে পারে না",
+    "defaultLabel": "ডিফল্ট",
+    "defaultCommission": "প্রতিটি পরিষেবায় {{percent}}%",
+    "defaultSalary": "বেতনভুক্ত — নিচে নিয়ম সেট না করলে কোনও কমিশন নেই",
+    "defaultNone": "কোনও ডিফল্ট সেট নেই — শুধু নিচে নিয়ম সেট করা জায়গায় কমিশন প্রযোজ্য",
+    "defaultHint": "নির্দিষ্ট পরিষেবার ডিফল্ট বদলাতে নিচে একটি নিয়ম সেট করুন।",
+    "usesDefaultBadge": "{{percent}}% (ডিফল্ট)"
+  },
+  "expense": {
+    "add": "খরচ যোগ করুন"
+  },
+  "expenses": {
+    "addExpense": "খরচ যোগ করুন",
+    "newExpense": "নতুন খরচ",
+    "editExpense": "খরচ এডিট করুন",
+    "saveExpense": "খরচ সেভ করুন",
+    "updateExpense": "খরচ আপডেট করুন",
+    "amount": "অঙ্ক",
+    "amountPlaceholder": "0.00",
+    "amountRequired": "0-এর বেশি অঙ্ক লিখুন",
+    "amountInvalid": "একটি বৈধ অঙ্ক লিখুন",
+    "category": "বিভাগ",
+    "categoryRequired": "একটি বিভাগ বাছুন",
+    "newCategory": "নতুন বিভাগ",
+    "newCategoryPrompt": "বিভাগের নাম লিখুন",
+    "categoryNamePlaceholder": "যেমন Repairs",
+    "categoryEmpty": "এখনও কোনও বিভাগ নেই",
+    "noCategories": "খরচ লেখা শুরু করতে একটি বিভাগ যোগ করুন।",
+    "date": "তারিখ",
+    "remarks": "মন্তব্য (ঐচ্ছিক)",
+    "remarksPlaceholder": "একটি নোট যোগ করুন",
+    "paymentMode": "পেমেন্ট হয়েছে",
+    "modes": {
+      "cash": "ক্যাশ",
+      "upi": "UPI",
+      "credit": "ক্রেডিট"
+    },
+    "creditHint": "ভেন্ডরকে আপনার বাকি টাকা হিসেবে ট্র্যাক করুন।",
+    "creditOwed": "ক্রেডিটে বাকি: {{amount}}",
+    "creditBadge": "CREDIT",
+    "paidBadge": "PAID",
+    "markPaid": "পেমেন্ট হয়েছে চিহ্নিত করুন",
+    "markPaidConfirmTitle": "এই ক্রেডিটটি পেমেন্ট হয়েছে হিসেবে চিহ্নিত করবেন?",
+    "markPaidConfirmBody": "এটি আপনার বকেয়া ব্যালান্স থেকে সরিয়ে দেওয়া হবে।",
+    "markPaidConfirmCta": "পেমেন্ট হয়েছে চিহ্নিত করুন",
+    "markedPaid": "পেমেন্ট হয়েছে হিসেবে চিহ্নিত",
+    "markPaidFailed": "পেমেন্ট হয়েছে হিসেবে চিহ্নিত করা যায়নি",
+    "saved": "খরচ সেভ হয়েছে",
+    "updated": "খরচ আপডেট হয়েছে",
+    "saveFailed": "খরচ সেভ করা যায়নি",
+    "todayTotal": "আজকের খরচ",
+    "todayNone": "আজ কোনও খরচ নেই",
+    "todayList": "আজকের খরচ",
+    "viewAll": "সব দেখুন ({{count}})",
+    "detail": {
+      "title": "খরচ",
+      "edit": "এডিট",
+      "delete": "মুছুন",
+      "deleteConfirmTitle": "এই খরচটি মুছবেন?",
+      "deleteConfirmBody": "এতে আজকের মোট হিসেব থেকে খরচটি সরানো হবে। পরে সেটিংস থেকে এটি ফিরিয়ে আনতে পারবেন।",
+      "deleteConfirmCta": "মুছুন",
+      "deleted": "খরচ মুছে দেওয়া হয়েছে",
+      "deleteFailed": "খরচ মুছতে পারা যায়নি",
+      "loggedAt": "{{time}}-এ লেখা হয়েছে"
+    }
+  },
+  "advances": {
+    "title": "স্টাফ অ্যাডভান্স",
+    "add": "অ্যাডভান্স যোগ করুন",
+    "newAdvance": "নতুন অ্যাডভান্স",
+    "editAdvance": "অ্যাডভান্স এডিট করুন",
+    "saveAdvance": "অ্যাডভান্স সেভ করুন",
+    "updateAdvance": "অ্যাডভান্স আপডেট করুন",
+    "employee": "কর্মী",
+    "employeeRequired": "একজন কর্মী বাছুন",
+    "noEmployees": "অ্যাডভান্স রেকর্ড করতে আগে কর্মী যোগ করুন।",
+    "amount": "অঙ্ক",
+    "amountPlaceholder": "0.00",
+    "amountRequired": "0-এর বেশি অঙ্ক লিখুন",
+    "date": "তারিখ",
+    "remarks": "মন্তব্য (ঐচ্ছিক)",
+    "remarksPlaceholder": "যেমন weekly salary advance",
+    "saveFailed": "অ্যাডভান্স সেভ করা যায়নি",
+    "outstandingBadge": "OUTSTANDING",
+    "paidBadge": "PAID",
+    "outstandingTotal": "বকেয়া: {{amount}}",
+    "sectionOutstanding": "বকেয়া",
+    "sectionSettled": "সেটেল করা",
+    "emptyTitle": "এখনও কোনও অ্যাডভান্স নেই",
+    "emptyBody": "স্টাফ লেজার পরিষ্কার রাখতে ক্যাশ অ্যাডভান্স লিখে রাখুন।",
+    "markPaid": "সেটেল করা হিসেবে চিহ্নিত করুন",
+    "markPaidConfirmTitle": "এই অ্যাডভান্সটি সেটেল করা হিসেবে চিহ্নিত করবেন?",
+    "markPaidConfirmBody": "এটি বকেয়া মোট থেকে সরিয়ে দেওয়া হবে।",
+    "markPaidConfirmCta": "সেটেল করা চিহ্নিত করুন",
+    "markPaidFailed": "সেটেল করা হিসেবে চিহ্নিত করা যায়নি",
+    "detail": {
+      "title": "অ্যাডভান্স",
+      "edit": "এডিট",
+      "delete": "মুছুন",
+      "deleteConfirmTitle": "এই অ্যাডভান্সটি মুছবেন?",
+      "deleteConfirmBody": "এতে লেজার থেকে অ্যাডভান্সটি সরানো হবে। এটি ফেরানো যাবে না।",
+      "deleteConfirmCta": "মুছুন",
+      "deleteFailed": "অ্যাডভান্স মুছতে পারা যায়নি"
+    }
+  },
+  "more": {
+    "title": "আরও",
+    "staffAdvances": "স্টাফ অ্যাডভান্স",
+    "staffAdvancesSub": "বেতনের দিনগুলির মাঝে কর্মীদের দেওয়া ক্যাশ লিখে রাখুন",
+    "subscription": "সাবস্ক্রিপশন ও রেফারাল",
+    "subscriptionSub": "ট্রায়াল স্ট্যাটাস, প্ল্যান, এবং আপনার রেফারাল কোড",
+    "syncNow": "এখন sync করুন",
+    "syncNowSub": "লোকাল পরিবর্তন ক্লাউডে পাঠান এবং ক্লাউড থেকে সর্বশেষ ডেটা আনুন",
+    "syncStatus": "Sync স্ট্যাটাস",
+    "syncStatusSub": "কিউ গভীরতা, সাম্প্রতিক কার্যকলাপ, ব্যর্থ রেকর্ড",
+    "exportSnapshot": "স্ন্যাপশট এক্সপোর্ট করুন",
+    "exportSnapshotSub": "পুরো লোকাল ডেটাবেসের ইমার্জেন্সি ব্যাকআপ",
+    "account": "অ্যাকাউন্ট",
+    "signedInAs": "সাইন ইন করেছেন",
+    "mobileCredential": "আপনার স্যালন লগইন",
+    "logOut": "লগ আউট",
+    "logOutSub": "এই ডিভাইস থেকে সাইন আউট করুন",
+    "deleteAccount": "অ্যাকাউন্ট মুছুন",
+    "deleteAccountSub": "আপনার অ্যাকাউন্ট ও ডেটা স্থায়ীভাবে সরিয়ে দিন",
+    "language": "ভাষা",
+    "languageSub": "অ্যাপের ভাষা বেছে নিন"
+  },
+  "subscription": {
+    "title": "সাবস্ক্রিপশন",
+    "currentPlan": "বর্তমান প্ল্যান",
+    "remainingDays_one": "{{count}} দিন বাকি",
+    "remainingDays_other": "{{count}} দিন বাকি",
+    "validUntil": "{{date}} পর্যন্ত বৈধ",
+    "expiredBanner": "আপনার ট্রায়াল শেষ হয়েছে। আপনি মালিক হিসেবে এখনও বিল করতে পারবেন — আবার স্টাফ assign করতে সাবস্ক্রাইব করুন।",
+    "billingStaffLocked": "স্টাফ assign লক করা আছে। বিলে কর্মী assign করতে সাবস্ক্রাইব করুন।",
+    "billingOwnerOnlyHint": "শুধু মালিকের নামে বিলিং সক্রিয় আছে। নিজেকে কর্মী হিসেবে যোগ করুন, বা স্টাফ আনলক করতে সাবস্ক্রাইব করুন।",
+    "ownerFallbackName": "মালিক",
+    "featuresTitle": "যা অন্তর্ভুক্ত",
+    "features": {
+      "assignStaff": "বিল করার সময় স্টাফ assign করুন",
+      "reports": "রিপোর্ট ও হিস্ট্রি দেখুন",
+      "manageStaff": "স্টাফ রেকর্ড পরিচালনা করুন",
+      "premium": "প্রিমিয়াম ফিচার"
+    },
+    "referral": {
+      "title": "রেফারাল",
+      "yourCode": "আপনার রেফারাল কোড",
+      "share": "কোড শেয়ার করুন",
+      "shareMessage": "আমার রেফারাল কোড দিয়ে Salon Khata-তে যোগ দিন: {{code}}",
+      "hint": "স্বচ্ছন্দে শেয়ার করুন — প্রতিটি বন্ধু প্ল্যান কিনলে আপনি 1 মাস ফ্রি পাবেন। আনলিমিটেড রেফারাল।",
+      "rewardRule": "রিওয়ার্ড: রেফার করা প্রতিটি স্যালন সাবস্ক্রাইব করলেই +1 মাস ফ্রি।"
+    },
+    "plansTitle": "প্ল্যান",
+    "planDuration": "{{days}} দিন",
+    "paymentsComingSoon": "Payments শীঘ্রই আসছে। প্ল্যানের দাম রেফারেন্সের জন্য দেখানো হয়েছে।",
+    "refresh": "স্ট্যাটাস রিফ্রেশ করুন",
+    "status": {
+      "trial": "ফ্রি ট্রায়াল",
+      "active": "সক্রিয়",
+      "grace": "গ্রেস পিরিয়ড",
+      "expired": "মেয়াদ শেষ",
+      "none": "কোনও প্ল্যান নেই"
+    }
+  },
+  "backup": {
+    "export": {
+      "title": "স্ন্যাপশট এক্সপোর্ট করবেন?",
+      "message": "সেফটি নেট হিসেবে আপনার লোকাল ডেটাবেসের সম্পূর্ণ ব্যাকআপ আপলোড করে। নিয়মিত sync আপনার রেকর্ড আপডেট রাখে — শুধু অতিরিক্ত সুরক্ষার জন্য এটি ব্যবহার করুন।",
+      "confirm": "এক্সপোর্ট",
+      "busy": "একটি ব্যাকআপ ইতিমধ্যে চলছে",
+      "success": "স্ন্যাপশট আপলোড হয়েছে ({{size}})",
+      "skipped": "ব্যাকআপ স্কিপ করা হয়েছে ({{reason}})",
+      "cancelled": "ব্যাকআপ বাতিল হয়েছে",
+      "failed": "ব্যাকআপ ব্যর্থ: {{message}}"
+    }
+  },
+  "syncStatus": {
+    "title": "Sync স্ট্যাটাস",
+    "lastSynced": "শেষ sync",
+    "never": "কখনও নয়",
+    "pending_one": "{{count}}টি অপেক্ষায়",
+    "pending_other": "{{count}}টি অপেক্ষায়",
+    "syncing_one": "{{count}}টি চলছে",
+    "syncing_other": "{{count}}টি চলছে",
+    "failed_one": "{{count}}টি ব্যর্থ",
+    "failed_other": "{{count}}টি ব্যর্থ",
+    "deadLetters_one": "ব্যর্থ রেকর্ড ({{count}})",
+    "deadLetters_other": "ব্যর্থ রেকর্ড ({{count}})",
+    "recentConflicts": "সাম্প্রতিক conflict",
+    "recentActivity": "সাম্প্রতিক কার্যকলাপ",
+    "noActivity": "এখনও কিছু sync হয়নি",
+    "retry": "আবার চেষ্টা করুন",
+    "discard": "বাতিল করুন",
+    "discardTitle": "এই রেকর্ড sync করা বন্ধ করবেন?",
+    "discardMessage": "রেকর্ডটি এই ডিভাইসে থাকবে, কিন্তু আপনি আবার এডিট না করা পর্যন্ত sync হবে না।",
+    "discardConfirm": "বাতিল করুন",
+    "localWon": "লোকাল রাখা হয়েছে",
+    "remoteWon": "ক্লাউড প্রয়োগ হয়েছে",
+    "time": {
+      "justNow": "এইমাত্র",
+      "minutesAgo_one": "{{count}} মিনিট আগে",
+      "minutesAgo_other": "{{count}} মিনিট আগে",
+      "hoursAgo_one": "{{count}} ঘণ্টা আগে",
+      "hoursAgo_other": "{{count}} ঘণ্টা আগে",
+      "daysAgo_one": "{{count}} দিন আগে",
+      "daysAgo_other": "{{count}} দিন আগে"
+    },
+    "trigger": {
+      "manual": "এখন sync করুন",
+      "app-background": "App ব্যাকগ্রাউন্ডে গেছে",
+      "app-foreground": "App খোলা হয়েছে",
+      "post-write-debounce": "লেখার পরে",
+      "periodic": "পর্যায়ক্রমিক",
+      "network-reconnect": "পুনরায় কানেক্ট হয়েছে",
+      "background-task": "ব্যাকগ্রাউন্ড",
+      "drain": "ড্রেন"
+    }
+  },
+  "sync": {
+    "line": {
+      "neverSynced": "এখনও sync হয়নি · রেকর্ড এই ডিভাইসে সেভ থাকে",
+      "synced": "শেষ sync {{relative}}",
+      "syncing": "Sync হচ্ছে…",
+      "offline": "শেষ sync {{relative}} · অফলাইন"
+    },
+    "badge": {
+      "notSynced": "Sync হয়নি"
+    },
+    "result": {
+      "offline": "অফলাইন — আপনি অনলাইনে ফিরলে আবার চেষ্টা হবে",
+      "noWork": "ইতিমধ্যে আপ টু ডেট",
+      "done": "{{pushed}}টি আপ, {{applied}}টি ডাউন sync হয়েছে",
+      "doneWithConflicts": "{{conflicts}}টি conflict সমাধান করে sync হয়েছে",
+      "failed": "Sync ব্যর্থ। আমরা অটোমেটিক আবার চেষ্টা করব"
+    }
+  },
+  "errors": {
+    "startupTitle": "Salon Khata শুরু করা যায়নি",
+    "unknown": "কিছু ভুল হয়েছে"
+  },
+  "auth": {
+    "phone": {
+      "title": "আপনার মোবাইল নম্বর লিখুন",
+      "subtitle": "আপনিই তা যাচাই করতে আমরা SMS-এ 6-সংখ্যার কোড পাঠাব।",
+      "placeholder": "10-সংখ্যার মোবাইল নম্বর",
+      "helper": "এই মোবাইল নম্বরটি এই স্যালনের জন্য আপনার লগইন।",
+      "continue": "চালিয়ে যান",
+      "sendOtp": "OTP পাঠান",
+      "legal": "চালিয়ে গেলে, আপনি আমাদের Terms ও Privacy Policy-তে সম্মতি দিচ্ছেন।",
+      "a11yLabel": "মোবাইল নম্বর"
+    },
+    "otp": {
+      "title": "6-সংখ্যার কোড লিখুন",
+      "subtitle": "{{phone}}-এ পাঠানো হয়েছে।",
+      "change": "বদলান",
+      "verify": "যাচাই করুন",
+      "resend": "কোড আবার পাঠান",
+      "resending": "আবার পাঠানো হচ্ছে…",
+      "resendIn": "{{seconds}}s পরে আবার পাঠান",
+      "a11yLabel": "ছয় সংখ্যার যাচাইকরণ কোড"
+    },
+    "signOut": {
+      "title": "লগ আউট করবেন?",
+      "message": "আপনাকে আপনার মোবাইল নম্বর দিয়ে আবার সাইন ইন করতে হবে। আপনার স্যালনের ডেটা এই ডিভাইসে থাকবে।",
+      "confirm": "লগ আউট",
+      "failed": "লগ আউট করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।"
+    },
+    "delete": {
+      "title": "আপনার অ্যাকাউন্ট মুছবেন?",
+      "message": "এটি স্থায়ীভাবে আপনার অ্যাকাউন্ট মুছে দেবে এবং এই ডিভাইসে থাকা প্রতিটি বিল, কর্মী, পরিষেবা ও কাস্টমার মুছে দেবে। এটি ফেরানো যাবে না।",
+      "confirm": "চিরতরে মুছুন",
+      "requiresRecentLogin": "নিরাপত্তার জন্য, আপনার অ্যাকাউন্ট মুছতে অনুগ্রহ করে আবার সাইন ইন করুন।",
+      "failed": "অ্যাকাউন্ট মুছতে পারা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।"
+    },
+    "errors": {
+      "invalidPhone": "অনুগ্রহ করে একটি বৈধ 10-সংখ্যার মোবাইল নম্বর লিখুন।",
+      "invalidCode": "আপনি যে কোড লিখেছেন তা সঠিক নয়। আবার চেষ্টা করুন।",
+      "codeExpired": "ওই কোডটির মেয়াদ শেষ হয়েছে। নতুন কোড আবার পাঠান।",
+      "tooManyRequests": "অনেকবার চেষ্টা করা হয়েছে। অনুগ্রহ করে কয়েক মিনিট পরে আবার চেষ্টা করুন।",
+      "network": "ইন্টারনেট কানেকশন নেই। অনলাইনে ফিরলে আবার চেষ্টা করুন।",
+      "quotaExceeded": "সার্ভিস সাময়িকভাবে উপলব্ধ নয়। পরে আবার চেষ্টা করুন।",
+      "sessionExpired": "আপনার সেশন শেষ হয়েছে। অনুগ্রহ করে আবার সাইন ইন করুন।",
+      "unknown": "কিছু ভুল হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।"
+    }
+  },
+  "onboarding": {
+    "step": "ধাপ {{current}} / {{total}}",
+    "next": "পরবর্তী",
+    "back": "পিছনে",
+    "language": {
+      "title": "আপনার ভাষা বাছুন",
+      "subtitle": "আপনি এটি পরে অ্যাকাউন্ট থেকে বদলাতে পারবেন।",
+      "english": "English",
+      "hindi": "हिन्दी",
+      "marathi": "मराठी",
+      "gujarati": "ગુજરાતી",
+      "bengali": "বাংলা",
+      "tamil": "தமிழ்",
+      "kannada": "ಕನ್ನಡ"
+    },
+    "salonType": {
+      "title": "আপনি কী ধরনের স্যালন চালান?",
+      "subtitle": "এটি নতুন বিলের জন্য ডিফল্ট কাস্টমার টাইপ এবং স্টার্টার পরিষেবা তালিকা সেট করে।",
+      "male": {
+        "title": "পুরুষদের স্যালন",
+        "body": "হেয়ারকাট, দাড়ি, শেভ"
+      },
+      "female": {
+        "title": "মহিলাদের স্যালন / পার্লার",
+        "body": "হেয়ারকাট, ফেসিয়াল, থ্রেডিং"
+      },
+      "unisex": {
+        "title": "ইউনিসেক্স স্যালন",
+        "body": "সবার জন্য পরিষেবা"
+      }
+    },
+    "business": {
+      "title": "আপনার স্যালন সম্পর্কে বলুন",
+      "subtitle": "শুধু মৌলিক তথ্য — এগুলি আপনি যে কোনও সময় এডিট করতে পারবেন।",
+      "businessName": "স্যালনের নাম",
+      "businessNamePlaceholder": "যেমন Style Studio",
+      "businessNameRequired": "স্যালনের নাম আবশ্যক",
+      "ownerName": "আপনার নাম",
+      "ownerNamePlaceholder": "যেমন Priya",
+      "ownerNameHelper": "ঐচ্ছিক — রসিদ ও রিপোর্টে ব্যবহার হবে।",
+      "referralCode": "রেফারাল কোড (ঐচ্ছিক)",
+      "referralCodePlaceholder": "যেমন PRIYA7K2",
+      "referralCodeHelper": "কোনও বন্ধু আপনাকে আমন্ত্রণ করলে, তাঁদের কোড এখানে একবার লিখুন।",
+      "iDoServices": "আমি নিজেও পরিষেবা করি",
+      "iDoServicesHelper": "আমাকে কর্মী হিসেবে যোগ করুন যাতে বিলে আমাকে বাছা যায়।",
+      "iDoServicesNeedsName": "এটি চালু করতে উপরে আপনার নাম যোগ করুন।",
+      "finish": "সেটআপ শেষ করুন",
+      "saveFailed": "সেটআপ শেষ করা যায়নি"
+    },
+    "services": {
+      "title": "আপনার পরিষেবার দাম সেট করুন",
+      "subtitle": "আপনার স্যালন টাইপ অনুযায়ী সবচেয়ে সাধারণ পরিষেবাগুলি আমরা যোগ করেছি। আপনি যেগুলি দেন সেগুলির দাম লিখুন — বাকিগুলি ফাঁকা রাখুন এবং পরে আপডেট করুন।",
+      "menSection": "পুরুষদের পরিষেবা",
+      "womenSection": "মহিলাদের পরিষেবা",
+      "pricePlaceholder": "0",
+      "footnote": "সব পরিষেবা আপনার ক্যাটালগে যোগ হবে। ফাঁকা দাম ₹0 হিসেবে সেভ হবে।",
+      "footerHint": "Services স্ক্রিন থেকে যে কোনও সময় দাম এডিট করতে পারবেন।"
+    },
+    "welcome": "স্বাগতম, {{name}}!"
+  },
+  "settings": {
+    "language": {
+      "title": "ভাষা"
+    }
+  }
+}

@@ -20,7 +20,7 @@ it's in [`docs/future-features.md`](future-features.md) or
 - **Local DB**: SQLite via `expo-sqlite` 16.0.10.
 - **Cloud**: Firebase — Auth (phone OTP), Firestore (per-record sync),
   Storage (DR file backup), App Check (Play Integrity / DeviceCheck).
-- **i18n**: `i18next` / `react-i18next` — `en` (full) + `hi` (stub copy).
+- **i18n**: `i18next` / `react-i18next` — `en`, `hi`, `mr`, `gu`, `bn`, `ta`, `kn` (full).
 - **Runtime target**: dev client (Expo Go doesn't work — native modules
   from `@react-native-firebase/*` + `react-native-share`).
 
@@ -56,7 +56,7 @@ Four-step wizard shown when user is authenticated but has no salon:
 | File | Role |
 | --- | --- |
 | `src/features/onboarding/OnboardingNavigator.tsx` | Native stack |
-| `src/features/onboarding/LanguageStep.tsx` | en / hi |
+| `src/features/onboarding/LanguageStep.tsx` | en / hi / mr / gu / bn / ta / kn |
 | `src/features/onboarding/SalonTypeStep.tsx` | male / female / unisex |
 | `src/features/onboarding/BusinessSetupStep.tsx` | Business name, owner name |
 | `src/features/onboarding/ServicesStep.tsx` | Seeds an industry-appropriate service menu (`defaultServices.ts` — ~16 men's, ~30 women's; unisex = both). All rows insert on Finish; blank price = ₹0. Ensures default service categories exist |
@@ -213,6 +213,7 @@ Tiles:
 - **Export snapshot** (DR file backup) — confirm alert → snackbar
 
 Account:
+- Language → `LanguageScreen` (instant switch; persists `salons.language`)
 - Log out (with confirm alert)
 - Delete account (with confirm + re-auth handling)
 
@@ -252,10 +253,14 @@ Shipped locally:
 
 - `src/i18n/index.ts` — `compatibilityJSON: 'v4'` set for
   `_one`/`_other` plural interpolation.
-- `src/i18n/locales/en.json` — full English strings.
-- `src/i18n/locales/hi.json` — currently a stub copy of `en.json`.
-  Hindi translations pending.
-- Registered locales: `en`, `hi`.
+- `src/i18n/languages.ts` — shared language registry (codes, native
+  names, Intl locales).
+- Locale files under `src/i18n/locales/`: `en`, `hi`, `mr`, `gu`, `bn`,
+  `ta`, `kn` — full translations (formal register).
+- Onboarding language picker and **More → Account → Language**
+  (`LanguageScreen`) both use the shared registry; change is instant
+  and persisted on `salons.language`.
+- Registered locales: `en`, `hi`, `mr`, `gu`, `bn`, `ta`, `kn`.
 
 ---
 
@@ -431,7 +436,7 @@ npx expo start --dev-client
 ```bash
 npm run typecheck                              # tsc --noEmit
 CI=1 npx expo install --check                 # deps up-to-date
-python3 -c "import json; json.load(open('src/i18n/locales/en.json')); json.load(open('src/i18n/locales/hi.json')); print('ok')"
+python3 -c "import json,glob; [json.load(open(p)) for p in glob.glob('src/i18n/locales/*.json')]; print('ok')"
 ```
 
 ### Reset local DB during dev
@@ -491,7 +496,6 @@ Notes:
 
 ### In flight or not built yet
 
-- **Hindi translations** — `hi.json` is currently a copy of `en.json`.
 - **Full multi-writer UI** — invite / manage members (helpers exist in
   `src/cloud/salon-membership.ts`).
 - **Row-level `sync_status` badges** — data flows through, UI hooks

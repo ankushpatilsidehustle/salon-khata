@@ -4,26 +4,17 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 
 import { colors, radius, spacing, typography } from "@/design-system/tokens";
+import { APP_LANGUAGES, type AppLanguageCode } from "@/i18n/languages";
 import { i18n } from "@/i18n";
 import type { OnboardingStackParamList } from "./OnboardingNavigator";
 import { StepHeader } from "./components/StepHeader";
 
 type Props = NativeStackScreenProps<OnboardingStackParamList, "Language">;
 
-type LanguageOption = {
-  code: string;
-  labelKey: string;
-};
-
-const LANGUAGES: LanguageOption[] = [
-  { code: "en", labelKey: "onboarding.language.english" },
-  { code: "hi", labelKey: "onboarding.language.hindi" }
-];
-
 export function LanguageStep({ navigation }: Props) {
   const { t } = useTranslation();
 
-  function select(code: string) {
+  function select(code: AppLanguageCode) {
     void i18n.changeLanguage(code);
     navigation.navigate("SalonType", { language: code });
   }
@@ -39,15 +30,15 @@ export function LanguageStep({ navigation }: Props) {
         <Text style={styles.subtitle}>{t("onboarding.language.subtitle")}</Text>
 
         <View style={styles.list}>
-          {LANGUAGES.map((lang) => (
+          {APP_LANGUAGES.map((lang) => (
             <Pressable
               key={lang.code}
               onPress={() => select(lang.code)}
               accessibilityRole="button"
-              accessibilityLabel={t(lang.labelKey)}
+              accessibilityLabel={lang.nativeName}
               style={({ pressed }) => [styles.item, pressed && styles.itemPressed]}
             >
-              <Text style={styles.itemLabel}>{t(lang.labelKey)}</Text>
+              <Text style={styles.itemLabel}>{lang.nativeName}</Text>
               <Ionicons
                 name="chevron-forward"
                 size={20}

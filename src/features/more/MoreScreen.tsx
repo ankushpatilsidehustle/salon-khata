@@ -16,16 +16,18 @@ import { formatE164ForDisplay } from "@/domain/phone";
 import { backupScheduler } from "@/backup/backup-scheduler";
 import { syncScheduler } from "@/sync/sync-scheduler";
 import type { RootStackParamList } from "@/application/AppNavigator";
+import { getAppLanguage } from "@/i18n/languages";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 export function MoreScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigation = useNavigation<Nav>();
   const { signOut, deleteAccount, user } = useAuth();
   const { showSnackbar } = useSnackbar();
   const [busy, setBusy] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const languageSub = getAppLanguage(i18n.language).nativeName;
 
   async function handleSyncNow() {
     if (syncing) return;
@@ -270,6 +272,13 @@ export function MoreScreen() {
             </View>
           </View>
         ) : null}
+
+        <Tile
+          icon="language-outline"
+          label={t("more.language")}
+          sub={languageSub}
+          onPress={() => navigation.navigate("Language")}
+        />
 
         <Tile
           icon="log-out-outline"

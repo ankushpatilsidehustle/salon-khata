@@ -17,7 +17,7 @@ Offline-first Expo/React Native app for small salon daily bookkeeping (income, e
 | Auth | Firebase Phone OTP + App Check |
 | Sync | Firestore per-record sync (`src/sync/`) |
 | DR backup | Encrypted whole-DB snapshot (`src/backup/` + `src/cloud/`) |
-| i18n | i18next — `en` full, `hi` stub |
+| i18n | i18next — `en` full; `hi` / `mr` / `gu` / `bn` / `ta` / `kn` full |
 | Alias | `@/*` → `src/*` |
 
 **Runtime:** custom dev client required (native Firebase modules). Expo Go will not work.
@@ -165,7 +165,7 @@ When docs disagree with code, prefer **code** + [`docs/implementation-status.md`
 | Commission math | `src/domain/commission-service.ts` |
 | Report totals | `src/domain/report-service.ts` |
 | New DB column | new migration in `src/database/migrations/` + register in `index.ts` |
-| Visible string | `src/i18n/locales/en.json` (+ `hi.json`) — never hardcode |
+| Visible string | `src/i18n/locales/*.json` — never hardcode |
 | Auth flow | `AuthProvider` + `src/firebase/auth.ts` |
 | Sync bug | `src/sync/sync-service.ts`, `queue-manager.ts`, `conflict-resolver.ts` |
 | Colors/type | `src/design-system/` |
