@@ -26,6 +26,7 @@ export function BusinessSetupStep({ navigation, route }: Props) {
   const [businessName, setBusinessName] = useState("");
   const [ownerName, setOwnerName] = useState("");
   const [alsoDoesServices, setAlsoDoesServices] = useState(false);
+  const [referralCode, setReferralCode] = useState("");
   const [nameError, setNameError] = useState("");
 
   const ownerToggleEnabled = ownerName.trim().length > 0;
@@ -50,7 +51,8 @@ export function BusinessSetupStep({ navigation, route }: Props) {
       salonType,
       businessName: trimmedBusiness,
       ownerName: trimmedOwner,
-      alsoDoesServices: alsoDoesServices && ownerToggleEnabled
+      alsoDoesServices: alsoDoesServices && ownerToggleEnabled,
+      referralCode: referralCode.trim() || undefined
     });
   }
 
@@ -98,6 +100,16 @@ export function BusinessSetupStep({ navigation, route }: Props) {
               helper={t("onboarding.business.ownerNameHelper")}
               autoCapitalize="words"
               maxLength={60}
+            />
+
+            <TextField
+              label={t("onboarding.business.referralCode")}
+              placeholder={t("onboarding.business.referralCodePlaceholder")}
+              value={referralCode}
+              onChangeText={setReferralCode}
+              helper={t("onboarding.business.referralCodeHelper")}
+              autoCapitalize="characters"
+              maxLength={12}
             />
 
             <View style={styles.toggleRow}>

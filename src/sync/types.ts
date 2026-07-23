@@ -26,7 +26,11 @@ export type SyncEntityType =
   | "expense_categories"
   | "expenses"
   | "customers"
-  | "employee_advances";
+  | "employee_advances"
+  | "salon_subscriptions"
+  | "subscription_payments"
+  | "referral_codes"
+  | "referrals";
 
 /**
  * Per-row sync lifecycle state stored on every business row.

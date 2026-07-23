@@ -18,6 +18,8 @@ export type OnboardingStackParamList = {
     businessName: string;
     ownerName: string;
     alsoDoesServices: boolean;
+    /** Optional referral code entered during business setup. */
+    referralCode?: string;
   };
 };
 

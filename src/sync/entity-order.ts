@@ -25,5 +25,9 @@ export const ENTITY_PULL_ORDER: readonly SyncEntityType[] = [
   "commission_rules",
   "expenses",
   "employee_advances",
+  "referral_codes",
+  "salon_subscriptions",
+  "subscription_payments",
+  "referrals",
   "income_transactions"
 ] as const;

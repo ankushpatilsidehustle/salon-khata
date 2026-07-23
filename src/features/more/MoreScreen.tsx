@@ -221,6 +221,13 @@ export function MoreScreen() {
         />
 
         <Tile
+          icon="diamond-outline"
+          label={t("more.subscription")}
+          sub={t("more.subscriptionSub")}
+          onPress={() => navigation.navigate("Subscription")}
+        />
+
+        <Tile
           icon="sync-outline"
           label={t("more.syncNow")}
           sub={t("more.syncNowSub")}

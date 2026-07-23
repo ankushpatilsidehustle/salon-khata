@@ -5,6 +5,14 @@ import { onSchedule } from "firebase-functions/v2/scheduler";
 
 initializeApp();
 
+export { claimReferral } from "./claim-referral";
+export { syncReferralIndex } from "./sync-referral-index";
+export { processReferralClaimRequest } from "./process-referral-claim-request";
+export {
+  recordPaidSubscription,
+  recordPaidSubscriptionWebhook
+} from "./record-paid-subscription";
+
 /**
  * Tombstone garbage collection — nightly job that hard-deletes cloud
  * records marked as soft-deleted more than TOMBSTONE_RETENTION_DAYS ago.
