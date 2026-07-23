@@ -8,7 +8,9 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:android:preview": "eas build -p android --profile preview",
+    "build:android:production": "eas build -p android --profile production"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
@@ -17,10 +19,13 @@
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-community/datetimepicker": "8.4.4",
     "@react-native-community/netinfo": "11.4.1",
+    "@react-native-firebase/analytics": "^22.4.0",
     "@react-native-firebase/app": "^22.4.0",
     "@react-native-firebase/app-check": "^22.4.0",
     "@react-native-firebase/auth": "^22.4.0",
+    "@react-native-firebase/crashlytics": "^22.4.0",
     "@react-native-firebase/firestore": "^22.4.0",
+    "@react-native-firebase/perf": "^22.4.0",
     "@react-native-firebase/storage": "^22.4.0",
     "@react-navigation/bottom-tabs": "^7.18.7",
     "@react-navigation/native": "^7.3.7",

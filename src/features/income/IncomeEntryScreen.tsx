@@ -28,6 +28,7 @@ import { colors, radius, spacing, typography } from "@/design-system/tokens";
 import { DEV_SALON_ID } from "@/constants/dev";
 import { formatMoney } from "@/domain/money";
 import { newId } from "@/domain/id";
+import { Events, recordNonFatal, track } from "@/observability";
 import { getUtcTimestamp } from "@/domain/dates";
 import { calculateCommission, resolveEffectiveRule } from "@/domain/commission-service";
 import { EmployeeRepository } from "@/repositories/employee-repository";
@@ -867,8 +868,36 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
 
       if (isEditing) {
         incomeRepo.updateIncomeTransaction(draft);
+        track(Events.billing.billEdited, {
+          item_count: items.length,
+          has_discount: discount > 0 ? 1 : 0,
+          payment_method: paymentMode
+        });
       } else {
+        const priorBills = incomeRepo.countBillsBetween(
+          DEV_SALON_ID,
+          "1970-01-01",
+          "2099-12-31"
+        ).count;
         incomeRepo.saveIncomeTransaction(draft);
+        track(
+          Events.billing.billCreated,
+          {
+            item_count: items.length,
+            has_discount: discount > 0 ? 1 : 0,
+            payment_method: paymentMode,
+            has_customer: resolvedCustomerId ? 1 : 0
+          },
+          { critical: true }
+        );
+        if (priorBills === 0) {
+          track(Events.billing.firstBillCreated, {}, { critical: true });
+        }
+        if (discount > 0) {
+          track(Events.billing.discountApplied, {
+            discount_type: discountType
+          });
+        }
       }
 
       const label = isEditing ? t("income.updateBill") : t("income.saveBill");
@@ -886,6 +915,7 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
       }
       navigation.goBack();
     } catch (err) {
+      recordNonFatal(err, "sqlite", { extra: { stage: "bill_save" } });
       const message = err instanceof Error ? err.message : String(err);
       Alert.alert(t("income.saveFailed"), message);
     } finally {

@@ -38,6 +38,7 @@ import { ensureSalonBillingBootstrap } from "@/repositories/subscription-bootstr
 import { claimReferralOnline } from "@/cloud/referral-claim";
 import { normalizeReferralCode } from "@/domain/subscription";
 import { syncScheduler } from "@/sync/sync-scheduler";
+import { Events, logger, track } from "@/observability";
 
 type Props = NativeStackScreenProps<OnboardingStackParamList, "Services">;
 
@@ -157,9 +158,15 @@ export function ServicesStep({ navigation, route }: Props) {
         insertSide(womenRows);
       });
 
+      track(Events.onboarding.servicesSeeded, {
+        service_count: menRows.length + womenRows.length,
+        salon_type: salonType
+      });
+
       // Billing bootstrap is intentionally outside the seed transaction —
       // it has its own atomic writes and must not nest expo-sqlite txs.
       ensureSalonBillingBootstrap(salonId);
+      track(Events.subscription.trialStarted);
 
       // Publish referral code + claim online. Firebase is authoritative for
       // cross-salon referral claims and later reward grants.
@@ -173,14 +180,25 @@ export function ServicesStep({ navigation, route }: Props) {
           code: trimmedReferral,
           referredSalonId: salonId
         }).then((result) => {
-          if (!result.ok && result.reason !== "already_applied") {
-            // Non-blocking — salon is usable; user can retry from Subscription.
-            // eslint-disable-next-line no-console
-            console.warn("[onboarding] referral claim failed", result.reason);
+          if (result.ok) {
+            track(
+              Events.subscription.referralClaimSucceeded,
+              {},
+              { critical: true }
+            );
+          } else if (result.reason !== "already_applied") {
+            track(Events.subscription.referralClaimFailed, {
+              reason: result.reason
+            });
+            logger.warn("referral claim failed", {
+              category: "auth",
+              err_code: result.reason
+            });
           }
         });
       }
 
+      track(Events.onboarding.completed, { salon_type: salonType }, { critical: true });
       showSnackbar(t("onboarding.welcome", { name: businessName }));
       onDone();
     } catch (err) {

@@ -543,7 +543,10 @@
     "deleteAccount": "கணக்கை நீக்கவும்",
     "deleteAccountSub": "உங்கள் கணக்கையும் தரவையும் நிரந்தரமாக நீக்கவும்",
     "language": "மொழி",
-    "languageSub": "ஆப் மொழியைத் தேர்வு செய்யவும்"
+    "languageSub": "ஆப் மொழியைத் தேர்வு செய்யவும்",
+    "privacy": "Privacy",
+    "analyticsShare": "Share anonymous usage data",
+    "analyticsShareSub": "Helps us improve Salon Khata. Crash reports stay on to keep the app stable."
   },
   "subscription": {
     "title": "Subscription",
@@ -656,7 +659,10 @@
   },
   "errors": {
     "startupTitle": "Salon Khata-வை தொடங்க முடியவில்லை",
-    "unknown": "ஏதோ தவறு ஏற்பட்டது"
+    "unknown": "ஏதோ தவறு ஏற்பட்டது",
+    "boundaryTitle": "Something went wrong",
+    "boundaryBody": "The app hit an unexpected error. You can try again — your data is safe on this device.",
+    "boundaryRetry": "Try again"
   },
   "auth": {
     "phone": {

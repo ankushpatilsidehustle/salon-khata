@@ -20,6 +20,7 @@ import { formatMoney } from "@/domain/money";
 import { EmployeeAdvanceRepository } from "@/repositories/employee-advance-repository";
 import type { EmployeeAdvanceRecord } from "@/repositories/employee-advance-repository";
 import type { RootStackParamList } from "@/application/AppNavigator";
+import { Events, track } from "@/observability";
 import { AdvanceDetailSheet } from "./AdvanceDetailSheet";
 
 type Props = NativeStackScreenProps<RootStackParamList, "AdvancesList">;
@@ -45,8 +46,13 @@ export function AdvancesListScreen({ navigation, route }: Props) {
   }, [employeeFilter]);
 
   useEffect(() => {
-    if (isFocused) loadData();
-  }, [isFocused, loadData]);
+    if (isFocused) {
+      loadData();
+      track(Events.staff.advanceListViewed, {
+        filtered_by_employee: employeeFilter ? 1 : 0
+      });
+    }
+  }, [isFocused, loadData, employeeFilter]);
 
   const sections = useMemo<Section[]>(() => {
     const outstanding = rows.filter((r) => r.settled_at === null);

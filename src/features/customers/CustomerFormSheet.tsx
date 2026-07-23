@@ -18,6 +18,7 @@ import {
   CustomerRepository,
   DuplicatePhoneError
 } from "@/repositories/customer-repository";
+import { Events, track } from "@/observability";
 
 type Props = {
   visible: boolean;
@@ -92,8 +93,10 @@ export function CustomerFormSheet({
     try {
       if (isEditMode && customerId) {
         repo.update(DEV_SALON_ID, customerId, { name, phone });
+        track(Events.customer.updated);
       } else {
         repo.insert({ salonId: DEV_SALON_ID, name, phone });
+        track(Events.customer.created);
       }
       onSaved();
       showSnackbar(t("customers.saved"));

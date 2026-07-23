@@ -23,6 +23,7 @@ import {
 } from "@/repositories/income-repository";
 import type { RootStackParamList } from "@/application/AppNavigator";
 import { normalizeReportPeriod } from "./period-params";
+import { Events, track } from "@/observability";
 
 const incomeRepo = new IncomeRepository();
 const MAX_ROWS = 200;
@@ -55,7 +56,8 @@ export function TopServicesScreen({ navigation, route }: Props) {
   useFocusEffect(
     useCallback(() => {
       reload();
-    }, [reload])
+      track(Events.report.topServicesOpened, { period_mode: period.mode });
+    }, [reload, period.mode])
   );
 
   const isEmpty = rows.length === 0;

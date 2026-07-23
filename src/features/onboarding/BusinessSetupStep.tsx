@@ -14,6 +14,7 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Button } from "@/components/core/Button";
 import { TextField } from "@/components/core/TextField";
 import { colors, radius, spacing, typography } from "@/design-system/tokens";
+import { Events, track } from "@/observability";
 import type { OnboardingStackParamList } from "./OnboardingNavigator";
 import { StepHeader } from "./components/StepHeader";
 
@@ -45,6 +46,15 @@ export function BusinessSetupStep({ navigation, route }: Props) {
       return;
     }
     setNameError("");
+
+    track(Events.onboarding.businessSetupCompleted, {
+      has_owner_name: trimmedOwner.length > 0 ? 1 : 0,
+      also_does_services: alsoDoesServices && ownerToggleEnabled ? 1 : 0,
+      has_referral: referralCode.trim().length > 0 ? 1 : 0
+    });
+    if (referralCode.trim().length > 0) {
+      track(Events.subscription.referralCodeEntered);
+    }
 
     navigation.navigate("Services", {
       language,

@@ -23,6 +23,7 @@ import {
 } from "@/repositories/income-repository";
 import type { RootStackParamList } from "@/application/AppNavigator";
 import { normalizeReportPeriod } from "./period-params";
+import { Events, track } from "@/observability";
 
 const incomeRepo = new IncomeRepository();
 /** Effectively-unlimited for a family salon; keeps a hard ceiling for safety. */
@@ -66,7 +67,8 @@ export function TopEmployeesScreen({ navigation, route }: Props) {
   useFocusEffect(
     useCallback(() => {
       reload();
-    }, [reload])
+      track(Events.report.topEmployeesOpened, { period_mode: period.mode });
+    }, [reload, period.mode])
   );
 
   const isEmpty = rows.length === 0;

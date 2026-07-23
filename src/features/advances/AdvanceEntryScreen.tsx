@@ -32,6 +32,7 @@ import { EmployeeRepository } from "@/repositories/employee-repository";
 import type { EmployeeRecord } from "@/repositories/employee-repository";
 import { EmployeeAdvanceRepository } from "@/repositories/employee-advance-repository";
 import type { RootStackParamList } from "@/application/AppNavigator";
+import { Events, track } from "@/observability";
 
 type Props = NativeStackScreenProps<RootStackParamList, "AdvanceEntry">;
 
@@ -198,6 +199,7 @@ export function AdvanceEntryScreen({ navigation, route }: Props) {
         advanceRepo.update(draft);
       } else {
         advanceRepo.insert(draft);
+        track(Events.staff.advanceCreated);
       }
 
       const label = isEditing

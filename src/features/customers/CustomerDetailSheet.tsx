@@ -31,6 +31,7 @@ import {
   type IncomeTransactionSummary
 } from "@/repositories/income-repository";
 import type { RootStackParamList } from "@/application/AppNavigator";
+import { Events, track } from "@/observability";
 
 const customerRepo = new CustomerRepository();
 const incomeRepo = new IncomeRepository();
@@ -110,6 +111,7 @@ export function CustomerDetailSheet({
 
   const handleCall = async () => {
     if (!customer) return;
+    track(Events.customer.callTapped);
     const url = telUrl(customer.phone);
     try {
       const can = await Linking.canOpenURL(url);
@@ -125,6 +127,7 @@ export function CustomerDetailSheet({
 
   const handleWhatsapp = async () => {
     if (!customer) return;
+    track(Events.customer.whatsappTapped);
     const url = whatsappUrl(customer.phone);
     try {
       const can = await Linking.canOpenURL(url);
@@ -150,6 +153,7 @@ export function CustomerDetailSheet({
           style: "destructive",
           onPress: () => {
             customerRepo.softDelete(DEV_SALON_ID, customer.id);
+            track(Events.customer.deleted);
             showSnackbar(t("customers.deleted"));
             onDeleted();
           }

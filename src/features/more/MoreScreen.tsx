@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -17,6 +17,14 @@ import { backupScheduler } from "@/backup/backup-scheduler";
 import { syncScheduler } from "@/sync/sync-scheduler";
 import type { RootStackParamList } from "@/application/AppNavigator";
 import { getAppLanguage } from "@/i18n/languages";
+import {
+  Events,
+  getConsent,
+  onConsentChanged,
+  setAnalyticsCollectionEnabled,
+  setAnalyticsEnabled,
+  track
+} from "@/observability";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -27,7 +35,33 @@ export function MoreScreen() {
   const { showSnackbar } = useSnackbar();
   const [busy, setBusy] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [analyticsOn, setAnalyticsOn] = useState(
+    () => getConsent().analyticsEnabled
+  );
   const languageSub = getAppLanguage(i18n.language).nativeName;
+
+  useEffect(() => {
+    return onConsentChanged((state) => {
+      setAnalyticsOn(state.analyticsEnabled);
+    });
+  }, []);
+
+  async function handleAnalyticsToggle(next: boolean) {
+    // Fire consent event while collection is still allowed (opt-out path).
+    if (!next) {
+      track(Events.settings.analyticsConsentChanged, {
+        analytics_enabled: 0
+      });
+    }
+    setAnalyticsOn(next);
+    await setAnalyticsEnabled(next);
+    setAnalyticsCollectionEnabled(next);
+    if (next) {
+      track(Events.settings.analyticsConsentChanged, {
+        analytics_enabled: 1
+      });
+    }
+  }
 
   async function handleSyncNow() {
     if (syncing) return;
@@ -148,6 +182,7 @@ export function MoreScreen() {
           onPress: async () => {
             if (busy) return;
             setBusy(true);
+            track(Events.settings.accountSignOut);
             try {
               await signOut();
               // AuthProvider will flip status → signed-out and swap navigators.
@@ -241,15 +276,39 @@ export function MoreScreen() {
           icon="pulse-outline"
           label={t("more.syncStatus")}
           sub={t("more.syncStatusSub")}
-          onPress={() => navigation.navigate("SyncStatus")}
+          onPress={() => {
+            track(Events.settings.syncStatusOpened);
+            navigation.navigate("SyncStatus");
+          }}
         />
 
         <Tile
           icon="cloud-upload-outline"
           label={t("more.exportSnapshot")}
           sub={t("more.exportSnapshotSub")}
-          onPress={handleExportSnapshot}
+          onPress={() => {
+            track(Events.settings.exportSnapshotStarted);
+            void handleExportSnapshot();
+          }}
         />
+
+        <Text style={styles.sectionLabel}>{t("more.privacy")}</Text>
+        <View style={styles.consentRow}>
+          <View style={styles.consentCopy}>
+            <Text style={styles.tileLabel}>{t("more.analyticsShare")}</Text>
+            <Text style={styles.tileSub}>{t("more.analyticsShareSub")}</Text>
+          </View>
+          <Switch
+            value={analyticsOn}
+            onValueChange={(v) => void handleAnalyticsToggle(v)}
+            trackColor={{
+              false: colors.interactive.disabled,
+              true: colors.brand.accent
+            }}
+            thumbColor={colors.surface.default}
+            accessibilityLabel={t("more.analyticsShare")}
+          />
+        </View>
 
         <Text style={styles.sectionLabel}>{t("more.account")}</Text>
 
@@ -379,6 +438,20 @@ const styles = StyleSheet.create({
     ...typography.overline,
     color: colors.text.muted,
     marginTop: spacing[4]
+  },
+  consentRow: {
+    alignItems: "center",
+    backgroundColor: colors.surface.default,
+    borderColor: colors.border.subtle,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: spacing[3],
+    padding: spacing[3]
+  },
+  consentCopy: {
+    flex: 1,
+    gap: 2
   },
   credentialCard: {
     alignItems: "center",

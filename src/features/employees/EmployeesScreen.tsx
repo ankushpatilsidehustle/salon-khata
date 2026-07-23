@@ -20,6 +20,7 @@ import type { EntriesStackParamList } from "@/features/entries/EntriesNavigator"
 import type { RootStackParamList } from "@/application/AppNavigator";
 import { CommissionRulesSheet } from "./CommissionRulesSheet";
 import { EmployeeFormSheet } from "./EmployeeFormSheet";
+import { Events, track } from "@/observability";
 
 type Props = NativeStackScreenProps<EntriesStackParamList, "Employees">;
 
@@ -117,6 +118,7 @@ export function EmployeesScreen({ navigation }: Props) {
           style: "destructive",
           onPress: () => {
             repo.softDelete(emp.id, DEV_SALON_ID);
+            track(Events.staff.deleted);
             showSnackbar(t("employees.deleted"));
             loadData();
           }

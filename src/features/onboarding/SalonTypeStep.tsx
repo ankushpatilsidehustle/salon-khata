@@ -5,6 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { colors, radius, spacing, typography } from "@/design-system/tokens";
 import type { SalonType } from "@/repositories/salon-repository";
+import { Events, track } from "@/observability";
 import type { OnboardingStackParamList } from "./OnboardingNavigator";
 import { StepHeader } from "./components/StepHeader";
 
@@ -43,6 +44,7 @@ export function SalonTypeStep({ navigation, route }: Props) {
   const { language } = route.params;
 
   function select(salonType: SalonType) {
+    track(Events.onboarding.salonTypeSelected, { salon_type: salonType });
     navigation.navigate("BusinessSetup", { language, salonType });
   }
 

@@ -6,6 +6,8 @@ import { loadDeviceIdentity } from "@/device/device-identity";
 import { startNetworkManager, isOnline } from "@/network/network-manager";
 import { getPersistedSalonId } from "@/session/session-storage";
 import { syncService } from "@/sync/sync-service";
+import { logger } from "@/observability/logging/logger";
+import { recordNonFatal } from "@/observability/crash/crash-reporter";
 
 /**
  * `expo-background-task` worker that opportunistically drains the sync
@@ -69,10 +71,11 @@ TaskManager.defineTask(SYNC_TASK_NAME, async () => {
       ? BackgroundTask.BackgroundTaskResult.Failed
       : BackgroundTask.BackgroundTaskResult.Success;
   } catch (err) {
-    // eslint-disable-next-line no-console
-    console.warn(
-      `[background-sync] worker threw: ${err instanceof Error ? err.message : String(err)}`
-    );
+    logger.warn("background-sync worker threw", {
+      category: "background",
+      err_code: err instanceof Error ? err.message.slice(0, 80) : "unknown"
+    });
+    recordNonFatal(err, "background", { extra: { task: "sync" } });
     return BackgroundTask.BackgroundTaskResult.Failed;
   }
 });
@@ -104,10 +107,10 @@ export async function registerBackgroundSyncTask(): Promise<void> {
   } catch (err) {
     // Registration failures shouldn't block app startup — the in-app
     // SyncScheduler still covers all the primary triggers.
-    // eslint-disable-next-line no-console
-    console.warn(
-      `[background-sync] registration failed: ${err instanceof Error ? err.message : String(err)}`
-    );
+    logger.warn("background-sync registration failed", {
+      category: "background",
+      err_code: err instanceof Error ? err.message.slice(0, 80) : "unknown"
+    });
   }
 }
 

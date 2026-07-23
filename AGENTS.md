@@ -84,6 +84,7 @@ Salon id = Firebase `user.uid`. Set via `src/session/current-salon.ts` (`DEV_SAL
 | More | `src/features/more/` | Sync, export, account, dev reset |
 | Sync status UI | `src/features/sync/` | Queue depth / dead letters |
 | Subscription | `src/features/subscription/` | Trial/plan entitlements, referral code UI |
+| Observability | `src/observability/` | Analytics, Crashlytics, Perf, logger, consent; import `@/observability` only |
 
 ---
 

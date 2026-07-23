@@ -29,6 +29,16 @@ import { unregisterBackgroundSyncTask } from "@/sync/background-sync-task";
 import { releaseLock } from "@/cloud/device-lock";
 import { ensureSalonMembership } from "@/cloud/salon-membership";
 import { ensureSalonBillingBootstrap } from "@/repositories/subscription-bootstrap";
+import {
+  Events,
+  identifyUser,
+  logger,
+  recordNonFatal,
+  setCrashAttributes,
+  setUserProperties,
+  track
+} from "@/observability";
+import { getDeviceIdentity } from "@/device/device-identity";
 
 /**
  * Auth lifecycle states:
@@ -76,15 +86,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // would cause the Firebase-auth `useEffect` to re-subscribe every time
   // the resolver identity changed).
   const previousSalonIdRef = useRef<string | null>(null);
+  const statusRef = useRef<AuthStatus>("loading");
+  statusRef.current = status;
 
   // Recompute the salon-resolution for the given firebase user.
   const resolveSalonFor = useCallback((nextUser: AuthUser | null) => {
     if (!nextUser) {
       const previousSalonId = previousSalonIdRef.current;
+      const hadSession = previousSalonId != null || statusRef.current !== "signed-out";
       previousSalonIdRef.current = null;
       clearCurrentSalonId();
       setSalonId(null);
       setStatus("signed-out");
+      identifyUser(null);
+      setCrashAttributes({ salon_id: "none", user_id: "none" });
+      if (hadSession) {
+        track(Events.auth.logout);
+      }
       // Tear down backup subscriptions + persistent salon id + OS-level
       // background task on sign-out so a signed-out device stops trying
       // to upload. Best-effort release of the cloud device lock so
@@ -103,19 +121,43 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return;
     }
     const salon = salonRepo.findByOwnerUid(nextUser.uid);
+    identifyUser(nextUser.uid);
+    setCrashAttributes({ user_id: nextUser.uid });
+
+    let installId: string | null = null;
+    try {
+      installId = getDeviceIdentity().installId;
+    } catch {
+      installId = null;
+    }
+
     if (salon) {
       previousSalonIdRef.current = salon.id;
       setCurrentSalonId(salon.id);
       setSalonId(salon.id);
       setStatus("signed-in");
+      track(Events.auth.sessionRestored, { has_salon: 1 });
+      setCrashAttributes({
+        salon_id: salon.id,
+        user_role: "owner"
+      });
+      setUserProperties({
+        userId: nextUser.uid,
+        salonId: salon.id,
+        installId,
+        userRole: "owner",
+        salonType: salon.salon_type ?? null,
+        preferredLanguage: salon.language ?? null,
+        country: "IN"
+      });
       // Trial + referral code bootstrap is local and idempotent. Must run
       // before feature screens read entitlements.
       try {
         ensureSalonBillingBootstrap(salon.id);
       } catch (err) {
         // Non-fatal — screens fall back to locked entitlements until retry.
-        // eslint-disable-next-line no-console
-        console.warn("[auth] billing bootstrap failed", err);
+        logger.warn("billing bootstrap failed", { category: "auth" });
+        recordNonFatal(err, "auth", { extra: { stage: "billing_bootstrap" } });
       }
       // Mirror the resolved salon id to persistent storage so the
       // background task worker can pick it up when the app isn't running,
@@ -136,6 +178,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
       clearCurrentSalonId();
       setSalonId(null);
       setStatus("signed-in-no-salon");
+      track(Events.auth.sessionRestored, { has_salon: 0 });
+      setCrashAttributes({ salon_id: "none" });
+      setUserProperties({
+        userId: nextUser.uid,
+        salonId: null,
+        installId,
+        userRole: "owner",
+        country: "IN"
+      });
       // Onboarding hasn't completed yet — no salon means nothing to
       // back up. The scheduler stays stopped until `refreshSalon()`.
       backupScheduler.stop();

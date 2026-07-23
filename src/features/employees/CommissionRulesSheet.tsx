@@ -20,6 +20,7 @@ import { EmployeeRepository } from "@/repositories/employee-repository";
 import type { EmployeeRecord } from "@/repositories/employee-repository";
 import { ServiceRepository } from "@/repositories/service-repository";
 import type { ServiceRecord } from "@/repositories/service-repository";
+import { Events, track } from "@/observability";
 
 type Props = {
   visible: boolean;
@@ -113,6 +114,9 @@ export function CommissionRulesSheet({
       salonId: DEV_SALON_ID,
       ruleType: editType,
       value: Math.round(raw * 100) // → basis points or paise
+    });
+    track(Events.staff.commissionRulesUpdated, {
+      rule_type: editType
     });
     loadData();
     setEditingId(null);

@@ -1,7 +1,8 @@
-import { createContext, useContext } from "react";
+import { createContext, useContext, useEffect } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
+import { Events, onNavigationStateChange, track } from "@/observability";
 import type { SalonType } from "@/repositories/salon-repository";
 import { LanguageStep } from "./LanguageStep";
 import { SalonTypeStep } from "./SalonTypeStep";
@@ -37,9 +38,13 @@ type OnboardingNavigatorProps = {
 };
 
 export function OnboardingNavigator({ onDone }: OnboardingNavigatorProps) {
+  useEffect(() => {
+    track(Events.onboarding.started);
+  }, []);
+
   return (
     <OnboardingDoneContext.Provider value={onDone}>
-      <NavigationContainer>
+      <NavigationContainer onStateChange={onNavigationStateChange}>
         <Stack.Navigator
           screenOptions={{
             headerShown: false,

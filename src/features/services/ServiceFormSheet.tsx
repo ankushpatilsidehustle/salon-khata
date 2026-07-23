@@ -13,6 +13,7 @@ import type { ServiceRecord } from "@/repositories/service-repository";
 import { ServiceCategoryRepository } from "@/repositories/service-category-repository";
 import type { ServiceCategoryRecord } from "@/repositories/service-category-repository";
 import { CategoryPickerSheet } from "./CategoryPickerSheet";
+import { Events, track } from "@/observability";
 
 type ServiceFormSheetProps = {
   visible: boolean;
@@ -142,6 +143,10 @@ export function ServiceFormSheet({
         categoryId,
         isActive
       });
+      track(Events.service.updated, {
+        is_active: isActive ? 1 : 0,
+        has_product_cost: cost > 0 ? 1 : 0
+      });
     } else {
       serviceRepo.insert({
         salonId: DEV_SALON_ID,
@@ -150,6 +155,9 @@ export function ServiceFormSheet({
         femalePrice: female,
         productCost: cost,
         categoryId
+      });
+      track(Events.service.created, {
+        has_product_cost: cost > 0 ? 1 : 0
       });
     }
     onSaved();

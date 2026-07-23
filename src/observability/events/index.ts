@@ -1,0 +1,21 @@
+export {
+  Events,
+  AuthEvents,
+  OnboardingEvents,
+  CustomerEvents,
+  BillingEvents,
+  StaffEvents,
+  ExpenseEvents,
+  ServiceEvents,
+  AppointmentEvents,
+  InventoryEvents,
+  ReportEvents,
+  SubscriptionEvents,
+  SyncEvents,
+  SettingsEvents,
+  DashboardEvents,
+  ScreenEvents,
+  type AnalyticsParams,
+  type EventName,
+  type ErrorCategory
+} from "@/observability/events/catalog";

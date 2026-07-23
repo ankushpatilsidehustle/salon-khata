@@ -6,6 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { colors, radius, spacing, typography } from "@/design-system/tokens";
 import { APP_LANGUAGES, type AppLanguageCode } from "@/i18n/languages";
 import { i18n } from "@/i18n";
+import { Events, track } from "@/observability";
 import type { OnboardingStackParamList } from "./OnboardingNavigator";
 import { StepHeader } from "./components/StepHeader";
 
@@ -16,6 +17,7 @@ export function LanguageStep({ navigation }: Props) {
 
   function select(code: AppLanguageCode) {
     void i18n.changeLanguage(code);
+    track(Events.onboarding.languageSelected, { language: code });
     navigation.navigate("SalonType", { language: code });
   }
 

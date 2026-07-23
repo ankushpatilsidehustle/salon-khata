@@ -28,6 +28,7 @@ import type {
   EmployeeRecord
 } from "@/repositories/employee-repository";
 import { CommissionRulesSheet } from "./CommissionRulesSheet";
+import { Events, track } from "@/observability";
 
 type EmployeeFormSheetProps = {
   visible: boolean;
@@ -173,8 +174,15 @@ export function EmployeeFormSheet({
 
     if (isEditMode && employeeId) {
       repo.update(employeeId, DEV_SALON_ID, { ...payload, isActive });
+      track(Events.staff.updated, {
+        compensation_type: compType ?? "none",
+        is_active: isActive ? 1 : 0
+      });
     } else {
       repo.insert(payload);
+      track(Events.staff.added, {
+        compensation_type: compType ?? "none"
+      });
     }
     onSaved();
     onClose();

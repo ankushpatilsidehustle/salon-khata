@@ -21,6 +21,12 @@ import { loadDeviceIdentity } from "@/device/device-identity";
 import { startNetworkManager } from "@/network/network-manager";
 import { loadBackupPreferences } from "@/backup/backup-preferences";
 import { registerBackgroundSyncTask } from "@/sync/background-sync-task";
+import {
+  ObservabilityErrorBoundary,
+  beginStartupTrace,
+  bootstrapObservability,
+  endStartupTrace
+} from "@/observability";
 
 const settingsRepo = new SettingsRepository();
 
@@ -33,6 +39,7 @@ export function AppRoot() {
     let cancelled = false;
     (async () => {
       try {
+        await beginStartupTrace();
         runAllMigrations();
         // Resolve the persistent install_id before anything else — the key
         // vault and backup engine depend on it. Cheap on subsequent launches
@@ -48,10 +55,15 @@ export function AppRoot() {
         // Kick off App Check before any auth request goes out. Errors are
         // swallowed inside initializeAppCheck (soft-fail).
         await initializeAppCheck();
+        // Observability after identity + network so crash keys / consent work.
+        await bootstrapObservability();
         // Register the OS-level per-record sync background worker. The
         // Phase-7 file-backup engine is manual-only — no OS task registered.
         void registerBackgroundSyncTask();
-        if (!cancelled) setIsReady(true);
+        if (!cancelled) {
+          setIsReady(true);
+          void endStartupTrace();
+        }
       } catch (error) {
         if (!cancelled) {
           setStartupError(
@@ -83,11 +95,17 @@ export function AppRoot() {
   return (
     <SafeAreaProvider>
       <StatusBar style="dark" />
-      <AuthProvider>
-        <SnackbarProvider>
-          <AuthGate />
-        </SnackbarProvider>
-      </AuthProvider>
+      <ObservabilityErrorBoundary
+        title={t("errors.boundaryTitle")}
+        body={t("errors.boundaryBody")}
+        retryLabel={t("errors.boundaryRetry")}
+      >
+        <AuthProvider>
+          <SnackbarProvider>
+            <AuthGate />
+          </SnackbarProvider>
+        </AuthProvider>
+      </ObservabilityErrorBoundary>
     </SafeAreaProvider>
   );
 }

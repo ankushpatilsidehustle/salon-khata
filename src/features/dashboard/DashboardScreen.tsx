@@ -32,6 +32,7 @@ import type { RootStackParamList } from "@/application/AppNavigator";
 import { TransactionDetailSheet } from "@/features/income/TransactionDetailSheet";
 import { ExpenseDetailSheet } from "@/features/expenses/ExpenseDetailSheet";
 import { intlLocaleFor } from "@/i18n/languages";
+import { Events, track } from "@/observability";
 
 const incomeRepo = new IncomeRepository();
 const expenseRepo = new ExpenseRepository();
@@ -99,6 +100,7 @@ export function DashboardScreen() {
                   expense.id,
                   getUtcTimestamp()
                 );
+                track(Events.expense.settled, { payment_mode: "credit" });
                 reloadToday();
               } catch (err) {
                 const message =
@@ -116,6 +118,7 @@ export function DashboardScreen() {
   useFocusEffect(
     useCallback(() => {
       reloadToday();
+      track(Events.dashboard.viewed);
     }, [reloadToday])
   );
 
@@ -208,7 +211,10 @@ export function DashboardScreen() {
         <View style={styles.ghostRow}>
           <Button
             variant="ghost"
-            onPress={() => navigation.navigate("ExpenseEntry")}
+            onPress={() => {
+              track(Events.dashboard.ghostExpensePressed);
+              navigation.navigate("ExpenseEntry");
+            }}
             testID="dash-ghost-add-expense"
             accessibilityLabel={t("expense.add")}
           >
@@ -253,7 +259,12 @@ export function DashboardScreen() {
                       index > 0 && styles.rowBorder,
                       pressed && styles.rowPressed
                     ]}
-                    onPress={() => setDetailTxId(tx.id)}
+                    onPress={() => {
+                      track(Events.dashboard.transactionOpened, {
+                        kind: "income"
+                      });
+                      setDetailTxId(tx.id);
+                    }}
                     accessibilityRole="button"
                     accessibilityLabel={tx.services_summary}
                     testID={`dash-tx-${tx.id}`}

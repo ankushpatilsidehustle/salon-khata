@@ -21,6 +21,7 @@ import {
 import { ReferralRepository } from "@/repositories/referral-repository";
 import type { ReferralCodeRecord } from "@/repositories/referral-repository";
 import { useAuth } from "@/features/auth/AuthProvider";
+import { applyEntitlementProperties, setCrashAttributes } from "@/observability";
 
 type SubscriptionContextValue = {
   entitlements: Entitlements;
@@ -58,8 +59,20 @@ export function SubscriptionProvider({ children }: Props) {
       return;
     }
     ensureSalonBillingBootstrap(salonId);
-    setEntitlements(getEntitlementsForSalon(salonId));
+    const next = getEntitlementsForSalon(salonId);
+    setEntitlements(next);
     setReferralCode(referralRepo.getCodeForSalon(salonId));
+    applyEntitlementProperties(next);
+    setCrashAttributes({
+      subscription_plan: next.planCode ?? next.lifecycle,
+      trial_status: next.isOnTrial
+        ? "active"
+        : next.isSubscriptionActive
+          ? "converted"
+          : next.isExpired
+            ? "expired"
+            : "none"
+    });
   }, [salonId, status]);
 
   useEffect(() => {

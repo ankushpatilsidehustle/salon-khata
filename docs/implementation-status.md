@@ -19,7 +19,12 @@ it's in [`docs/future-features.md`](future-features.md) or
   TypeScript strict.
 - **Local DB**: SQLite via `expo-sqlite` 16.0.10.
 - **Cloud**: Firebase — Auth (phone OTP), Firestore (per-record sync),
-  Storage (DR file backup), App Check (Play Integrity / DeviceCheck).
+  Storage (DR file backup), App Check (Play Integrity / DeviceCheck),
+  Analytics, Crashlytics, Performance Monitoring.
+- **Observability**: `src/observability/` — typed event catalog, screen
+  tracking, consent-gated analytics, Crashlytics context, structured logger,
+  event-bus bridge for sync/backup. See
+  [`docs/observability/dashboards.md`](observability/dashboards.md).
 - **i18n**: `i18next` / `react-i18next` — `en`, `hi`, `mr`, `gu`, `bn`, `ta`, `kn` (full).
 - **Runtime target**: dev client (Expo Go doesn't work — native modules
   from `@react-native-firebase/*` + `react-native-share`).

@@ -543,7 +543,10 @@
     "deleteAccount": "ಖಾತೆ ಅಳಿಸಿ",
     "deleteAccountSub": "ನಿಮ್ಮ ಖಾತೆ ಮತ್ತು ಡೇಟಾವನ್ನು ಶಾಶ್ವತವಾಗಿ ತೆಗೆದುಹಾಕಿ",
     "language": "ಭಾಷೆ",
-    "languageSub": "ಅಪ್ಲಿಕೇಶನ್ ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ"
+    "languageSub": "ಅಪ್ಲಿಕೇಶನ್ ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ",
+    "privacy": "Privacy",
+    "analyticsShare": "Share anonymous usage data",
+    "analyticsShareSub": "Helps us improve Salon Khata. Crash reports stay on to keep the app stable."
   },
   "subscription": {
     "title": "ಸದಸ್ಯತ್ವ",
@@ -656,7 +659,10 @@
   },
   "errors": {
     "startupTitle": "Salon Khata ಆರಂಭಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ",
-    "unknown": "ಏನೋ ತಪ್ಪಾಗಿದೆ"
+    "unknown": "ಏನೋ ತಪ್ಪಾಗಿದೆ",
+    "boundaryTitle": "Something went wrong",
+    "boundaryBody": "The app hit an unexpected error. You can try again — your data is safe on this device.",
+    "boundaryRetry": "Try again"
   },
   "auth": {
     "phone": {

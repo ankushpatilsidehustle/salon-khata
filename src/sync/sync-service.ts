@@ -24,6 +24,7 @@ import type {
   SyncOp
 } from "@/sync/sync-api";
 import type { SyncEntityType, SyncQueueRow } from "@/sync/types";
+import { logger } from "@/observability/logging/logger";
 
 /**
  * SyncService — orchestrator for the per-record sync engine.
@@ -187,12 +188,11 @@ export class SyncService {
           totalConflicts += result.conflicts;
         } catch (err) {
           errors++;
-          // eslint-disable-next-line no-console
-          console.warn(
-            `[sync] pull failed for ${entityType}: ${
-              err instanceof Error ? err.message : String(err)
-            }`
-          );
+          logger.warn(`sync pull failed for ${entityType}`, {
+            category: "sync",
+            err_code:
+              err instanceof Error ? err.message.slice(0, 80) : "unknown"
+          });
         }
       }
 

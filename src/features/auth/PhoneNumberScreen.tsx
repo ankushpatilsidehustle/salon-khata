@@ -17,6 +17,7 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { colors, radius, spacing, typography } from "@/design-system/tokens";
 import { signInWithPhone, AuthError } from "@/firebase/auth";
 import { toE164 } from "@/domain/phone";
+import { Events, recordNonFatal, track } from "@/observability";
 import type { AuthStackParamList } from "./AuthNavigator";
 
 type Props = NativeStackScreenProps<AuthStackParamList, "Phone">;
@@ -52,10 +53,23 @@ export function PhoneNumberScreen({ navigation, route }: Props) {
     }
     setSubmitting(true);
     setError(null);
+    track(Events.auth.loginStarted);
     try {
       const confirmation = await signInWithPhone(e164);
+      track(Events.auth.otpSent);
       navigation.navigate("Otp", { e164Phone: e164, confirmation });
     } catch (err) {
+      const code = err instanceof AuthError ? err.code : "unknown";
+      track(Events.auth.loginFailed, { error_code: code, stage: "otp_send" });
+      if (err instanceof AuthError) {
+        const skip =
+          code === "invalid-phone" ||
+          code === "too-many-requests" ||
+          code === "network-request-failed";
+        if (!skip) {
+          recordNonFatal(err, "auth", { extra: { stage: "otp_send", code } });
+        }
+      }
       const message =
         err instanceof AuthError
           ? mapErrorMessage(err.code, t)

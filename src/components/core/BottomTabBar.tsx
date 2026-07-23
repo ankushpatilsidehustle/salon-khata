@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { colors, spacing, typography } from "@/design-system/tokens";
+import { Events, track } from "@/observability";
 
 // ─── constants ───────────────────────────────────────────────────────────────
 const BAR_HEIGHT = 64;
@@ -102,6 +103,7 @@ export function BottomTabBar({ navigation, state }: BottomTabBarProps) {
             accessibilityLabel="Record a bill"
             testID="nav-center-add"
             onPress={() => {
+              track(Events.dashboard.fabPressed);
               // Navigate up to the root stack's IncomeEntry modal.
               // React Navigation v6 bubbles navigate() up the tree automatically.
               navigation.navigate("IncomeEntry" as never);

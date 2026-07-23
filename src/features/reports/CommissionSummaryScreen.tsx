@@ -25,6 +25,7 @@ import type { Period } from "@/domain/period";
 import { IncomeRepository } from "@/repositories/income-repository";
 import type { RootStackParamList } from "@/application/AppNavigator";
 import { normalizeReportPeriod } from "./period-params";
+import { Events, track } from "@/observability";
 
 const incomeRepo = new IncomeRepository();
 
@@ -68,7 +69,8 @@ export function CommissionSummaryScreen({ navigation, route }: Props) {
   useFocusEffect(
     useCallback(() => {
       reload();
-    }, [reload])
+      track(Events.report.commissionOpened, { period_mode: period.mode });
+    }, [reload, period.mode])
   );
 
   const isEmpty = rows.length === 0;

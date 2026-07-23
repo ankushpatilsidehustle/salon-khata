@@ -1,0 +1,30 @@
+# Used INSTEAD of .gitignore when uploading to EAS Build.
+# Keep google-services.json included so Android Firebase native config is present.
+
+node_modules/
+.expo/
+dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+*.tsbuildinfo
+
+android/
+ios/
+
+# iOS Firebase plist (not needed for Android APK builds)
+GoogleService-Info.plist
+
+functions/lib/
+functions/node_modules/
+.firebase/
+
+# Local tooling / docs noise
+.git/
+agent-transcripts/
+*.md
+!README.md
+docs/
+.cursor/
+AGENTS.md

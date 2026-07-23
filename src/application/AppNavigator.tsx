@@ -2,6 +2,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
+import { onNavigationStateChange } from "@/observability";
 import { BottomTabBar } from "@/components/core/BottomTabBar";
 import { DashboardScreen } from "@/features/dashboard/DashboardScreen";
 import { EntriesNavigator } from "@/features/entries/EntriesNavigator";
@@ -114,7 +115,7 @@ function MainTabsNavigator() {
 
 export function AppNavigator() {
   return (
-    <NavigationContainer>
+    <NavigationContainer onStateChange={onNavigationStateChange}>
       <RootStack.Navigator screenOptions={{ headerShown: false }}>
         <RootStack.Screen name="MainTabs" component={MainTabsNavigator} />
         <RootStack.Screen

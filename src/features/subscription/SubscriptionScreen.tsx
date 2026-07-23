@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import {
   Alert,
   Pressable,
@@ -19,12 +19,16 @@ import { colors, radius, spacing, typography } from "@/design-system/tokens";
 import { formatMoney } from "@/domain/money";
 import type { RootStackParamList } from "@/application/AppNavigator";
 import { SubscriptionPlanRepository } from "@/repositories/subscription-plan-repository";
+import { Events, track } from "@/observability";
 import {
   useRefreshEntitlementsOnFocus,
   useSubscription
 } from "./SubscriptionProvider";
 
 const planRepo = new SubscriptionPlanRepository();
+
+/** Days remaining at/below which we treat the trial as "expiring soon". */
+const TRIAL_EXPIRING_DAYS = 7;
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -35,6 +39,28 @@ export function SubscriptionScreen() {
   useRefreshEntitlementsOnFocus();
 
   const plans = useMemo(() => planRepo.listPurchaseable(), []);
+
+  useEffect(() => {
+    track(Events.subscription.screenViewed, {
+      lifecycle: entitlements.lifecycle,
+      remaining_days: entitlements.remainingDays
+    });
+    if (entitlements.isExpired) {
+      track(Events.subscription.softLockShown, {
+        lifecycle: entitlements.lifecycle
+      });
+    } else if (
+      entitlements.isOnTrial &&
+      entitlements.remainingDays > 0 &&
+      entitlements.remainingDays <= TRIAL_EXPIRING_DAYS
+    ) {
+      track(Events.subscription.trialExpiringShown, {
+        remaining_days: entitlements.remainingDays
+      });
+    }
+    // Fire once on mount for this screen visit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const statusLabel = (() => {
     switch (entitlements.lifecycle) {

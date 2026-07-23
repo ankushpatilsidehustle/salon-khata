@@ -27,6 +27,7 @@ import {
   type CustomerWithStats
 } from "@/repositories/customer-repository";
 import type { EntriesStackParamList } from "@/features/entries/EntriesNavigator";
+import { Events, track } from "@/observability";
 import { CustomerDetailSheet } from "./CustomerDetailSheet";
 import { CustomerFormSheet } from "./CustomerFormSheet";
 
@@ -85,6 +86,18 @@ export function CustomersListScreen({ navigation }: Props) {
     }
     return rows.filter((r) => r.name.toLowerCase().includes(q));
   }, [rows, query]);
+
+  useEffect(() => {
+    const q = query.trim();
+    if (!q) return;
+    const handle = setTimeout(() => {
+      track(Events.customer.search, {
+        query_len: q.length,
+        result_count: filtered.length
+      });
+    }, 400);
+    return () => clearTimeout(handle);
+  }, [query, filtered.length]);
 
   const isEmpty = rows.length === 0;
   const noResults = !isEmpty && filtered.length === 0;
@@ -185,7 +198,10 @@ export function CustomersListScreen({ navigation }: Props) {
                 </View>
               }
               showChevron={false}
-              onPress={() => setDetailId(item.id)}
+              onPress={() => {
+                setDetailId(item.id);
+                track(Events.customer.detailOpened);
+              }}
             />
           )}
         />

@@ -543,7 +543,10 @@
     "logOut": "Log out",
     "logOutSub": "Sign out on this device",
     "deleteAccount": "Delete account",
-    "deleteAccountSub": "Permanently remove your account and data"
+    "deleteAccountSub": "Permanently remove your account and data",
+    "privacy": "Privacy",
+    "analyticsShare": "Share anonymous usage data",
+    "analyticsShareSub": "Helps us improve Salon Khata. Crash reports stay on to keep the app stable."
   },
   "settings": {
     "language": {
@@ -661,7 +664,10 @@
   },
   "errors": {
     "startupTitle": "Could not start Salon Khata",
-    "unknown": "Something went wrong"
+    "unknown": "Something went wrong",
+    "boundaryTitle": "Something went wrong",
+    "boundaryBody": "The app hit an unexpected error. You can try again — your data is safe on this device.",
+    "boundaryRetry": "Try again"
   },
   "auth": {
     "phone": {

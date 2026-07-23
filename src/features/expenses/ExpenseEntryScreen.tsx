@@ -34,6 +34,7 @@ import type { ExpensePaymentMode } from "@/repositories/expense-repository";
 import { ExpenseCategoryRepository } from "@/repositories/expense-category-repository";
 import type { ExpenseCategoryRecord } from "@/repositories/expense-category-repository";
 import type { RootStackParamList } from "@/application/AppNavigator";
+import { Events, track } from "@/observability";
 
 type Props = NativeStackScreenProps<RootStackParamList, "ExpenseEntry">;
 
@@ -213,8 +214,10 @@ export function ExpenseEntryScreen({ navigation, route }: Props) {
 
       if (isEditing) {
         expenseRepo.update(draft);
+        track(Events.expense.updated, { payment_mode: paymentMode });
       } else {
         expenseRepo.insert(draft);
+        track(Events.expense.created, { payment_mode: paymentMode });
       }
 
       const label = isEditing

@@ -21,6 +21,8 @@
       "expo-sqlite",
       "@react-native-community/datetimepicker",
       "@react-native-firebase/app",
+      "@react-native-firebase/crashlytics",
+      "@react-native-firebase/perf",
       [
         "expo-build-properties",
         {
@@ -31,6 +33,12 @@
       ],
       "expo-secure-store",
       "expo-background-task"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "8f45d0f5-b5ef-4e13-abf7-01b06ecb718f"
+      }
+    },
+    "owner": "ankushmessi"
   }
 }

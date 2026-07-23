@@ -37,6 +37,7 @@ import {
 } from "@/repositories/income-repository";
 import { ExpenseRepository } from "@/repositories/expense-repository";
 import type { RootStackParamList } from "@/application/AppNavigator";
+import { Events, track } from "@/observability";
 
 const incomeRepo = new IncomeRepository();
 const expenseRepo = new ExpenseRepository();
@@ -91,8 +92,14 @@ export function ReportsScreen() {
   useFocusEffect(
     useCallback(() => {
       reload();
-    }, [reload])
+      track(Events.report.viewed, { period_mode: period.mode });
+    }, [reload, period.mode])
   );
+
+  const onPeriodChange = (next: Period) => {
+    setPeriod(next);
+    track(Events.report.periodSelected, { period_mode: next.mode });
+  };
 
   const net = income - expenses - commission;
   const hasAnyActivity = billCount > 0 || expenses > 0;
@@ -126,7 +133,7 @@ export function ReportsScreen() {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        <PeriodSelector value={period} onChange={setPeriod} />
+        <PeriodSelector value={period} onChange={onPeriodChange} />
 
         {!hasAnyActivity ? (
           <EmptyState

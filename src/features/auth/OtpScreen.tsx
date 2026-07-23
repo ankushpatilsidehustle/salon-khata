@@ -22,6 +22,7 @@ import {
   type PhoneConfirmation
 } from "@/firebase/auth";
 import { formatE164ForDisplay } from "@/domain/phone";
+import { Events, recordNonFatal, track } from "@/observability";
 import type { AuthStackParamList } from "./AuthNavigator";
 
 type Props = NativeStackScreenProps<AuthStackParamList, "Otp">;
@@ -81,8 +82,24 @@ export function OtpScreen({ navigation, route }: Props) {
     setError(null);
     try {
       await verifyOtp(confirmation, code);
+      track(Events.auth.otpVerified);
       // Success — AuthProvider's onAuthStateChanged swaps the navigator.
     } catch (err) {
+      const authCode = err instanceof AuthError ? err.code : "unknown";
+      track(Events.auth.loginFailed, {
+        error_code: authCode,
+        stage: "otp_verify"
+      });
+      // Expected user mistakes — do not flood Crashlytics.
+      const skip =
+        authCode === "invalid-code" ||
+        authCode === "code-expired" ||
+        authCode === "too-many-requests";
+      if (!skip) {
+        recordNonFatal(err, "auth", {
+          extra: { stage: "otp_verify", code: authCode }
+        });
+      }
       const message =
         err instanceof AuthError
           ? mapErrorMessage(err.code, t)

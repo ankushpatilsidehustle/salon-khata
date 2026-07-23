@@ -543,7 +543,10 @@
     "deleteAccount": "अकाउंट डिलीट करें",
     "deleteAccountSub": "अपना अकाउंट और डेटा स्थायी रूप से हटाएं",
     "language": "भाषा",
-    "languageSub": "ऐप की भाषा चुनें"
+    "languageSub": "ऐप की भाषा चुनें",
+    "privacy": "Privacy",
+    "analyticsShare": "Share anonymous usage data",
+    "analyticsShareSub": "Helps us improve Salon Khata. Crash reports stay on to keep the app stable."
   },
   "subscription": {
     "title": "सब्सक्रिप्शन",
@@ -656,7 +659,10 @@
   },
   "errors": {
     "startupTitle": "Salon Khata शुरू नहीं हो सका",
-    "unknown": "कुछ गलत हो गया"
+    "unknown": "कुछ गलत हो गया",
+    "boundaryTitle": "Something went wrong",
+    "boundaryBody": "The app hit an unexpected error. You can try again — your data is safe on this device.",
+    "boundaryRetry": "Try again"
   },
   "auth": {
     "phone": {

@@ -13,6 +13,8 @@
  * type-checked against the same payload shape.
  */
 
+import { logger } from "@/observability/logging/logger";
+
 /** Discriminated union of every event the backup engine broadcasts. */
 export type BackupEventMap = {
   /**
@@ -153,8 +155,10 @@ class EventBus {
         (handler as Handler<E>)(payload);
       } catch (err) {
         // Swallowing keeps the fan-out isolated; log for diagnostics.
-        // eslint-disable-next-line no-console
-        console.warn(`[event-bus] handler for "${event}" threw`, err);
+        logger.warn(`event-bus handler for "${event}" threw`, {
+          category: "general",
+          err_code: err instanceof Error ? err.message.slice(0, 80) : "unknown"
+        });
       }
     }
   }

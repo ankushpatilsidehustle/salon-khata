@@ -7,6 +7,8 @@ import { startNetworkManager, isOnline } from "@/network/network-manager";
 import { loadBackupPreferences } from "@/backup/backup-preferences";
 import { runBackupOnce } from "@/backup/backup-pipeline";
 import { getPersistedSalonId } from "@/session/session-storage";
+import { logger } from "@/observability/logging/logger";
+import { recordNonFatal } from "@/observability/crash/crash-reporter";
 
 /**
  * `expo-background-task` worker that opportunistically runs the backup
@@ -81,10 +83,11 @@ TaskManager.defineTask(BACKUP_TASK_NAME, async () => {
       ? BackgroundTask.BackgroundTaskResult.Failed
       : BackgroundTask.BackgroundTaskResult.Success;
   } catch (err) {
-    // eslint-disable-next-line no-console
-    console.warn(
-      `[background-task] worker threw: ${err instanceof Error ? err.message : String(err)}`
-    );
+    logger.warn("background-task worker threw", {
+      category: "background",
+      err_code: err instanceof Error ? err.message.slice(0, 80) : "unknown"
+    });
+    recordNonFatal(err, "background", { extra: { task: "backup" } });
     return BackgroundTask.BackgroundTaskResult.Failed;
   }
 });
@@ -116,10 +119,10 @@ export async function registerBackgroundBackupTask(): Promise<void> {
   } catch (err) {
     // Registration failures shouldn't block app startup — the in-app
     // scheduler still covers all the primary triggers.
-    // eslint-disable-next-line no-console
-    console.warn(
-      `[background-task] registration failed: ${err instanceof Error ? err.message : String(err)}`
-    );
+    logger.warn("background-task registration failed", {
+      category: "background",
+      err_code: err instanceof Error ? err.message.slice(0, 80) : "unknown"
+    });
   }
 }
 
