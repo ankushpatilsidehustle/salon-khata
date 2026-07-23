@@ -17,6 +17,7 @@ import { AdvanceEntryScreen } from "@/features/advances/AdvanceEntryScreen";
 import { AdvancesListScreen } from "@/features/advances/AdvancesListScreen";
 import { SyncStatusScreen } from "@/features/sync/SyncStatusScreen";
 import { SubscriptionScreen } from "@/features/subscription/SubscriptionScreen";
+import { LanguageScreen } from "@/features/more/LanguageScreen";
 import type { PeriodMode } from "@/domain/period";
 
 // ─── types ───────────────────────────────────────────────────────────────────
@@ -63,6 +64,8 @@ export type RootStackParamList = {
   SyncStatus: undefined;
   /** Trial / plan status, referral code, upcoming paid plans. */
   Subscription: undefined;
+  /** Switch app UI language (persisted on the salon). */
+  Language: undefined;
 };
 
 export type RootTabParamList = {
@@ -157,6 +160,7 @@ export function AppNavigator() {
           name="Subscription"
           component={SubscriptionScreen}
         />
+        <RootStack.Screen name="Language" component={LanguageScreen} />
       </RootStack.Navigator>
     </NavigationContainer>
   );

@@ -99,4 +99,19 @@ export class SalonRepository {
       markDirty();
     });
   }
+
+  /** Persist the owner's preferred UI language (local commit + sync queue). */
+  updateLanguage(id: string, language: string): void {
+    const now = getUtcTimestamp();
+    runInTransaction(() => {
+      database.runSync(
+        `UPDATE salons
+         SET language = ?, updated_at = ?
+         WHERE id = ? AND deleted_at IS NULL`,
+        [language, now, id]
+      );
+      trackChange({ entityType: "salons", entityId: id, salonId: id });
+      markDirty();
+    });
+  }
 }
