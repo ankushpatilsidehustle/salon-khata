@@ -33,7 +33,7 @@ A future feature should be considered only if:
 
 - Export reports
 - Simple data correction history
-- More languages
+- Additional languages (Telugu, Punjabi, Malayalam, Odia)
 - Optional service categories
 
 ### Version 1.2

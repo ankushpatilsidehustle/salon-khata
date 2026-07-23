@@ -6,19 +6,19 @@ Salon Khata is built for Indian salon owners across languages. Localization is a
 
 | Language | Code | Script | Direction |
 | --- | --- | --- | --- |
-| English (India) | `en-IN` | Latin | LTR |
-| हिन्दी (Hindi) | `hi-IN` | Devanagari | LTR |
-| मराठी (Marathi) | `mr-IN` | Devanagari | LTR |
-| ગુજરાતી (Gujarati) | `gu-IN` | Gujarati | LTR |
-| ಕನ್ನಡ (Kannada) | `kn-IN` | Kannada | LTR |
-| தமிழ் (Tamil) | `ta-IN` | Tamil | LTR |
-| తెలుగు (Telugu) | `te-IN` | Telugu | LTR |
+| English (India) | `en` | Latin | LTR |
+| हिन्दी (Hindi) | `hi` | Devanagari | LTR |
+| मराठी (Marathi) | `mr` | Devanagari | LTR |
+| ગુજરાતી (Gujarati) | `gu` | Gujarati | LTR |
+| বাংলা (Bengali) | `bn` | Bengali | LTR |
+| தமிழ் (Tamil) | `ta` | Tamil | LTR |
+| ಕನ್ನಡ (Kannada) | `kn` | Kannada | LTR |
 
 **Fallback**: English.
 
 ## Post-MVP
 
-Bengali, Punjabi, Malayalam, Odia.
+Telugu, Punjabi, Malayalam, Odia.
 
 ## Principles
 
@@ -128,7 +128,7 @@ MVP does not ship RTL scripts, but layout code must be RTL-safe for future:
 ## Language Selection
 
 - First launch: detect device locale, offer the language picker with detected language pre-selected.
-- User can switch language anytime from Settings → Language.
+- User can switch language anytime from More → Account → Language.
 - Change is instant, no restart.
 - Each language row displays its name in that language:
   - `English` (not "अंग्रेजी")
@@ -142,6 +142,7 @@ MVP does not ship RTL scripts, but layout code must be RTL-safe for future:
 - Missing keys fall back to English; log a warning in development.
 - New keys added must ship with translations for **all** supported languages before release.
 - Never ship a screen with untranslated keys.
+- Shared registry: `src/i18n/languages.ts`.
 
 ## Voice & Tone Across Languages
 

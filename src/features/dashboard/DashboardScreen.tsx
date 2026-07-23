@@ -31,6 +31,7 @@ import { SalonRepository } from "@/repositories/salon-repository";
 import type { RootStackParamList } from "@/application/AppNavigator";
 import { TransactionDetailSheet } from "@/features/income/TransactionDetailSheet";
 import { ExpenseDetailSheet } from "@/features/expenses/ExpenseDetailSheet";
+import { intlLocaleFor } from "@/i18n/languages";
 
 const incomeRepo = new IncomeRepository();
 const expenseRepo = new ExpenseRepository();
@@ -45,7 +46,7 @@ function toLocalISODate(d: Date): string {
 }
 
 function formatDisplayDate(d: Date, locale: string): string {
-  return d.toLocaleDateString(locale.startsWith("hi") ? "hi-IN" : "en-IN", {
+  return d.toLocaleDateString(intlLocaleFor(locale), {
     weekday: "short",
     day: "numeric",
     month: "short"
