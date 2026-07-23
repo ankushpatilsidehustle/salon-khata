@@ -1,0 +1,755 @@
+{
+  "app": {
+    "name": "Salon Khata"
+  },
+  "common": {
+    "loading": "ஏற்றப்படுகிறது",
+    "save": "சேமிக்கவும்",
+    "offlineReady": "இணையம் இல்லாமலும் செயல்படும்",
+    "profile": "சுயவிவரம்",
+    "back": "பின்செல்லவும்",
+    "cancel": "ரத்து செய்யவும்",
+    "delete": "நீக்கவும்",
+    "discard": "கைவிடவும்",
+    "done": "முடிந்தது",
+    "clear": "அழிக்கவும்",
+    "active": "செயலில்",
+    "inactive": "செயலில் இல்லை",
+    "discardChanges": "மாற்றங்களை கைவிடவா?",
+    "discardChangesMessage": "நீங்கள் சேமிக்காத மாற்றங்கள் உள்ளன. அவற்றை நிச்சயமாக கைவிட விரும்புகிறீர்களா?"
+  },
+  "entries": {
+    "title": "நிர்வகிக்கவும்",
+    "tabTitle": "நிர்வகிக்கவும்",
+    "hub": {
+      "employees": { "sub": "ஊழியர்களைச் சேர்த்து நிர்வகிக்கவும்" },
+      "services": { "sub": "ஹேர்கட், ட்ரீட்மென்ட் மற்றும் மேலும் பல" },
+      "commission": {
+      "label": "கமிஷன்",
+      "sub": "ஒவ்வொரு ஊழியர் மற்றும் சேவைக்கான விகிதங்களை அமைக்கவும்"
+    },
+      "customers": {
+        "label": "வாடிக்கையாளர்கள்",
+        "sub": "உங்கள் வழக்கமான வாடிக்கையாளர்கள் மற்றும் அவர்களின் வருகை வரலாறு"
+      },
+      "expenses": {
+        "label": "செலவுகள்",
+        "sub": "Wave 5-ல் வருகிறது"
+      }
+    }
+  },
+  "employees": {
+    "title": "ஊழியர்கள்",
+    "active": "செயலில்",
+    "inactive": "செயலில் இல்லை",
+    "empty": {
+      "icon": "👥",
+      "title": "இன்னும் ஊழியர்கள் இல்லை",
+      "body": "வருமானம் மற்றும் கமிஷன்களை கண்காணிக்க உங்கள் ஊழியர்களைச் சேர்க்கவும்."
+    },
+    "add": "ஊழியரைச் சேர்க்கவும்",
+    "edit": "ஊழியரைத் திருத்தவும்",
+    "name": "பெயர்",
+    "nameRequired": "பெயர் தேவை",
+    "namePlaceholder": "எ.கா. Priya, Rahul",
+    "address": "முகவரி",
+    "addressPlaceholder": "வீடு / தெரு / நகரம் (விருப்பத்தேர்வு)",
+    "mobile": "மொபைல் எண்",
+    "mobilePlaceholder": "10 இலக்க எண்",
+    "gender": "பாலினம்",
+    "genderOptions": {
+      "male": "ஆண்",
+      "female": "பெண்",
+      "other": "மற்றவை"
+    },
+    "joiningDate": "சேர்ந்த தேதி",
+    "joiningDatePlaceholder": "தேதியைத் தேர்ந்தெடுக்கவும்",
+    "compensation": {
+      "label": "சம்பளம் அல்லது கமிஷன்",
+      "salary": "சம்பளம்",
+      "commission": "கமிஷன்",
+      "hint": "இந்த ஊழியருக்கு எப்படி பணம் வழங்கப்படுகிறது என்பதைத் தேர்ந்தெடுக்கவும் (விருப்பத்தேர்வு)."
+    },
+    "salaryAmount": "மாத சம்பளம் (₹)",
+    "salaryPlaceholder": "எ.கா. 15000",
+    "salaryRequired": "சரியான சம்பளத் தொகையை உள்ளிடவும்",
+    "commissionPercent": "கமிஷன் (%)",
+    "commissionPlaceholder": "எ.கா. 40",
+    "commissionRequired": "0 முதல் 100 வரை சதவீதத்தை உள்ளிடவும்",
+    "perServiceRules": {
+      "title": "சேவை வாரியான கமிஷன்",
+      "subtitle": "குறிப்பிட்ட சேவைகளுக்கு இயல்புநிலையை மாற்றவும் (எ.கா. 35% தலை மசாஜ், 50% கெரட்டின்).",
+      "countZero": "மாற்றங்கள் இல்லை — இயல்புநிலை எல்லா சேவைகளுக்கும் பொருந்தும்",
+      "countOne": "1 மாற்றம் அமைக்கப்பட்டது",
+      "countMany": "{{count}} மாற்றங்கள் அமைக்கப்பட்டன",
+      "hintAddMode": "சேவை வாரியான விகிதங்களை அமைக்க முதலில் ஊழியரைச் சேமிக்கவும்."
+    },
+    "activeLabel": "செயலில்",
+    "deleteAction": "ஊழியரை நீக்கவும்",
+    "deleteConfirm": {
+      "title": "ஊழியரை நீக்கவா?",
+      "message": "இது ஊழியரை நீக்கும். முந்தைய பரிவர்த்தனைகள் பாதிக்கப்படாது."
+    },
+    "saved": "ஊழியர் சேமிக்கப்பட்டார்",
+    "deleted": "ஊழியர் நீக்கப்பட்டார்",
+    "ownerBadge": "உரிமையாளர்",
+    "ownerHint": "அமைப்பின் போது தானாக உருவாக்கப்பட்டது — இது நீங்கள்."
+  },
+  "services": {
+    "title": "சேவைகள்",
+    "uncategorized": "வகைப்படுத்தப்படாதது",
+    "filter": {
+      "all": "அனைத்தும்"
+    },
+    "empty": {
+      "icon": "✂️",
+      "title": "இன்னும் சேவைகள் இல்லை",
+      "body": "ஹேர்கட், ட்ரீட்மென்ட் மற்றும் பிற சேவைகளைச் சேர்க்கவும்."
+    },
+    "add": "சேவையைச் சேர்க்கவும்",
+    "edit": "சேவையைத் திருத்தவும்",
+    "name": "சேவை பெயர்",
+    "nameRequired": "சேவை பெயர் தேவை",
+    "namePlaceholder": "எ.கா. Haircut, Facial",
+    "category": "வகை",
+    "categoryPlaceholder": "வகையைத் தேர்ந்தெடுக்கவும்",
+    "categoryRequired": "ஒரு வகையைத் தேர்ந்தெடுக்கவும்",
+    "malePrice": "ஆண் விலை (₹)",
+    "femalePrice": "பெண் விலை (₹)",
+    "priceAtLeastOne": "குறைந்தது ஒரு விலையை உள்ளிடவும்",
+    "priceHint": "அந்த பாலினத்திற்கு சேவை வழங்கப்படவில்லை என்றால் விலையை காலியாக விடவும்.",
+    "pricePlaceholder": "0",
+    "productCost": "ஒவ்வொரு யூனிட்டிற்கான தயாரிப்பு செலவு (₹)",
+    "productCostHint": "விருப்பத்தேர்வு. சதவீத விதிகளில் கமிஷனுக்கு முன் கழிக்கப்படும் பொருள் செலவு (கலர், வாக்ஸ், கிட்).",
+    "activeLabel": "செயலில்",
+    "saved": "சேவை சேமிக்கப்பட்டது",
+    "deleted": "சேவை நீக்கப்பட்டது"
+  },
+  "categories": {
+    "pick": "வகையைத் தேர்ந்தெடுக்கவும்",
+    "add": "வகையைச் சேர்க்கவும்",
+    "name": "வகை பெயர்",
+    "nameRequired": "வகை பெயர் தேவை",
+    "namePlaceholder": "எ.கா. Hair, Facial, Bridal",
+    "activeLabel": "செயலில்",
+    "empty": "இன்னும் வகைகள் இல்லை"
+  },
+  "dashboard": {
+    "title": "இன்று",
+    "subtitle": "இணையம் இல்லாமலும் தயாராக இருக்கும் உங்கள் salon நோட்டுப் புத்தகம்.",
+    "businessNameFallback": "Salon Khata",
+    "snapshotLabel": "இன்றைய சுருக்கம்",
+    "activityLabel": "இன்றைய செயல்பாடு",
+    "tabIncome": "வருமானம்",
+    "tabExpenses": "செலவுகள்",
+    "income": {
+      "today": "இன்றைய வருமானம்"
+    },
+    "expenses": {
+      "today": "இன்றைய செலவுகள்"
+    },
+    "commission": {
+      "today": "ஊழியர் கமிஷன்",
+      "hint": "ஒவ்வொரு ஊழியரின் விவரத்திற்குத் தட்டவும்"
+    },
+    "net": {
+      "today": "நிகர வசூல்",
+      "formula": "வருமானம் − செலவுகள் − கமிஷன்"
+    },
+    "todayIncome": "இன்றைய வருமானம்",
+    "todayExpenses": "இன்றைய செலவுகள்",
+    "netCollection": "நிகர வசூல்",
+    "employeeCommission": "ஊழியர் கமிஷன்",
+    "recentTransactions": "சமீபத்திய பரிவர்த்தனைகள்",
+    "emptyTransactions": "இன்னும் பரிவர்த்தனைகள் இல்லை",
+    "recent": {
+      "title": "சமீபத்திய பரிவர்த்தனைகள்",
+      "viewAll": "அனைத்தையும் காண்க (இன்று {{count}})"
+    },
+    "empty": {
+      "title": "இன்னும் வருமானம் இல்லை",
+      "body": "இன்றைய மொத்தங்களைப் பார்க்க உங்கள் முதல் பதிவைச் சேர்க்கவும்.",
+      "icon": "📥"
+    },
+    "delta": {
+      "up": "நேற்றுடன் ஒப்பிடுகையில் {{amount}}",
+      "down": "நேற்றுடன் ஒப்பிடுகையில் {{amount}}"
+    }
+  },
+  "commissionSummary": {
+    "title": "கமிஷன்",
+    "totalLabel": "மொத்த கமிஷன்",
+    "sectionPerEmployee": "ஒவ்வொரு ஊழியருக்கும்",
+    "lineCount_one": "{{count}} பில்",
+    "lineCount_other": "{{count}} பில்கள்",
+    "empty": {
+      "title": "இந்த காலத்தில் கமிஷன் இல்லை",
+      "body": "பில் பதிவு செய்யப்பட்டதும் கமிஷன் இங்கே தோன்றும்."
+    }
+  },
+  "employeeCommissionDetail": {
+    "title": "{{name}}",
+    "totalLabel": "{{name}} அவர்களின் கமிஷன்",
+    "servicesSection": "செய்யப்பட்ட சேவைகள்",
+    "ruleFixed": "{{amount}} நிரந்தர தொகை",
+    "rulePercent": "{{lineAmount}}-இன் {{percent}}%",
+    "rulePercentWithProduct": "{{netAmount}}-இன் {{percent}}% ({{lineAmount}} − {{productCost}} பாகங்கள்)",
+    "ruleNone": "கமிஷன் விதி இல்லை",
+    "quantityMultiplier": "× {{quantity}}",
+    "customerLabel": "வாடிக்கையாளர்: {{name}}",
+    "noCustomer": "Walk-in",
+    "empty": {
+      "title": "இந்த காலத்தில் பில்கள் இல்லை",
+      "body": "இந்த ஊழியர் செய்த சேவைகள் இங்கே காட்டப்படும்."
+    }
+  },
+  "reports": {
+    "title": "அறிக்கைகள்",
+    "period": {
+      "day": "நாள்",
+      "week": "வாரம்",
+      "month": "மாதம்",
+      "custom": "தனிப்பயன்",
+      "prev": "முந்தைய காலம்",
+      "next": "அடுத்த காலம்",
+      "customTitle": "தனிப்பயன் தேதி வரம்பு",
+      "startDate": "தொடக்க தேதி",
+      "endDate": "முடிவு தேதி",
+      "rangeInvalid": "தொடக்க தேதி, முடிவு தேதிக்கு முன் அல்லது அதே தேதியாக இருக்க வேண்டும்."
+    },
+    "metrics": {
+      "income": "வருமானம்",
+      "expenses": "செலவுகள்",
+      "net": "நிகர வசூல்",
+      "netFormula": "வருமானம் − செலவுகள் − கமிஷன்",
+      "commission": "ஊழியர் கமிஷன்",
+      "commissionHint": "ஒவ்வொரு ஊழியரின் விவரத்திற்குத் தட்டவும்",
+      "billCount": "பில்கள்",
+      "avgBill": "சராசரி பில் மதிப்பு",
+      "billStats": "பில் புள்ளிவிவரங்கள்",
+      "topEmployees": "முன்னணி ஊழியர்கள்",
+      "topServices": "முன்னணி சேவைகள்",
+      "paymentSplit": "கட்டணப் பிரிப்பு",
+      "newVsRepeat": "வாடிக்கையாளர்கள்",
+      "transactions": "பரிவர்த்தனைகள்",
+      "viewAll": "அனைத்தையும் காண்க",
+      "cash": "பணம்",
+      "upi": "UPI",
+      "card": "கார்டு",
+      "credit": "கடன்",
+      "other": "மற்றவை",
+      "walkIn": "Walk-in",
+      "walkIn_bill_one": "{{count}} walk-in பில்",
+      "walkIn_bill_other": "{{count}} walk-in பில்கள்",
+      "newCustomer": "புதியவர்",
+      "repeatCustomer": "மீண்டும் வருபவர்",
+      "share": "{{percent}}%",
+      "billCountLabel_one": "{{count}} பில்",
+      "billCountLabel_other": "{{count}} பில்கள்",
+      "qtyLabel_one": "{{count}} விற்கப்பட்டது",
+      "qtyLabel_other": "{{count}} விற்கப்பட்டது"
+    },
+    "empty": {
+      "title": "இந்த காலத்தில் செயல்பாடு இல்லை",
+      "body": "இங்கே பார்க்க வருமான பதிவு அல்லது செலவைச் சேர்க்கவும்.",
+      "cta": "வருமானம் சேர்க்கவும்"
+    },
+    "topEmployeesScreen": {
+      "title": "முன்னணி ஊழியர்கள்",
+      "empty": {
+        "title": "இந்த காலத்தில் வருவாய் இல்லை",
+        "body": "பில்கள் பதிவு செய்யப்பட்டதும், அதிகம் ஈட்டியவர்கள் இங்கே தோன்றுவார்கள்."
+      }
+    },
+    "topServicesScreen": {
+      "title": "முன்னணி சேவைகள்",
+      "empty": {
+        "title": "இந்த காலத்தில் சேவைகள் விற்கப்படவில்லை",
+        "body": "முன்னணி சேவைகளை கண்காணிக்க பில் ஒன்றைச் சேர்க்கவும்."
+      }
+    }
+  },
+  "customers": {
+    "title": "வாடிக்கையாளர்கள்",
+    "add": "வாடிக்கையாளரைச் சேர்க்கவும்",
+    "edit": "வாடிக்கையாளரைத் திருத்தவும்",
+    "search": "பெயர் அல்லது தொலைபேசி எண்ணைத் தேடவும்",
+    "empty": {
+      "icon": "👤",
+      "title": "இன்னும் வாடிக்கையாளர்கள் இல்லை",
+      "body": "உங்கள் பட்டியலை உருவாக்க, வாடிக்கையாளரைச் சேர்க்கவும் அல்லது தொலைபேசி எண்ணுடன் பில் பதிவு செய்யவும்."
+    },
+    "form": {
+      "name": "பெயர்",
+      "namePlaceholder": "எ.கா. Priya, Rahul",
+      "phone": "தொலைபேசி",
+      "phonePlaceholder": "10 இலக்க எண்",
+      "nameRequired": "பெயர் தேவை",
+      "phoneRequired": "10 இலக்க தொலைபேசி எண்ணை உள்ளிடவும்",
+      "duplicate": "இந்த தொலைபேசி எண்ணுடன் ஒரு வாடிக்கையாளர் ஏற்கனவே உள்ளார்",
+      "duplicateJump": "ஏற்கனவே உள்ளதைத் திறக்கவும்"
+    },
+    "stats": {
+      "visits_one": "{{count}} வருகை",
+      "visits_other": "{{count}} வருகைகள்",
+      "noVisits": "இன்னும் வருகைகள் இல்லை",
+      "totalSpend": "மொத்த செலவு",
+      "lastVisit": "கடைசி வருகை",
+      "lastVisitOn": "கடைசியாக {{date}} அன்று வந்தார்"
+    },
+    "actions": {
+      "call": "அழைக்கவும்",
+      "whatsapp": "WhatsApp",
+      "edit": "திருத்தவும்",
+      "delete": "நீக்கவும்"
+    },
+    "pastBills": "முந்தைய பில்கள்",
+    "pastBillsEmpty": "இந்த வாடிக்கையாளருக்கான முந்தைய பில்கள் இன்னும் இல்லை.",
+    "saved": "வாடிக்கையாளர் சேமிக்கப்பட்டார்",
+    "deleted": "வாடிக்கையாளர் நீக்கப்பட்டார்",
+    "deleteConfirm": {
+      "title": "வாடிக்கையாளரை நீக்கவா?",
+      "message": "அவர்களின் முதன்மை பதிவு நீக்கப்படும், ஆனால் முந்தைய பில்கள் உங்கள் வரலாற்றில் இருக்கும்."
+    },
+    "callUnavailable": "இந்த சாதனத்தில் தொலைபேசி டயலரைத் திறக்க முடியவில்லை.",
+    "whatsappUnavailable": "இந்த சாதனத்தில் WhatsApp நிறுவப்படவில்லை."
+  },
+  "income": {
+    "add": "வருமானம் சேர்க்கவும்",
+    "addIncome": "வருமானம் சேர்க்கவும்",
+    "newBill": "புதிய பில்",
+    "editBill": "பில்லைத் திருத்தவும்",
+    "updateBill": "பில்லைப் புதுப்பிக்கவும்",
+    "previewTitle": "பில் சேமிக்கப்பட்டது! வாடிக்கையாளருக்கு அனுப்பவா?",
+    "whoServed": "யார் சேவை செய்தார்?",
+    "noEmployees": "பில் பதிவு செய்ய முதலில் ஊழியர்களைச் சேர்க்கவும்",
+    "customer": "வாடிக்கையாளர்",
+    "male": "ஆண்",
+    "female": "பெண்",
+    "genderHint": "விலையை பாதிக்கும்",
+    "date": "பில் தேதி",
+    "services": "சேவைகள்",
+    "addServices": "சேவைகளைச் சேர்க்கவும்",
+    "editSelection": "தேர்வைத் திருத்தவும்",
+    "addSelected": "தேர்ந்தெடுத்த சேவைகளைச் சேர்க்கவும்",
+    "addSelectedCount": "{{count}} சேவையைச் சேர்க்கவும்",
+    "addSelectedCount_other": "{{count}} சேவைகளைச் சேர்க்கவும்",
+    "noServices": "முதலில் சேவைகளைச் சேர்க்கவும்",
+    "noServicesTitle": "செயலில் உள்ள சேவைகள் இல்லை",
+    "noServicesBody": "இங்கே தேர்ந்தெடுக்க, Services திரையிலிருந்து சேவைகளைச் சேர்க்கவும்.",
+    "each": "ஒன்றுக்கு",
+    "bill": "பில்",
+    "subtotal": "இடைமொத்தம்",
+    "commission": "கமிஷன் (உரிமையாளர் கொடுக்க வேண்டியது)",
+    "commissionShort": "கமி. {{amount}}",
+    "discount": "தள்ளுபடி",
+    "discountPercent": "% சதவீதம்",
+    "discountFlat": "₹ நிரந்தர தொகை",
+    "discountApplied": "தள்ளுபடி பயன்படுத்தப்பட்டது",
+    "discountInvalid": "சரியான தள்ளுபடி மதிப்பை உள்ளிடவும்",
+    "discountMax": "தள்ளுபடி 100%-ஐ மீற முடியாது",
+    "total": "மொத்தம்",
+    "paymentMode": "கட்டணம்",
+    "modes": {
+      "cash": "பணம்",
+      "upi": "UPI",
+      "credit": "கடன்",
+      "card": "கார்டு",
+      "other": "மற்றவை"
+    },
+    "creditRequiresCustomerTitle": "கடனுக்கு வாடிக்கையாளர் தேவை",
+    "creditRequiresCustomerHint": "கடன் பில்களுக்கு வாடிக்கையாளர் தேவை; பின்னர் வசூலைத் தொடர முடியும்.",
+    "creditRequiresCustomerBody": "கடன் பிலைச் சேமிப்பதற்கு முன் வாடிக்கையாளரின் தொலைபேசி எண்ணையும் பெயரையும் சேர்க்கவும்.",
+    "saveBill": "பில்லைச் சேமிக்கவும்",
+    "saved": "பில் சேமிக்கப்பட்டது!",
+    "saveFailed": "பில்லைச் சேமிக்க முடியவில்லை",
+    "selectEmployee": "ஊழியரைத் தேர்ந்தெடுக்கவும்",
+    "selectService": "சேவையைத் தேர்ந்தெடுக்கவும்",
+    "assignedTo": "ஒதுக்கப்பட்டது",
+    "changeEmployee": "ஊழியரை மாற்றவும்",
+    "customerSection": "வாடிக்கையாளரைச் சேர்க்கவும் (விருப்பத்தேர்வு)",
+    "customerSectionSet": "வாடிக்கையாளர்: {{label}}",
+    "customerPhone": "தொலைபேசி",
+    "customerPhonePlaceholder": "10 இலக்க எண்",
+    "customerName": "பெயர்",
+    "customerNamePlaceholder": "எ.கா. Priya, Rahul",
+    "customerMatched": "ஏற்கனவே உள்ள வாடிக்கையாளர்",
+    "detail": {
+      "title": "பில்",
+      "edit": "திருத்தவும்",
+      "delete": "நீக்கவும்",
+      "deleteConfirmTitle": "இந்த பிலை நீக்கவா?",
+      "deleteConfirmBody": "இது பிலையும் அதன் கமிஷனையும் இன்றைய மொத்தங்களிலிருந்து நீக்கும். இதை மீண்டும் திரும்பப் பெற முடியாது.",
+      "deleteConfirmCta": "நீக்கவும்",
+      "deleted": "பில் நீக்கப்பட்டது",
+      "deleteFailed": "பிலை நீக்க முடியவில்லை",
+      "billTime": "{{time}}-க்கு பதிவு செய்யப்பட்டது"
+    }
+  },
+  "receipt": {
+    "title": "ரசீது",
+    "date": "தேதி",
+    "customer": "வாடிக்கையாளர்",
+    "servedBy": "சேவை செய்தவர்",
+    "service": "சேவை",
+    "qty": "அளவு",
+    "amount": "தொகை",
+    "subtotal": "இடைமொத்தம்",
+    "discount": "தள்ளுபடி",
+    "total": "மொத்தம்",
+    "paidBy": "செலுத்தியது",
+    "thankYou": "வருகைக்கு நன்றி!",
+    "shareOnWhatsapp": "WhatsApp-ல் பகிரவும்",
+    "shareReceipt": "ரசீதைப் பகிரவும்",
+    "shareTitle": "ரசீதை அனுப்பவும்",
+    "shareFailed": "ரசீதைப் பகிர முடியவில்லை",
+    "shareUnavailable": "இந்த சாதனத்தில் பகிர்வு கிடைக்கவில்லை",
+    "whatsappNotInstalled": "இந்த சாதனத்தில் WhatsApp நிறுவப்படவில்லை"
+  },
+  "commission": {
+    "setRules": "கமிஷன் விதிகளை அமைக்கவும்",
+    "sheetTitle": "கமிஷன் · {{name}}",
+    "noServices": "செயலில் உள்ள சேவைகள் இல்லை. கமிஷன் விகிதங்களை அமைக்க சேவைகளைச் சேர்க்கவும்.",
+    "noRule": "கமிஷன் இல்லை",
+    "typePercent": "சேவையின் %",
+    "typeFixed": "ஒவ்வொரு சேவைக்கும் ₹ நிரந்தர தொகை",
+    "valueRequired": "0-ஐ விட அதிகமான மதிப்பை உள்ளிடவும்",
+    "percentMax": "சதவீதம் 100%-ஐ மீற முடியாது",
+    "defaultLabel": "இயல்புநிலை",
+    "defaultCommission": "ஒவ்வொரு சேவைக்கும் {{percent}}%",
+    "defaultSalary": "சம்பள ஊழியர் — கீழே விதி அமைக்கப்படாவிட்டால் கமிஷன் இல்லை",
+    "defaultNone": "இயல்புநிலை அமைக்கப்படவில்லை — கீழே விதி அமைக்கப்பட்ட இடங்களில் மட்டுமே கமிஷன் பொருந்தும்",
+    "defaultHint": "குறிப்பிட்ட சேவைக்கான இயல்புநிலையை மாற்ற கீழே ஒரு விதியை அமைக்கவும்.",
+    "usesDefaultBadge": "{{percent}}% (இயல்புநிலை)"
+  },
+  "expense": {
+    "add": "செலவு சேர்க்கவும்"
+  },
+  "expenses": {
+    "addExpense": "செலவு சேர்க்கவும்",
+    "newExpense": "புதிய செலவு",
+    "editExpense": "செலவைத் திருத்தவும்",
+    "saveExpense": "செலவைச் சேமிக்கவும்",
+    "updateExpense": "செலவைப் புதுப்பிக்கவும்",
+    "amount": "தொகை",
+    "amountPlaceholder": "0.00",
+    "amountRequired": "0-ஐ விட அதிகமான தொகையை உள்ளிடவும்",
+    "amountInvalid": "சரியான தொகையை உள்ளிடவும்",
+    "category": "வகை",
+    "categoryRequired": "ஒரு வகையைத் தேர்ந்தெடுக்கவும்",
+    "newCategory": "புதிய வகை",
+    "newCategoryPrompt": "வகை பெயரை உள்ளிடவும்",
+    "categoryNamePlaceholder": "எ.கா. Repairs",
+    "categoryEmpty": "இன்னும் வகைகள் இல்லை",
+    "noCategories": "செலவுகளை உள்ளிடத் தொடங்க ஒரு வகையைச் சேர்க்கவும்.",
+    "date": "தேதி",
+    "remarks": "குறிப்புகள் (விருப்பத்தேர்வு)",
+    "remarksPlaceholder": "ஒரு குறிப்பைச் சேர்க்கவும்",
+    "paymentMode": "செலுத்தியது",
+    "modes": {
+      "cash": "பணம்",
+      "upi": "UPI",
+      "credit": "கடன்"
+    },
+    "creditHint": "விற்பனையாளருக்கு நீங்கள் கொடுக்க வேண்டிய பணமாக கண்காணிக்கவும்.",
+    "creditOwed": "கடனில் நிலுவை: {{amount}}",
+    "creditBadge": "கடன்",
+    "paidBadge": "செலுத்தப்பட்டது",
+    "markPaid": "செலுத்தியதாக குறிக்கவும்",
+    "markPaidConfirmTitle": "இந்த கடனை செலுத்தியதாக குறிக்கவா?",
+    "markPaidConfirmBody": "இது உங்கள் நிலுவை இருப்பிலிருந்து அதை நீக்கும்.",
+    "markPaidConfirmCta": "செலுத்தியதாக குறிக்கவும்",
+    "markedPaid": "செலுத்தியதாக குறிக்கப்பட்டது",
+    "markPaidFailed": "செலுத்தியதாக குறிக்க முடியவில்லை",
+    "saved": "செலவு சேமிக்கப்பட்டது",
+    "updated": "செலவு புதுப்பிக்கப்பட்டது",
+    "saveFailed": "செலவைச் சேமிக்க முடியவில்லை",
+    "todayTotal": "இன்றைய செலவுகள்",
+    "todayNone": "இன்று செலவுகள் இல்லை",
+    "todayList": "இன்றைய செலவுகள்",
+    "viewAll": "அனைத்தையும் காண்க ({{count}})",
+    "detail": {
+      "title": "செலவு",
+      "edit": "திருத்தவும்",
+      "delete": "நீக்கவும்",
+      "deleteConfirmTitle": "இந்த செலவை நீக்கவா?",
+      "deleteConfirmBody": "இது செலவை இன்றைய மொத்தங்களிலிருந்து நீக்கும். பின்னர் அமைப்புகளில் இருந்து அதை மீட்டெடுக்கலாம்.",
+      "deleteConfirmCta": "நீக்கவும்",
+      "deleted": "செலவு நீக்கப்பட்டது",
+      "deleteFailed": "செலவை நீக்க முடியவில்லை",
+      "loggedAt": "{{time}}-க்கு பதிவு செய்யப்பட்டது"
+    }
+  },
+  "advances": {
+    "title": "ஊழியர் முன்பணங்கள்",
+    "add": "முன்பணம் சேர்க்கவும்",
+    "newAdvance": "புதிய முன்பணம்",
+    "editAdvance": "முன்பணத்தைத் திருத்தவும்",
+    "saveAdvance": "முன்பணத்தைச் சேமிக்கவும்",
+    "updateAdvance": "முன்பணத்தைப் புதுப்பிக்கவும்",
+    "employee": "ஊழியர்",
+    "employeeRequired": "ஊழியரைத் தேர்ந்தெடுக்கவும்",
+    "noEmployees": "முன்பணம் பதிவு செய்ய முதலில் ஊழியர்களைச் சேர்க்கவும்.",
+    "amount": "தொகை",
+    "amountPlaceholder": "0.00",
+    "amountRequired": "0-ஐ விட அதிகமான தொகையை உள்ளிடவும்",
+    "date": "தேதி",
+    "remarks": "குறிப்புகள் (விருப்பத்தேர்வு)",
+    "remarksPlaceholder": "எ.கா. வாராந்திர சம்பள முன்பணம்",
+    "saveFailed": "முன்பணத்தைச் சேமிக்க முடியவில்லை",
+    "outstandingBadge": "நிலுவை",
+    "paidBadge": "செலுத்தப்பட்டது",
+    "outstandingTotal": "நிலுவை: {{amount}}",
+    "sectionOutstanding": "நிலுவை",
+    "sectionSettled": "தீர்க்கப்பட்டது",
+    "emptyTitle": "இன்னும் முன்பணங்கள் இல்லை",
+    "emptyBody": "உங்கள் ஊழியர் லெட்ஜரை சுத்தமாக வைத்திருக்க பண முன்பணத்தை பதிவு செய்யவும்.",
+    "markPaid": "தீர்க்கப்பட்டதாக குறிக்கவும்",
+    "markPaidConfirmTitle": "இந்த முன்பணத்தை தீர்க்கப்பட்டதாக குறிக்கவா?",
+    "markPaidConfirmBody": "இது நிலுவை மொத்தத்திலிருந்து அதை நீக்கும்.",
+    "markPaidConfirmCta": "தீர்க்கப்பட்டதாக குறிக்கவும்",
+    "markPaidFailed": "தீர்க்கப்பட்டதாக குறிக்க முடியவில்லை",
+    "detail": {
+      "title": "முன்பணம்",
+      "edit": "திருத்தவும்",
+      "delete": "நீக்கவும்",
+      "deleteConfirmTitle": "இந்த முன்பணத்தை நீக்கவா?",
+      "deleteConfirmBody": "இது முன்பணத்தை லெட்ஜரிலிருந்து நீக்கும். இதை மீண்டும் திரும்பப் பெற முடியாது.",
+      "deleteConfirmCta": "நீக்கவும்",
+      "deleteFailed": "முன்பணத்தை நீக்க முடியவில்லை"
+    }
+  },
+  "more": {
+    "title": "மேலும்",
+    "staffAdvances": "ஊழியர் முன்பணங்கள்",
+    "staffAdvancesSub": "சம்பள நாட்களுக்கு இடையில் ஊழியர்களுக்கு கொடுத்த பணத்தை பதிவு செய்யவும்",
+    "subscription": "Subscription மற்றும் referral",
+    "subscriptionSub": "Trial நிலை, plans, மற்றும் உங்கள் referral code",
+    "syncNow": "இப்போது sync செய்யவும்",
+    "syncNowSub": "உள்ளூர் மாற்றங்களை cloud-க்கு push செய்து சமீபத்தியதை pull செய்யவும்",
+    "syncStatus": "Sync நிலை",
+    "syncStatusSub": "Queue அளவு, சமீபத்திய செயல்பாடு, தோல்வியடைந்த பதிவுகள்",
+    "exportSnapshot": "Snapshot export செய்யவும்",
+    "exportSnapshotSub": "முழு உள்ளூர் database-க்கான அவசர backup",
+    "account": "கணக்கு",
+    "signedInAs": "உள்நுழைந்திருப்பது",
+    "mobileCredential": "உங்கள் salon login",
+    "logOut": "வெளியேறவும்",
+    "logOutSub": "இந்த சாதனத்தில் இருந்து sign out செய்யவும்",
+    "deleteAccount": "கணக்கை நீக்கவும்",
+    "deleteAccountSub": "உங்கள் கணக்கையும் தரவையும் நிரந்தரமாக நீக்கவும்"
+  },
+  "subscription": {
+    "title": "Subscription",
+    "currentPlan": "தற்போதைய plan",
+    "remainingDays_one": "{{count}} நாள் மீதமுள்ளது",
+    "remainingDays_other": "{{count}} நாட்கள் மீதமுள்ளன",
+    "validUntil": "{{date}} வரை செல்லுபடியாகும்",
+    "expiredBanner": "உங்கள் trial முடிந்துவிட்டது. உரிமையாளராக நீங்கள் இன்னும் bill செய்யலாம் — ஊழியர்களை மீண்டும் ஒதுக்க subscribe செய்யவும்.",
+    "billingStaffLocked": "ஊழியர் ஒதுக்கீடு lock செய்யப்பட்டுள்ளது. பில்களில் ஊழியர்களை ஒதுக்க subscribe செய்யவும்.",
+    "billingOwnerOnlyHint": "உரிமையாளர் மட்டும் billing செயலில் உள்ளது. உங்களை ஊழியராகச் சேர்க்கவும், அல்லது ஊழியர்களை unlock செய்ய subscribe செய்யவும்.",
+    "ownerFallbackName": "உரிமையாளர்",
+    "featuresTitle": "இதில் உள்ளவை",
+    "features": {
+      "assignStaff": "Billing செய்யும்போது ஊழியர்களை ஒதுக்குதல்",
+      "reports": "அறிக்கைகள் மற்றும் வரலாற்றைக் காணுதல்",
+      "manageStaff": "ஊழியர் பதிவுகளை நிர்வகித்தல்",
+      "premium": "Premium அம்சங்கள்"
+    },
+    "referral": {
+      "title": "Referral",
+      "yourCode": "உங்கள் referral code",
+      "share": "Code-ஐ பகிரவும்",
+      "shareMessage": "என் referral code உடன் Salon Khata-வில் சேருங்கள்: {{code}}",
+      "hint": "சுதந்திரமாக பகிரவும் — ஒவ்வொரு நண்பரும் plan வாங்கும்போது, உங்களுக்கு 1 இலவச மாதம் கிடைக்கும். வரம்பற்ற referrals.",
+      "rewardRule": "Reward: referral மூலம் வந்த salon subscribe செய்யும் ஒவ்வொரு முறையும் +1 மாதம் இலவசம்."
+    },
+    "plansTitle": "Plans",
+    "planDuration": "{{days}} நாட்கள்",
+    "paymentsComingSoon": "Payments விரைவில் வருகிறது. Plan விலைகள் குறிப்புக்காக காட்டப்பட்டுள்ளன.",
+    "refresh": "நிலையை refresh செய்யவும்",
+    "status": {
+      "trial": "இலவச trial",
+      "active": "செயலில்",
+      "grace": "Grace period",
+      "expired": "காலாவதியானது",
+      "none": "Plan இல்லை"
+    }
+  },
+  "backup": {
+    "export": {
+      "title": "Snapshot export செய்யவா?",
+      "message": "பாதுகாப்புக்காக உங்கள் உள்ளூர் database-இன் முழு backup-ஐ upload செய்கிறது. வழக்கமான sync ஏற்கனவே உங்கள் பதிவுகளை புதுப்பித்த நிலையில் வைத்திருக்கிறது — கூடுதல் பாதுகாப்பிற்காக மட்டுமே இதைப் பயன்படுத்தவும்.",
+      "confirm": "Export",
+      "busy": "Backup ஏற்கனவே நடைபெற்று வருகிறது",
+      "success": "Snapshot upload செய்யப்பட்டது ({{size}})",
+      "skipped": "Backup தவிர்க்கப்பட்டது ({{reason}})",
+      "cancelled": "Backup ரத்து செய்யப்பட்டது",
+      "failed": "Backup தோல்வியடைந்தது: {{message}}"
+    }
+  },
+  "syncStatus": {
+    "title": "Sync நிலை",
+    "lastSynced": "கடைசியாக sync செய்யப்பட்டது",
+    "never": "ஒருபோதும் இல்லை",
+    "pending_one": "{{count}} காத்திருக்கிறது",
+    "pending_other": "{{count}} காத்திருக்கின்றன",
+    "syncing_one": "{{count}} நடைபெறுகிறது",
+    "syncing_other": "{{count}} நடைபெறுகின்றன",
+    "failed_one": "{{count}} தோல்வியடைந்தது",
+    "failed_other": "{{count}} தோல்வியடைந்தன",
+    "deadLetters_one": "தோல்வியடைந்த பதிவுகள் ({{count}})",
+    "deadLetters_other": "தோல்வியடைந்த பதிவுகள் ({{count}})",
+    "recentConflicts": "சமீபத்திய முரண்பாடுகள்",
+    "recentActivity": "சமீபத்திய செயல்பாடு",
+    "noActivity": "இன்னும் எதுவும் sync செய்யப்படவில்லை",
+    "retry": "மீண்டும் முயற்சிக்கவும்",
+    "discard": "கைவிடவும்",
+    "discardTitle": "இந்த பதிவை sync செய்வதை நிறுத்தவா?",
+    "discardMessage": "பதிவு இந்த சாதனத்தில் இருக்கும்; ஆனால் நீங்கள் அதை மீண்டும் திருத்தும் வரை sync ஆகாது.",
+    "discardConfirm": "கைவிடவும்",
+    "localWon": "உள்ளூர் பதிவு வைத்துக்கொள்ளப்பட்டது",
+    "remoteWon": "Cloud பதிவு பயன்படுத்தப்பட்டது",
+    "time": {
+      "justNow": "இப்போதுதான்",
+      "minutesAgo_one": "{{count}} நிமிடம் முன்பு",
+      "minutesAgo_other": "{{count}} நிமிடங்கள் முன்பு",
+      "hoursAgo_one": "{{count}} மணி நேரம் முன்பு",
+      "hoursAgo_other": "{{count}} மணி நேரங்கள் முன்பு",
+      "daysAgo_one": "{{count}} நாள் முன்பு",
+      "daysAgo_other": "{{count}} நாட்கள் முன்பு"
+    },
+    "trigger": {
+      "manual": "இப்போது sync செய்யவும்",
+      "app-background": "App பின்னணிக்கு சென்றது",
+      "app-foreground": "App திறக்கப்பட்டது",
+      "post-write-debounce": "எழுதிய பிறகு",
+      "periodic": "காலமுறை",
+      "network-reconnect": "மீண்டும் இணைக்கப்பட்டது",
+      "background-task": "பின்னணி",
+      "drain": "Drain"
+    }
+  },
+  "sync": {
+    "line": {
+      "neverSynced": "இன்னும் sync செய்யப்படவில்லை · பதிவுகள் இந்த சாதனத்தில் சேமிக்கப்படும்",
+      "synced": "கடைசியாக sync செய்யப்பட்டது {{relative}}",
+      "syncing": "Sync செய்யப்படுகிறது…",
+      "offline": "கடைசியாக sync செய்யப்பட்டது {{relative}} · Offline"
+    },
+    "badge": {
+      "notSynced": "Sync செய்யப்படவில்லை"
+    },
+    "result": {
+      "offline": "Offline — நீங்கள் மீண்டும் online வந்ததும் மீண்டும் முயற்சிக்கும்",
+      "noWork": "ஏற்கனவே புதுப்பித்த நிலையில் உள்ளது",
+      "done": "{{pushed}} மேலே sync, {{applied}} கீழே sync செய்யப்பட்டது",
+      "doneWithConflicts": "{{conflicts}} முரண்பாடு(கள்) தீர்க்கப்பட்டு sync செய்யப்பட்டது",
+      "failed": "Sync தோல்வியடைந்தது. நாங்கள் தானாக மீண்டும் முயற்சிப்போம்"
+    }
+  },
+  "errors": {
+    "startupTitle": "Salon Khata-வை தொடங்க முடியவில்லை",
+    "unknown": "ஏதோ தவறு ஏற்பட்டது"
+  },
+  "auth": {
+    "phone": {
+      "title": "உங்கள் மொபைல் எண்ணை உள்ளிடவும்",
+      "subtitle": "நீங்கள்தான் என்பதை உறுதிப்படுத்த SMS மூலம் 6 இலக்க code அனுப்புவோம்.",
+      "placeholder": "10 இலக்க மொபைல் எண்",
+      "helper": "இந்த மொபைல் எண் இந்த salon-க்கான உங்கள் login ஆகும்.",
+      "continue": "தொடரவும்",
+      "sendOtp": "OTP அனுப்பவும்",
+      "legal": "தொடர்வதன் மூலம், எங்கள் Terms மற்றும் Privacy Policy-க்கு நீங்கள் ஒப்புக்கொள்கிறீர்கள்.",
+      "a11yLabel": "மொபைல் எண்"
+    },
+    "otp": {
+      "title": "6 இலக்க code-ஐ உள்ளிடவும்",
+      "subtitle": "{{phone}}-க்கு அனுப்பப்பட்டது.",
+      "change": "மாற்றவும்",
+      "verify": "சரிபார்க்கவும்",
+      "resend": "Code-ஐ மீண்டும் அனுப்பவும்",
+      "resending": "மீண்டும் அனுப்பப்படுகிறது…",
+      "resendIn": "{{seconds}}s-ல் மீண்டும் அனுப்பலாம்",
+      "a11yLabel": "ஆறு இலக்க சரிபார்ப்பு code"
+    },
+    "signOut": {
+      "title": "வெளியேறவா?",
+      "message": "உங்கள் மொபைல் எண்ணுடன் மீண்டும் உள்நுழைய வேண்டும். உங்கள் salon தரவு இந்த சாதனத்தில் இருக்கும்.",
+      "confirm": "வெளியேறவும்",
+      "failed": "வெளியேற முடியவில்லை. மீண்டும் முயற்சிக்கவும்."
+    },
+    "delete": {
+      "title": "உங்கள் கணக்கை நீக்கவா?",
+      "message": "இது உங்கள் கணக்கை நிரந்தரமாக நீக்கி, இந்த சாதனத்தில் சேமிக்கப்பட்டுள்ள ஒவ்வொரு பில், ஊழியர், சேவை மற்றும் வாடிக்கையாளரையும் அழிக்கும். இதை மீண்டும் திரும்பப் பெற முடியாது.",
+      "confirm": "நிரந்தரமாக நீக்கவும்",
+      "requiresRecentLogin": "பாதுகாப்புக்காக, உங்கள் கணக்கை நீக்க மீண்டும் உள்நுழையவும்.",
+      "failed": "கணக்கை நீக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்."
+    },
+    "errors": {
+      "invalidPhone": "சரியான 10 இலக்க மொபைல் எண்ணை உள்ளிடவும்.",
+      "invalidCode": "நீங்கள் உள்ளிட்ட code சரியானதல்ல. மீண்டும் முயற்சிக்கவும்.",
+      "codeExpired": "அந்த code காலாவதியாகிவிட்டது. புதியதை மீண்டும் அனுப்பவும்.",
+      "tooManyRequests": "மிக அதிகமான முயற்சிகள். சில நிமிடங்களில் மீண்டும் முயற்சிக்கவும்.",
+      "network": "இணைய இணைப்பு இல்லை. நீங்கள் மீண்டும் online ஆனதும் முயற்சிக்கவும்.",
+      "quotaExceeded": "சேவை தற்காலிகமாக கிடைக்கவில்லை. பிறகு மீண்டும் முயற்சிக்கவும்.",
+      "sessionExpired": "உங்கள் session காலாவதியாகிவிட்டது. மீண்டும் உள்நுழையவும்.",
+      "unknown": "ஏதோ தவறு ஏற்பட்டது. மீண்டும் முயற்சிக்கவும்."
+    }
+  },
+  "onboarding": {
+    "step": "படி {{current}} / {{total}}",
+    "next": "அடுத்து",
+    "back": "பின்",
+    "language": {
+      "title": "உங்கள் மொழியைத் தேர்ந்தெடுக்கவும்",
+      "subtitle": "இதைக் பின்னர் Settings-ல் மாற்றலாம்.",
+      "english": "English",
+      "hindi": "हिन्दी"
+    },
+    "salonType": {
+      "title": "நீங்கள் எந்த வகை salon நடத்துகிறீர்கள்?",
+      "subtitle": "இது புதிய பில்களுக்கு இயல்புநிலை வாடிக்கையாளர் வகையையும் தொடக்க சேவை பட்டியலையும் அமைக்கும்.",
+      "male": {
+        "title": "ஆண்கள் salon",
+        "body": "ஹேர்கட், தாடி, ஷேவ்"
+      },
+      "female": {
+        "title": "பெண்கள் salon / Parlour",
+        "body": "ஹேர்கட், ஃபேஷியல், திரெட்டிங்"
+      },
+      "unisex": {
+        "title": "Unisex salon",
+        "body": "அனைவருக்கும் சேவைகள்"
+      }
+    },
+    "business": {
+      "title": "உங்கள் salon பற்றி சொல்லுங்கள்",
+      "subtitle": "அடிப்படை தகவல்கள் மட்டும் — இவற்றை எப்போது வேண்டுமானாலும் திருத்தலாம்.",
+      "businessName": "Salon பெயர்",
+      "businessNamePlaceholder": "எ.கா. Style Studio",
+      "businessNameRequired": "Salon பெயர் தேவை",
+      "ownerName": "உங்கள் பெயர்",
+      "ownerNamePlaceholder": "எ.கா. Priya",
+      "ownerNameHelper": "விருப்பத்தேர்வு — ரசீதுகள் மற்றும் அறிக்கைகளில் பயன்படுத்தப்படும்.",
+      "referralCode": "Referral code (விருப்பத்தேர்வு)",
+      "referralCodePlaceholder": "எ.கா. PRIYA7K2",
+      "referralCodeHelper": "ஒரு நண்பர் உங்களை அழைத்திருந்தால், அவர்களின் code-ஐ இங்கே ஒருமுறை உள்ளிடவும்.",
+      "iDoServices": "நானும் சேவைகள் செய்கிறேன்",
+      "iDoServicesHelper": "பில்களில் என்னைத் தேர்ந்தெடுக்க நான் ஊழியராக சேர்க்கப்பட வேண்டும்.",
+      "iDoServicesNeedsName": "இதை இயக்க மேலே உங்கள் பெயரைச் சேர்க்கவும்.",
+      "finish": "அமைப்பை முடிக்கவும்",
+      "saveFailed": "அமைப்பை முடிக்க முடியவில்லை"
+    },
+    "services": {
+      "title": "உங்கள் சேவை விலைகளை அமைக்கவும்",
+      "subtitle": "உங்கள் salon வகைக்கான மிகவும் பொதுவான சேவைகளை நாங்கள் சேர்த்துள்ளோம். நீங்கள் வழங்கும் சேவைகளுக்கு விலைகளை உள்ளிடவும் — மீதியைக் காலியாக விடுங்கள், பின்னர் புதுப்பிக்கலாம்.",
+      "menSection": "ஆண்கள் சேவைகள்",
+      "womenSection": "பெண்கள் சேவைகள்",
+      "pricePlaceholder": "0",
+      "footnote": "அனைத்து சேவைகளும் உங்கள் catalog-ல் சேர்க்கப்படும். காலியான விலைகள் ₹0 ஆக சேமிக்கப்படும்.",
+      "footerHint": "Services திரையிலிருந்து விலைகளை எப்போது வேண்டுமானாலும் திருத்தலாம்."
+    },
+    "welcome": "வரவேற்கிறோம், {{name}}!"
+  }
+}
