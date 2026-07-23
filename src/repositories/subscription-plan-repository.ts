@@ -1,7 +1,6 @@
 import { database, runInTransaction } from "@/database/sqlite-client";
 import type { SharedColumns } from "@/database/schema/shared-columns";
 import { getUtcTimestamp } from "@/domain/dates";
-import { newId } from "@/domain/id";
 import {
   FULL_PLAN_FEATURES,
   stringifyPlanFeatures,
@@ -89,42 +88,79 @@ const DEFAULT_PLANS: PlanSeed[] = [
 /**
  * Local catalog repository. Plans are not salon-entity-synced in Phase 1;
  * see PRD §10. Future cloud catalog pull can UPSERT by `code`.
+ *
+ * Plan primary keys are stable and equal the plan `code` (`trial`,
+ * `monthly`, …) so cloud-written / synced `salon_subscriptions.plan_id`
+ * resolves on every install after restore or second-device sync.
  */
 export class SubscriptionPlanRepository {
   ensureDefaults(): void {
     const now = getUtcTimestamp();
     runInTransaction(() => {
       for (const seed of DEFAULT_PLANS) {
-        const existing = database.getFirstSync<{ id: string }>(
-          `SELECT id FROM subscription_plans
-           WHERE code = ? AND deleted_at IS NULL LIMIT 1`,
-          [seed.code]
-        );
-        if (existing) continue;
-
-        database.runSync(
-          `INSERT INTO subscription_plans
-           (id, code, name, description, billing_period, duration_days,
-            price_paise, currency, is_enabled, sort_order, features_json,
-            grace_period_days, created_at, updated_at, deleted_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, 'INR', 1, ?, ?, ?, ?, ?, NULL)`,
-          [
-            newId(),
-            seed.code,
-            seed.name,
-            seed.description,
-            seed.billingPeriod,
-            seed.durationDays,
-            seed.pricePaise,
-            seed.sortOrder,
-            stringifyPlanFeatures(seed.features ?? FULL_PLAN_FEATURES),
-            seed.gracePeriodDays,
-            now,
-            now
-          ]
-        );
+        this.ensurePlanRow(seed, now);
       }
     });
+  }
+
+  private ensurePlanRow(seed: PlanSeed, now: string): void {
+    const stableId = seed.code;
+    const byStableId = database.getFirstSync<{ id: string }>(
+      `SELECT id FROM subscription_plans
+       WHERE id = ? AND deleted_at IS NULL LIMIT 1`,
+      [stableId]
+    );
+    if (byStableId) return;
+
+    // Legacy installs seeded random UUIDs — remap subscriptions then
+    // replace the catalog row with the stable id.
+    const byCode = database.getFirstSync<{ id: string }>(
+      `SELECT id FROM subscription_plans
+       WHERE code = ? AND deleted_at IS NULL LIMIT 1`,
+      [seed.code]
+    );
+    if (byCode && byCode.id !== stableId) {
+      database.runSync(
+        `UPDATE salon_subscriptions
+         SET plan_id = ?, updated_at = ?
+         WHERE plan_id = ?`,
+        [stableId, now, byCode.id]
+      );
+      database.runSync(
+        `UPDATE subscription_payments
+         SET plan_id = ?, updated_at = ?
+         WHERE plan_id = ?`,
+        [stableId, now, byCode.id]
+      );
+      database.runSync(
+        `UPDATE subscription_plans
+         SET deleted_at = ?, updated_at = ?
+         WHERE id = ? AND deleted_at IS NULL`,
+        [now, now, byCode.id]
+      );
+    }
+
+    database.runSync(
+      `INSERT INTO subscription_plans
+       (id, code, name, description, billing_period, duration_days,
+        price_paise, currency, is_enabled, sort_order, features_json,
+        grace_period_days, created_at, updated_at, deleted_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'INR', 1, ?, ?, ?, ?, ?, NULL)`,
+      [
+        stableId,
+        seed.code,
+        seed.name,
+        seed.description,
+        seed.billingPeriod,
+        seed.durationDays,
+        seed.pricePaise,
+        seed.sortOrder,
+        stringifyPlanFeatures(seed.features ?? FULL_PLAN_FEATURES),
+        seed.gracePeriodDays,
+        now,
+        now
+      ]
+    );
   }
 
   getByCode(code: string): SubscriptionPlanRecord | null {

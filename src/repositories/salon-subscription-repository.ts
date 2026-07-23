@@ -229,7 +229,10 @@ export class SalonSubscriptionRepository {
           args.externalPaymentId ?? null,
           args.externalSubscriptionId ?? null,
           args.activatedBy,
-          JSON.stringify(args.metadata ?? {}),
+          JSON.stringify({
+            plan_code: args.plan.code,
+            ...(args.metadata ?? {})
+          }),
           now,
           now
         ]

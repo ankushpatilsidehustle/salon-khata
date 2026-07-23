@@ -50,7 +50,10 @@ import { SalonRepository } from "@/repositories/salon-repository";
 import { ReceiptCard } from "@/components/domain/ReceiptCard";
 import type { RootStackParamList } from "@/application/AppNavigator";
 import { useSubscription } from "@/features/subscription/SubscriptionProvider";
-import { filterBillingEmployees } from "@/features/subscription/billing-employees";
+import {
+  employeesForBillPicker,
+  filterBillingEmployees
+} from "@/features/subscription/billing-employees";
 import { AddServicesSheet } from "./AddServicesSheet";
 import type { ServiceSelection } from "./AddServicesSheet";
 import { useShareReceipt } from "./useShareReceipt";
@@ -236,10 +239,36 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
     }, [])
   );
 
-  /** Staff selectable on this bill given current subscription entitlements. */
+  /** Staff selectable for *new* assignments under current entitlements. */
   const billingEmployees = useMemo(
     () => filterBillingEmployees(employees, entitlements),
     [employees, entitlements]
+  );
+
+  /** Ids already on the bill — preserved when editing under a soft-lock. */
+  const assignedEmployeeIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (employeeId) ids.add(employeeId);
+    for (const item of billItems) {
+      if (item.employeeId) ids.add(item.employeeId);
+    }
+    return ids;
+  }, [employeeId, billItems]);
+
+  /**
+   * Picker list: owner-only when expired for new bills; when editing, also
+   * keep historically assigned non-owner staff visible (not rewritable to
+   * other staff — only owner + existing assignees).
+   */
+  const pickerEmployees = useMemo(
+    () =>
+      employeesForBillPicker({
+        employees,
+        entitlements,
+        assignedEmployeeIds,
+        isEditing
+      }),
+    [employees, entitlements, assignedEmployeeIds, isEditing]
   );
 
   // Hydrate the form from an existing transaction when in edit mode. Runs
@@ -382,10 +411,11 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
     billItems.length > 0 &&
     billItems.every((item) => {
       if (entitlements.assignStaffOnBill) return !!item.employeeId;
-      // Soft-lock: owner employee required when present; otherwise allow
-      // owner-operated bills with no staff row (onboarding skipped owner emp).
+      // Soft-lock: owner employee when present; otherwise save path will
+      // ensureOwnerEmployee. When editing, keep historical non-owner lines.
       if (!item.employeeId) return billingEmployees.length === 0;
-      return billingEmployees.some((e) => e.id === item.employeeId);
+      if (billingEmployees.some((e) => e.id === item.employeeId)) return true;
+      return isEditing && assignedEmployeeIds.has(item.employeeId);
     });
   const selectedIds = useMemo(
     () => billItems.map((i) => i.serviceId),
@@ -453,7 +483,10 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
   }
 
   // Soft-lock: auto-bind the owner employee when staff assignment is blocked.
+  // Skipped in edit mode so historical non-owner lines (and their commission
+  // snapshots) are not rewritten to the owner on open/save.
   useEffect(() => {
+    if (isEditing) return;
     if (entitlements.assignStaffOnBill) return;
     if (billingEmployees.length === 0) return;
     const owner = billingEmployees[0];
@@ -463,7 +496,7 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
     }
     handleSelectEmployee(owner.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [entitlements.assignStaffOnBill, billingEmployees, employeeId]);
+  }, [isEditing, entitlements.assignStaffOnBill, billingEmployees, employeeId]);
 
   /** Reassign a single service line to a specific employee. */
   function changeItemEmployee(serviceId: string, nextEmployeeId: string) {
@@ -698,7 +731,8 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
       ? items.every((i) => !!i.employeeId)
       : items.every((i) => {
           if (!i.employeeId) return billingEmployees.length === 0;
-          return billingEmployees.some((e) => e.id === i.employeeId);
+          if (billingEmployees.some((e) => e.id === i.employeeId)) return true;
+          return isEditing && assignedEmployeeIds.has(i.employeeId);
         });
     if (!staffOk) return;
     setBillItems(items);
@@ -722,17 +756,34 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
       const net = Math.max(0, gross - discount);
       const commission = items.reduce((s, i) => s + i.commissionAmount, 0);
 
-      // Transaction-level employee: prefer the top-level shortcut selection;
-      // otherwise fall back to the first line's employee.
-      const primaryEmployeeId = employeeId || items[0].employeeId || null;
-      const primaryEmployee = primaryEmployeeId
-        ? employees.find((e) => e.id === primaryEmployeeId) ?? null
-        : null;
       const salon = salonRepo.getById(DEV_SALON_ID);
       const ownerFallbackName =
         salon?.owner_name?.trim() ||
         salon?.business_name?.trim() ||
         t("subscription.ownerFallbackName");
+
+      // Transaction-level employee: prefer the top-level shortcut selection;
+      // otherwise fall back to the first line's employee. Header column is
+      // NOT NULL — ensure an owner employee row exists for owner-only billing
+      // when onboarding skipped "I also do services".
+      let primaryEmployeeId = employeeId || items[0]?.employeeId || null;
+      let primaryEmployee = primaryEmployeeId
+        ? employees.find((e) => e.id === primaryEmployeeId) ??
+          employeeRepo.getById(primaryEmployeeId, DEV_SALON_ID)
+        : null;
+      if (!primaryEmployeeId) {
+        const owner = employeeRepo.ensureOwnerEmployee(
+          DEV_SALON_ID,
+          ownerFallbackName
+        );
+        primaryEmployeeId = owner.id;
+        primaryEmployee = owner;
+        setEmployeeId(owner.id);
+        setEmployees((prev) =>
+          prev.some((e) => e.id === owner.id) ? prev : [...prev, owner]
+        );
+      }
+
       const now = getUtcTimestamp();
       const txId = editingId ?? newId();
       const createdAt = editingCreatedAtRef.current ?? now;
@@ -781,8 +832,14 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
           deleted_at: null
         },
         items: items.map((item) => {
-          const lineEmployee = employees.find((e) => e.id === item.employeeId);
-          const effective = resolveEffectiveRule(item.rule, lineEmployee ?? null);
+          const lineEmployeeId = item.employeeId || primaryEmployeeId;
+          const lineEmployee =
+            employees.find((e) => e.id === lineEmployeeId) ??
+            employeeRepo.getById(lineEmployeeId, DEV_SALON_ID);
+          const effective = resolveEffectiveRule(
+            item.rule,
+            lineEmployee ?? null
+          );
           return {
             id: newId(),
             salon_id: DEV_SALON_ID,
@@ -795,7 +852,7 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
             commission_rule_type_snapshot: effective?.rule_type ?? null,
             commission_rule_value_snapshot: effective?.value ?? null,
             commission_amount: item.commissionAmount,
-            employee_id: item.employeeId || null,
+            employee_id: lineEmployeeId,
             employee_name_snapshot:
               item.employeeName ||
               lineEmployee?.name ||
@@ -1023,7 +1080,7 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
                 </Text>
               </View>
             ) : null}
-            {billingEmployees.length === 0 ? (
+            {pickerEmployees.length === 0 ? (
               <Text style={styles.emptyHint}>
                 {entitlements.assignStaffOnBill
                   ? t("income.noEmployees")
@@ -1035,16 +1092,23 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.chipRow}
               >
-                {billingEmployees.map((emp) => {
+                {pickerEmployees.map((emp) => {
                   const isSelected = employeeId === emp.id;
+                  const lockedHistorical =
+                    !entitlements.assignStaffOnBill &&
+                    emp.is_owner !== 1;
                   return (
                     <Pressable
                       key={emp.id}
                       style={[
                         styles.empChip,
-                        isSelected && styles.empChipSelected
+                        isSelected && styles.empChipSelected,
+                        lockedHistorical && !isSelected && styles.empChipLocked
                       ]}
-                      onPress={() => handleSelectEmployee(emp.id)}
+                      onPress={() => {
+                        if (lockedHistorical) return;
+                        handleSelectEmployee(emp.id);
+                      }}
                     >
                       <View
                         style={[
@@ -1480,12 +1544,14 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
               style={styles.pickerList}
               contentContainerStyle={styles.pickerListContent}
             >
-              {billingEmployees.map((emp) => {
+              {pickerEmployees.map((emp) => {
                 const current =
                   pickingEmployeeForItemId !== null &&
                   billItems.find(
                     (i) => i.serviceId === pickingEmployeeForItemId
                   )?.employeeId === emp.id;
+                const lockedHistorical =
+                  !entitlements.assignStaffOnBill && emp.is_owner !== 1;
                 return (
                   <Pressable
                     key={emp.id}
@@ -1494,6 +1560,10 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
                       current && styles.pickerRowActive
                     ]}
                     onPress={() => {
+                      if (lockedHistorical) {
+                        setPickingEmployeeForItemId(null);
+                        return;
+                      }
                       if (pickingEmployeeForItemId) {
                         changeItemEmployee(
                           pickingEmployeeForItemId,
@@ -1667,6 +1737,9 @@ const styles = StyleSheet.create({
   empChipSelected: {
     backgroundColor: colors.interactive.selected,
     borderColor: colors.brand.primary
+  },
+  empChipLocked: {
+    opacity: 0.72
   },
   empAvatar: {
     alignItems: "center",
