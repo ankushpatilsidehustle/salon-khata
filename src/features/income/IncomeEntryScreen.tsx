@@ -15,7 +15,7 @@ import { useTranslation } from "react-i18next";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { SafeAreaView } from "react-native-safe-area-context";
 import DateTimePicker, {
   DateTimePickerAndroid,
   type DateTimePickerEvent
@@ -145,7 +145,6 @@ function formatDateLabel(iso: string): string {
 
 export function IncomeEntryScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
-  const insets = useSafeAreaInsets();
   const { entitlements } = useSubscription();
 
   const editingId = route.params?.transactionId ?? null;
@@ -165,14 +164,11 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
   const [employeeId, setEmployeeId] = useState<string | null>(null);
   const [customerGender, setCustomerGender] = useState<CustomerGender | null>(
     () => {
-      // For a new bill, seed the default from the salon type. Editing an
-      // existing bill leaves this untouched (the price snapshots on items
-      // already reflect the gender chosen at save time).
-      if (editingId) return null;
-      const t = settingsRepo.getSalonType(DEV_SALON_ID);
-      if (t === "male") return "male";
-      if (t === "female") return "female";
-      return "male"; // unisex → default to male
+      // Seed from salon type — both for new bills and as the initial fallback
+      // for edit mode (will be overwritten by hydration once the DB record loads).
+      const salonType = settingsRepo.getSalonType(DEV_SALON_ID);
+      if (salonType === "female") return "female";
+      return "male"; // male or unisex → default male
     }
   );
   const [billDate, setBillDate] = useState<string>(toLocalISODate(new Date()));
@@ -288,6 +284,12 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
     setEmployeeId(tx.employee_id || null);
     setBillDate(tx.transaction_date);
     setPaymentMode(tx.payment_mode as LegacyPaymentMode);
+
+    // Restore customer gender; fall back to salon-type default if not stored
+    // (bills saved before migration 020 will have customer_gender = null).
+    if (tx.customer_gender === "male" || tx.customer_gender === "female") {
+      setCustomerGender(tx.customer_gender);
+    }
     if (tx.discount_type) {
       setDiscountEnabled(true);
       setDiscountType(tx.discount_type as DiscountType);
@@ -828,6 +830,7 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
           customer_id: resolvedCustomerId,
           customer_name_snapshot: customerNameSnapshot,
           customer_phone_snapshot: customerPhoneSnapshot,
+          customer_gender: customerGender,
           created_at: createdAt,
           updated_at: now,
           deleted_at: null
@@ -1506,39 +1509,39 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
       </KeyboardAvoidingView>
 
       {/* ── Sticky footer ─────────────────────────────────────────── */}
-      <View
-        style={[
-          styles.footer,
-          { paddingBottom: Math.max(spacing[4], insets.bottom) }
-        ]}
+      <SafeAreaView
+        edges={["bottom"]}
+        style={[styles.footer, styles.footerSafeArea]}
       >
-        <View style={styles.footerMeta}>
-          <Text style={styles.footerLabel}>{t("income.total")}</Text>
-          <Text style={styles.footerAmount}>{formatMoney(netAmount)}</Text>
-          {totalCommission > 0 && (
-            <Text style={styles.footerCommission}>
-              {t("income.commissionShort", {
-                amount: formatMoney(totalCommission)
-              })}
-            </Text>
-          )}
+        <View style={styles.footerInner}>
+          <View style={styles.footerMeta}>
+            <Text style={styles.footerLabel}>{t("income.total")}</Text>
+            <Text style={styles.footerAmount}>{formatMoney(netAmount)}</Text>
+            {totalCommission > 0 && (
+              <Text style={styles.footerCommission}>
+                {t("income.commissionShort", {
+                  amount: formatMoney(totalCommission)
+                })}
+              </Text>
+            )}
+          </View>
+          <Button
+            variant="primary"
+            onPress={handleSave}
+            style={[
+              styles.saveBtn,
+              (!canSave || saving) && styles.saveBtnDisabled
+            ]}
+            accessibilityLabel={isEditing ? t("income.updateBill") : t("income.saveBill")}
+          >
+            {saving
+              ? t("common.loading")
+              : isEditing
+                ? t("income.updateBill")
+                : t("income.saveBill")}
+          </Button>
         </View>
-        <Button
-          variant="primary"
-          onPress={handleSave}
-          style={[
-            styles.saveBtn,
-            (!canSave || saving) && styles.saveBtnDisabled
-          ]}
-          accessibilityLabel={isEditing ? t("income.updateBill") : t("income.saveBill")}
-        >
-          {saving
-            ? t("common.loading")
-            : isEditing
-              ? t("income.updateBill")
-              : t("income.saveBill")}
-        </Button>
-      </View>
+      </SafeAreaView>
 
       {/* Services picker sheet */}
       <AddServicesSheet
@@ -1664,13 +1667,11 @@ export function IncomeEntryScreen({ navigation, route }: Props) {
                   variant="primary"
                   fullWidth
                   onPress={async () => {
-                    // Capture the receipt view as PNG and open the native
-                    // share sheet. WhatsApp appears prominently — user picks
-                    // it, then picks the customer's chat, and the image is
-                    // attached. WhatsApp's share intent doesn't support
-                    // pre-selecting both a contact AND an image in one call,
-                    // so this is the reliable cross-platform flow.
-                    await shareReceipt();
+                    // Send receipt image directly to the customer's WhatsApp.
+                    // Falls back to the OS share sheet if WhatsApp isn't installed.
+                    await shareReceipt({
+                      phone: previewData?.transaction.customer_phone_snapshot
+                    });
                     setPreviewVisible(false);
                     navigation.goBack();
                   }}
@@ -2239,14 +2240,18 @@ const styles = StyleSheet.create({
     height: spacing[9]
   },
   footer: {
-    alignItems: "center",
     backgroundColor: colors.surface.default,
     borderTopColor: colors.border.subtle,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    flexDirection: "row",
-    gap: spacing[3],
+    borderTopWidth: StyleSheet.hairlineWidth
+  },
+  footerSafeArea: {
     paddingHorizontal: spacing[4],
     paddingTop: spacing[3]
+  },
+  footerInner: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing[3]
   },
   footerMeta: {
     flex: 1,

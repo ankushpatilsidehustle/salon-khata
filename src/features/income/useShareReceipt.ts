@@ -6,50 +6,97 @@ import * as Sharing from "expo-sharing";
 import { useTranslation } from "react-i18next";
 
 /**
+ * Lazily require `react-native-share` so a missing native module (dev bundle
+ * loaded before `npx expo prebuild && run:android`) doesn't crash the app at
+ * bundle load. We only touch it when the user actually shares.
+ */
+function loadRNShare():
+  | typeof import("react-native-share")
+  | null {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    return require("react-native-share");
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Provides a stable ref to attach to a `ReceiptCard` plus a `shareReceipt`
- * callback that captures the view as a PNG and opens the native share sheet.
+ * callback that captures the view as a PNG.
  *
- * The share sheet lets the user pick WhatsApp (and any specific chat) with
- * the receipt image attached — no separate deep link needed. The customer's
- * phone number is not passed through the share intent because WhatsApp share
- * intents on iOS/Android don't accept an image + a pre-selected chat in one
- * call. Owners can still see the phone in the app for reference.
+ * When `phone` is supplied, the image is sent DIRECTLY to that WhatsApp
+ * number (Android opens the specific chat; iOS opens WhatsApp to that
+ * registered number). Falls back to the generic OS share sheet when:
+ *  - no phone is given
+ *  - WhatsApp is not installed
+ *  - `react-native-share` throws or isn't linked
  */
 export function useShareReceipt() {
   const { t } = useTranslation();
   const ref = useRef<View>(null);
   const [sharing, setSharing] = useState(false);
 
-  const shareReceipt = useCallback(async () => {
-    if (sharing) return;
-    const current = ref.current;
-    if (!current) return;
+  const shareReceipt = useCallback(
+    async (options?: { phone?: string | null }) => {
+      if (sharing) return;
+      const current = ref.current;
+      if (!current) return;
 
-    setSharing(true);
-    try {
-      const uri = await captureRef(current, {
-        format: "png",
-        quality: 1,
-        result: "tmpfile"
-      });
+      setSharing(true);
+      try {
+        const uri = await captureRef(current, {
+          format: "png",
+          quality: 1,
+          result: "tmpfile"
+        });
 
-      if (!(await Sharing.isAvailableAsync())) {
-        Alert.alert(t("receipt.shareUnavailable"));
-        return;
+        const phone = options?.phone ?? null;
+
+        if (phone) {
+          const shareMod = loadRNShare();
+          if (shareMod) {
+            const Share = shareMod.default;
+            const Social = shareMod.Social;
+            // Normalise: ensure international format with leading "+"
+            const normalised = phone.startsWith("+") ? phone : `+${phone}`;
+            try {
+              await Share.shareSingle({
+                social: Social.Whatsapp,
+                // whatsAppNumber is not in v12 TS types — cast to bypass
+                whatsAppNumber: normalised,
+                url: uri,
+                type: "image/png",
+                failOnCancel: false
+              } as Parameters<typeof Share.shareSingle>[0]);
+              return; // success — skip generic fallback
+            } catch {
+              // WhatsApp not installed or share cancelled — fall through
+            }
+          }
+        }
+
+        // Generic OS share sheet fallback
+        if (!(await Sharing.isAvailableAsync())) {
+          Alert.alert(t("receipt.shareUnavailable"));
+          return;
+        }
+        await Sharing.shareAsync(uri, {
+          mimeType: "image/png",
+          dialogTitle: t("receipt.shareTitle"),
+          UTI: "public.png"
+        });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        Alert.alert(t("receipt.shareFailed"), message);
+      } finally {
+        setSharing(false);
       }
-
-      await Sharing.shareAsync(uri, {
-        mimeType: "image/png",
-        dialogTitle: t("receipt.shareTitle"),
-        UTI: "public.png"
-      });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      Alert.alert(t("receipt.shareFailed"), message);
-    } finally {
-      setSharing(false);
-    }
-  }, [sharing, t]);
+    },
+    [sharing, t]
+  );
 
   return { receiptRef: ref, shareReceipt, sharing } as const;
 }
+
+

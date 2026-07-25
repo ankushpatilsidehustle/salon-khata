@@ -2,6 +2,7 @@ import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 
 import { colors, spacing, typography } from "@/design-system/tokens";
 import { Events, track } from "@/observability";
@@ -20,40 +21,41 @@ type TabDef = {
   iconOutline: React.ComponentProps<typeof Ionicons>["name"];
 };
 
-const LEFT_TABS: TabDef[] = [
-  {
-    routeIndex: 0,
-    label: "Dashboard",
-    iconFilled: "home",
-    iconOutline: "home-outline"
-  },
-  {
-    routeIndex: 1,
-    label: "Manage",
-    iconFilled: "layers",
-    iconOutline: "layers-outline"
-  }
-];
-
-const RIGHT_TABS: TabDef[] = [
-  {
-    routeIndex: 3,
-    label: "Reports",
-    iconFilled: "bar-chart",
-    iconOutline: "bar-chart-outline"
-  },
-  {
-    routeIndex: 4,
-    label: "More",
-    iconFilled: "ellipsis-horizontal-circle",
-    iconOutline: "ellipsis-horizontal-circle-outline"
-  }
-];
-
 // ─── component ───────────────────────────────────────────────────────────────
 
 export function BottomTabBar({ navigation, state }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
+
+  const LEFT_TABS: TabDef[] = [
+    {
+      routeIndex: 0,
+      label: t("nav.home"),
+      iconFilled: "home",
+      iconOutline: "home-outline"
+    },
+    {
+      routeIndex: 1,
+      label: t("entries.tabTitle"),
+      iconFilled: "layers",
+      iconOutline: "layers-outline"
+    }
+  ];
+
+  const RIGHT_TABS: TabDef[] = [
+    {
+      routeIndex: 3,
+      label: t("reports.title"),
+      iconFilled: "bar-chart",
+      iconOutline: "bar-chart-outline"
+    },
+    {
+      routeIndex: 4,
+      label: t("more.title"),
+      iconFilled: "ellipsis-horizontal-circle",
+      iconOutline: "ellipsis-horizontal-circle-outline"
+    }
+  ];
 
   function pressTab(routeIndex: number) {
     const route = state.routes[routeIndex];

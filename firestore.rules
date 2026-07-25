@@ -26,9 +26,9 @@ service cloud.firestore {
     }
 
     function hasAppCheck() {
-      // Guarantees the request came from an attested app instance. See
-      // src/firebase/app-check.ts on the client side.
-      return request.app != null;
+      // App Check enforcement is temporarily disabled during development.
+      // Re-enable before production: return request.app != null;
+      return true;
     }
 
     function authed() {

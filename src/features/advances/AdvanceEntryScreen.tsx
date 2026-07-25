@@ -14,7 +14,7 @@ import { useTranslation } from "react-i18next";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { SafeAreaView } from "react-native-safe-area-context";
 import DateTimePicker, {
   DateTimePickerAndroid,
   type DateTimePickerEvent
@@ -75,7 +75,6 @@ function parseRupeesToPaise(input: string): number {
 
 export function AdvanceEntryScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
-  const insets = useSafeAreaInsets();
 
   const editingId = route.params?.advanceId ?? null;
   const isEditing = !!editingId;
@@ -371,36 +370,36 @@ export function AdvanceEntryScreen({ navigation, route }: Props) {
       </KeyboardAvoidingView>
 
       {/* Sticky footer */}
-      <View
-        style={[
-          styles.footer,
-          { paddingBottom: Math.max(spacing[4], insets.bottom) }
-        ]}
+      <SafeAreaView
+        edges={["bottom"]}
+        style={[styles.footer, styles.footerSafeArea]}
       >
-        <View style={styles.footerMeta}>
-          <Text style={styles.footerLabel}>{t("advances.amount")}</Text>
-          <Text style={styles.footerAmount}>
-            {formatMoney(amountValid ? amountPaise : 0)}
-          </Text>
+        <View style={styles.footerInner}>
+          <View style={styles.footerMeta}>
+            <Text style={styles.footerLabel}>{t("advances.amount")}</Text>
+            <Text style={styles.footerAmount}>
+              {formatMoney(amountValid ? amountPaise : 0)}
+            </Text>
+          </View>
+          <Button
+            variant="primary"
+            onPress={handleSave}
+            style={[
+              styles.saveBtn,
+              (!canSave || saving) && styles.saveBtnDisabled
+            ]}
+            accessibilityLabel={
+              isEditing ? t("advances.updateAdvance") : t("advances.saveAdvance")
+            }
+          >
+            {saving
+              ? t("common.loading")
+              : isEditing
+                ? t("advances.updateAdvance")
+                : t("advances.saveAdvance")}
+          </Button>
         </View>
-        <Button
-          variant="primary"
-          onPress={handleSave}
-          style={[
-            styles.saveBtn,
-            (!canSave || saving) && styles.saveBtnDisabled
-          ]}
-          accessibilityLabel={
-            isEditing ? t("advances.updateAdvance") : t("advances.saveAdvance")
-          }
-        >
-          {saving
-            ? t("common.loading")
-            : isEditing
-              ? t("advances.updateAdvance")
-              : t("advances.saveAdvance")}
-        </Button>
-      </View>
+      </SafeAreaView>
     </View>
   );
 }
@@ -535,14 +534,18 @@ const styles = StyleSheet.create({
     height: spacing[9]
   },
   footer: {
-    alignItems: "center",
     backgroundColor: colors.surface.default,
     borderTopColor: colors.border.subtle,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    flexDirection: "row",
-    gap: spacing[3],
+    borderTopWidth: StyleSheet.hairlineWidth
+  },
+  footerSafeArea: {
     paddingHorizontal: spacing[4],
     paddingTop: spacing[3]
+  },
+  footerInner: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing[3]
   },
   footerMeta: {
     flex: 1,

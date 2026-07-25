@@ -15,7 +15,7 @@ import { useTranslation } from "react-i18next";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { SafeAreaView } from "react-native-safe-area-context";
 import DateTimePicker, {
   DateTimePickerAndroid,
   type DateTimePickerEvent
@@ -77,7 +77,6 @@ function parseRupeesToPaise(input: string): number {
 
 export function ExpenseEntryScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
-  const insets = useSafeAreaInsets();
 
   const editingId = route.params?.expenseId ?? null;
   const isEditing = !!editingId;
@@ -451,36 +450,36 @@ export function ExpenseEntryScreen({ navigation, route }: Props) {
       </KeyboardAvoidingView>
 
       {/* ── Sticky footer ─────────────────────────────────────────── */}
-      <View
-        style={[
-          styles.footer,
-          { paddingBottom: Math.max(spacing[4], insets.bottom) }
-        ]}
+      <SafeAreaView
+        edges={["bottom"]}
+        style={[styles.footer, styles.footerSafeArea]}
       >
-        <View style={styles.footerMeta}>
-          <Text style={styles.footerLabel}>{t("expenses.amount")}</Text>
-          <Text style={styles.footerAmount}>
-            {formatMoney(amountValid ? amountPaise : 0)}
-          </Text>
+        <View style={styles.footerInner}>
+          <View style={styles.footerMeta}>
+            <Text style={styles.footerLabel}>{t("expenses.amount")}</Text>
+            <Text style={styles.footerAmount}>
+              {formatMoney(amountValid ? amountPaise : 0)}
+            </Text>
+          </View>
+          <Button
+            variant="primary"
+            onPress={handleSave}
+            style={[
+              styles.saveBtn,
+              (!canSave || saving) && styles.saveBtnDisabled
+            ]}
+            accessibilityLabel={
+              isEditing ? t("expenses.updateExpense") : t("expenses.saveExpense")
+            }
+          >
+            {saving
+              ? t("common.loading")
+              : isEditing
+                ? t("expenses.updateExpense")
+                : t("expenses.saveExpense")}
+          </Button>
         </View>
-        <Button
-          variant="primary"
-          onPress={handleSave}
-          style={[
-            styles.saveBtn,
-            (!canSave || saving) && styles.saveBtnDisabled
-          ]}
-          accessibilityLabel={
-            isEditing ? t("expenses.updateExpense") : t("expenses.saveExpense")
-          }
-        >
-          {saving
-            ? t("common.loading")
-            : isEditing
-              ? t("expenses.updateExpense")
-              : t("expenses.saveExpense")}
-        </Button>
-      </View>
+      </SafeAreaView>
 
       {/* ── New category modal ────────────────────────────────────── */}
       <Modal
@@ -724,14 +723,18 @@ const styles = StyleSheet.create({
     height: spacing[6]
   },
   footer: {
+    backgroundColor: colors.surface.default,
+    borderTopWidth: 1,
+    borderTopColor: colors.divider
+  },
+  footerSafeArea: {
+    paddingHorizontal: spacing[4],
+    paddingTop: spacing[3]
+  },
+  footerInner: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing[3],
-    paddingHorizontal: spacing[4],
-    paddingTop: spacing[3],
-    borderTopWidth: 1,
-    borderTopColor: colors.divider,
-    backgroundColor: colors.surface.default
+    gap: spacing[3]
   },
   footerMeta: {
     flex: 1

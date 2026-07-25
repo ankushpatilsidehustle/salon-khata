@@ -2,6 +2,9 @@
   "app": {
     "name": "Salon Khata"
   },
+  "nav": {
+    "home": "होम"
+  },
   "common": {
     "loading": "लोड होत आहे",
     "save": "जतन करा",

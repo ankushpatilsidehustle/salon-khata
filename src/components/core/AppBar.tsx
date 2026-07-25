@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+
 import { colors, spacing, typography } from "@/design-system/tokens";
 
 /**
@@ -55,7 +56,9 @@ export function AppBar({
       ]}
     >
       <View style={styles.row}>
-        <View style={styles.side}>{leading ?? null}</View>
+        <View style={[styles.side, !leading && styles.sideEmpty]}>
+          {leading ?? null}
+        </View>
         <Text
           style={[styles.title, { color: vc.titleColor }]}
           accessibilityRole="header"
@@ -71,7 +74,7 @@ export function AppBar({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: spacing[4],
+    paddingHorizontal: spacing[3],
     borderBottomWidth: StyleSheet.hairlineWidth
   },
   row: {
@@ -84,12 +87,16 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     justifyContent: "center"
   },
+  sideEmpty: {
+    minWidth: 0
+  },
   trailing: {
     alignItems: "flex-end"
   },
   title: {
     ...typography.h2,
     flex: 1,
-    marginHorizontal: spacing[3]
+    marginLeft: spacing[1],
+    marginRight: spacing[1]
   }
 });

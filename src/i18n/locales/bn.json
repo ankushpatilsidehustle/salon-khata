@@ -2,6 +2,9 @@
   "app": {
     "name": "Salon Khata"
   },
+  "nav": {
+    "home": "হোম"
+  },
   "common": {
     "loading": "লোড হচ্ছে",
     "save": "সেভ করুন",

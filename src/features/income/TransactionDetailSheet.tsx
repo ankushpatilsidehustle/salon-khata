@@ -118,7 +118,11 @@ export function TransactionDetailSheet({
           {loaded ? (
             <Button
               variant="secondary"
-              onPress={shareReceipt}
+              onPress={() =>
+                shareReceipt({
+                  phone: loaded?.transaction.customer_phone_snapshot
+                })
+              }
               fullWidth
               style={styles.footerBtnHeight}
               accessibilityLabel={

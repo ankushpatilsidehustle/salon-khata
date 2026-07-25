@@ -17,6 +17,7 @@ import { runMigration016 } from "./016-sync-columns";
 import { runMigration017 } from "./017-sync-queue";
 import { runMigration018 } from "./018-sync-history";
 import { runMigration019 } from "./019-subscription-referral";
+import { runMigration020 } from "./020-income-gender";
 
 /** Run every migration in order. Safe to call on every app start. */
 export function runAllMigrations(): void {
@@ -39,4 +40,5 @@ export function runAllMigrations(): void {
   runMigration017();
   runMigration018();
   runMigration019();
+  runMigration020();
 }

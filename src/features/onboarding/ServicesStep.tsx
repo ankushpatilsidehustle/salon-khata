@@ -19,7 +19,6 @@ import { useSnackbar } from "@/components/core/SnackbarProvider";
 import { colors, radius, spacing, typography } from "@/design-system/tokens";
 import { getCurrentAuthUser } from "@/firebase/auth";
 import { setCurrentSalonId } from "@/session/current-salon";
-import { runInTransaction } from "@/database/sqlite-client";
 import { EmployeeRepository } from "@/repositories/employee-repository";
 import type { EmployeeGender } from "@/repositories/employee-repository";
 import { SalonRepository } from "@/repositories/salon-repository";
@@ -109,54 +108,58 @@ export function ServicesStep({ navigation, route }: Props) {
 
     setSaving(true);
     try {
-      runInTransaction(() => {
-        salonRepo.create({
-          id: salonId,
-          businessName,
-          ownerName,
-          mobileNumber: authUser.phoneNumber ?? undefined,
-          language,
-          salonType,
-          ownerUid: authUser.uid
-        });
+      // NOTE: each repository call below opens its own `runInTransaction`
+      // internally, so we intentionally do NOT wrap this block in another
+      // one — expo-sqlite `withTransactionSync` doesn't support nesting
+      // (nested BEGIN fails and the rollback path throws "no transaction
+      // is active"). Onboarding is one-time on a fresh account, so the
+      // atomicity trade-off is acceptable.
+      salonRepo.create({
+        id: salonId,
+        businessName,
+        ownerName,
+        mobileNumber: authUser.phoneNumber ?? undefined,
+        language,
+        salonType,
+        ownerUid: authUser.uid
+      });
 
-        if (alsoDoesServices && ownerName.length > 0) {
-          employeeRepo.insert({
+      if (alsoDoesServices && ownerName.length > 0) {
+        employeeRepo.insert({
+          salonId,
+          name: ownerName,
+          gender: ownerGenderFor(salonType),
+          isOwner: true
+        });
+      }
+
+      // Seed the default category set, then build a name → id lookup so
+      // each service can point at the correct category row.
+      categoryRepo.ensureDefaults(salonId);
+      const categoriesByName = new Map<string, string>();
+      for (const cat of categoryRepo.listActive(salonId)) {
+        categoriesByName.set(cat.name.toLowerCase(), cat.id);
+      }
+      const fallbackCategoryId =
+        categoriesByName.get("others") ?? null;
+
+      const insertSide = (rows: Row[]) => {
+        for (const row of rows) {
+          const paise = toPaise(row.price);
+          const categoryId =
+            categoriesByName.get(row.category.toLowerCase()) ??
+            fallbackCategoryId;
+          serviceRepo.insert({
             salonId,
-            name: ownerName,
-            gender: ownerGenderFor(salonType),
-            isOwner: true
+            categoryId,
+            name: row.name,
+            malePrice: row.gender === "male" ? paise : 0,
+            femalePrice: row.gender === "female" ? paise : 0
           });
         }
-
-        // Seed the default category set, then build a name → id lookup so
-        // each service can point at the correct category row.
-        categoryRepo.ensureDefaults(salonId);
-        const categoriesByName = new Map<string, string>();
-        for (const cat of categoryRepo.listActive(salonId)) {
-          categoriesByName.set(cat.name.toLowerCase(), cat.id);
-        }
-        const fallbackCategoryId =
-          categoriesByName.get("others") ?? null;
-
-        const insertSide = (rows: Row[]) => {
-          for (const row of rows) {
-            const paise = toPaise(row.price);
-            const categoryId =
-              categoriesByName.get(row.category.toLowerCase()) ??
-              fallbackCategoryId;
-            serviceRepo.insert({
-              salonId,
-              categoryId,
-              name: row.name,
-              malePrice: row.gender === "male" ? paise : 0,
-              femalePrice: row.gender === "female" ? paise : 0
-            });
-          }
-        };
-        insertSide(menRows);
-        insertSide(womenRows);
-      });
+      };
+      insertSide(menRows);
+      insertSide(womenRows);
 
       track(Events.onboarding.servicesSeeded, {
         service_count: menRows.length + womenRows.length,

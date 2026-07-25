@@ -29,6 +29,11 @@ export type IncomeTransactionRecord = SharedColumns & {
   customer_id: string | null;
   customer_name_snapshot: string | null;
   customer_phone_snapshot: string | null;
+  /**
+   * Gender of the customer at billing time ("male" | "female" | null).
+   * Persisted so edit mode restores the correct gender toggle state.
+   */
+  customer_gender: string | null;
 };
 
 export type IncomeItemRecord = SharedColumns & {

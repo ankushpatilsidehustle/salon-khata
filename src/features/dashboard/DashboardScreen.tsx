@@ -144,7 +144,7 @@ export function DashboardScreen() {
   return (
     <View style={styles.root}>
       <AppBar
-        title={businessName}
+        title={t("app.name")}
         trailing={
           <View
             style={styles.avatar}
