@@ -133,6 +133,37 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // Razorpay checkout session queue — create subscription options.
+    match /billing_checkout_requests/{requestId} {
+      allow create: if authed() &&
+        request.resource.data.salon_id == request.auth.uid &&
+        request.resource.data.status == 'queued';
+      allow read: if authed() &&
+        resource.data.salon_id == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // Post-checkout payment signature verification queue.
+    match /billing_verify_requests/{requestId} {
+      allow create: if authed() &&
+        request.resource.data.salon_id == request.auth.uid &&
+        request.resource.data.status == 'queued';
+      allow read: if authed() &&
+        resource.data.salon_id == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // Server-only Razorpay mapping / webhook idempotency / plan cache.
+    match /razorpay_subscriptions/{subId} {
+      allow read, write: if false;
+    }
+    match /razorpay_webhook_events/{eventId} {
+      allow read, write: if false;
+    }
+    match /billing_config/{docId} {
+      allow read, write: if false;
+    }
+
     // Everything else is denied. Explicit terminal rule so no future
     // top-level collection accidentally becomes readable.
     match /{document=**} {

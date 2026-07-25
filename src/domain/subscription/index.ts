@@ -41,3 +41,16 @@ export {
   isValidReferralCodeFormat,
   normalizeReferralCode
 } from "./referral-code";
+
+export {
+  buildSubscriptionGuard,
+  getActivePlanCode,
+  getActivePlanName,
+  getAvailableFeatures,
+  getSubscriptionExpiry,
+  hasFeature,
+  isOnTrial,
+  isSubscriptionExpired,
+  isUserSubscribed,
+  type SubscriptionGuard
+} from "./subscription-guard";

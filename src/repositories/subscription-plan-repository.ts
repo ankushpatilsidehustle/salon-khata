@@ -31,56 +31,62 @@ type PlanSeed = {
   pricePaise: number;
   sortOrder: number;
   gracePeriodDays: number;
+  /** When false, plan is hidden from purchase UI but kept for history. */
+  enabled?: boolean;
   features?: PlanFeatures;
 };
 
 /**
- * Default catalog. Prices are placeholders until payment ships — the
- * entitlement engine only cares about duration + features for trial.
+ * Default catalog. Purchaseable plans: monthly ₹99, yearly ₹999.
+ * Trial duration is configurable via the `trial` row (`durationDays`).
  */
 const DEFAULT_PLANS: PlanSeed[] = [
   {
     code: "trial",
     name: "Free Trial",
-    description: "30-day full-feature trial for new salons",
+    description: "Full-feature trial for new salons",
     billingPeriod: "trial",
     durationDays: 30,
     pricePaise: 0,
     sortOrder: 0,
     gracePeriodDays: 0,
+    enabled: true,
     features: FULL_PLAN_FEATURES
   },
   {
     code: "monthly",
     name: "Monthly",
-    description: "Billed every 30 days",
+    description: "Billed every month",
     billingPeriod: "month",
     durationDays: 30,
-    pricePaise: 49900,
+    pricePaise: 9900,
     sortOrder: 10,
     gracePeriodDays: 3,
-    features: FULL_PLAN_FEATURES
-  },
-  {
-    code: "quarterly",
-    name: "Quarterly",
-    description: "Billed every 90 days",
-    billingPeriod: "quarter",
-    durationDays: 90,
-    pricePaise: 129900,
-    sortOrder: 20,
-    gracePeriodDays: 3,
+    enabled: true,
     features: FULL_PLAN_FEATURES
   },
   {
     code: "yearly",
     name: "Yearly",
-    description: "Billed every 365 days",
+    description: "Billed every year",
     billingPeriod: "year",
     durationDays: 365,
-    pricePaise: 449900,
-    sortOrder: 30,
+    pricePaise: 99900,
+    sortOrder: 20,
     gracePeriodDays: 7,
+    enabled: true,
+    features: FULL_PLAN_FEATURES
+  },
+  {
+    code: "quarterly",
+    name: "Quarterly",
+    description: "Legacy plan — not offered for purchase",
+    billingPeriod: "quarter",
+    durationDays: 90,
+    pricePaise: 129900,
+    sortOrder: 90,
+    gracePeriodDays: 3,
+    enabled: false,
     features: FULL_PLAN_FEATURES
   }
 ];
@@ -105,12 +111,42 @@ export class SubscriptionPlanRepository {
 
   private ensurePlanRow(seed: PlanSeed, now: string): void {
     const stableId = seed.code;
+    const enabled = seed.enabled === false ? 0 : 1;
+    const featuresJson = stringifyPlanFeatures(
+      seed.features ?? FULL_PLAN_FEATURES
+    );
+
     const byStableId = database.getFirstSync<{ id: string }>(
       `SELECT id FROM subscription_plans
        WHERE id = ? AND deleted_at IS NULL LIMIT 1`,
       [stableId]
     );
-    if (byStableId) return;
+
+    if (byStableId) {
+      // Keep seed prices / enablement in sync (e.g. ₹99 / ₹999 rollout).
+      database.runSync(
+        `UPDATE subscription_plans
+         SET name = ?, description = ?, billing_period = ?,
+             duration_days = ?, price_paise = ?, is_enabled = ?,
+             sort_order = ?, features_json = ?, grace_period_days = ?,
+             updated_at = ?
+         WHERE id = ? AND deleted_at IS NULL`,
+        [
+          seed.name,
+          seed.description,
+          seed.billingPeriod,
+          seed.durationDays,
+          seed.pricePaise,
+          enabled,
+          seed.sortOrder,
+          featuresJson,
+          seed.gracePeriodDays,
+          now,
+          stableId
+        ]
+      );
+      return;
+    }
 
     // Legacy installs seeded random UUIDs — remap subscriptions then
     // replace the catalog row with the stable id.
@@ -145,7 +181,7 @@ export class SubscriptionPlanRepository {
        (id, code, name, description, billing_period, duration_days,
         price_paise, currency, is_enabled, sort_order, features_json,
         grace_period_days, created_at, updated_at, deleted_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 'INR', 1, ?, ?, ?, ?, ?, NULL)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'INR', ?, ?, ?, ?, ?, ?, NULL)`,
       [
         stableId,
         seed.code,
@@ -154,8 +190,9 @@ export class SubscriptionPlanRepository {
         seed.billingPeriod,
         seed.durationDays,
         seed.pricePaise,
+        enabled,
         seed.sortOrder,
-        stringifyPlanFeatures(seed.features ?? FULL_PLAN_FEATURES),
+        featuresJson,
         seed.gracePeriodDays,
         now,
         now
