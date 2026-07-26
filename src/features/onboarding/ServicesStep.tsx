@@ -38,6 +38,12 @@ import { claimReferralOnline } from "@/cloud/referral-claim";
 import { normalizeReferralCode } from "@/domain/subscription";
 import { syncScheduler } from "@/sync/sync-scheduler";
 import { Events, logger, track } from "@/observability";
+import {
+  isAppLanguageCode,
+  type AppLanguageCode
+} from "@/i18n/languages";
+import { i18n } from "@/i18n";
+import { resolvePreferredLanguage } from "@/session/app-preferences";
 
 type Props = NativeStackScreenProps<OnboardingStackParamList, "Services">;
 
@@ -68,13 +74,18 @@ export function ServicesStep({ navigation, route }: Props) {
   const { showSnackbar } = useSnackbar();
   const onDone = useOnboardingDone();
   const {
-    language,
     salonType,
     businessName,
     ownerName,
     alsoDoesServices,
     referralCode
   } = route.params;
+
+  const language: AppLanguageCode = (() => {
+    const fromPrefs = resolvePreferredLanguage("en");
+    if (isAppLanguageCode(i18n.language)) return i18n.language;
+    return fromPrefs;
+  })();
 
   const lists = useMemo(() => getServicesForSalonType(salonType), [salonType]);
 
@@ -214,8 +225,8 @@ export function ServicesStep({ navigation, route }: Props) {
   return (
     <View style={styles.root}>
       <StepHeader
-        currentStep={4}
-        totalSteps={4}
+        currentStep={3}
+        totalSteps={3}
         onBack={() => navigation.goBack()}
       />
       <KeyboardAvoidingView

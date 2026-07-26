@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   StyleSheet,
   Text,
   TextInput,
@@ -11,9 +9,10 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
-import { Ionicons } from "@expo/vector-icons";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 
+import { Button } from "@/components/core/Button";
+import { AppLogo } from "@/components/domain/AppLogo";
 import { colors, radius, spacing, typography } from "@/design-system/tokens";
 import { signInWithPhone, AuthError } from "@/firebase/auth";
 import { toE164 } from "@/domain/phone";
@@ -29,8 +28,8 @@ export function PhoneNumberScreen({ navigation, route }: Props) {
   const [phone, setPhone] = useState(route.params?.prefillPhone ?? "");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [focused, setFocused] = useState(false);
 
-  // Returning from OTP "Change" with a prefilled number.
   useEffect(() => {
     const prefill = route.params?.prefillPhone;
     if (prefill) setPhone(prefill);
@@ -87,66 +86,55 @@ export function PhoneNumberScreen({ navigation, route }: Props) {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <View style={styles.content}>
-          <View style={styles.brandRow}>
-            <View style={styles.brandIcon}>
-              <Ionicons name="cut-outline" size={28} color={colors.brand.primary} />
+          <AppLogo size={48} showWordmark wordmark={t("app.name")} />
+
+          <View style={styles.heroBlock}>
+            <Text style={styles.title}>{t("auth.phone.title")}</Text>
+            <Text style={styles.subtitle}>{t("auth.phone.subtitle")}</Text>
+          </View>
+
+          <View>
+            <View
+              style={[
+                styles.inputRow,
+                focused && styles.inputRowFocused,
+                !!error && styles.inputRowError
+              ]}
+            >
+              <View style={styles.prefixBox}>
+                <Text style={styles.prefixText}>{COUNTRY_CODE}</Text>
+              </View>
+              <TextInput
+                style={styles.input}
+                placeholder={t("auth.phone.placeholder")}
+                placeholderTextColor={colors.text.muted}
+                keyboardType="number-pad"
+                value={phone}
+                onChangeText={handlePhoneChange}
+                onFocus={() => setFocused(true)}
+                onBlur={() => setFocused(false)}
+                autoFocus
+                maxLength={10}
+                accessibilityLabel={t("auth.phone.a11yLabel")}
+                returnKeyType="done"
+                onSubmitEditing={() => void handleSubmit()}
+              />
             </View>
-            <Text style={styles.brandName}>{t("app.name")}</Text>
+            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+            <Text style={styles.helperText}>{t("auth.phone.helper")}</Text>
           </View>
-
-          <View style={styles.heroIcon}>
-            <Ionicons
-              name="phone-portrait-outline"
-              size={36}
-              color={colors.brand.primary}
-            />
-          </View>
-
-          <Text style={styles.title}>{t("auth.phone.title")}</Text>
-          <Text style={styles.subtitle}>{t("auth.phone.subtitle")}</Text>
-
-          <View style={styles.inputRow}>
-            <View style={styles.prefixBox}>
-              <Text style={styles.prefixText}>{COUNTRY_CODE}</Text>
-            </View>
-            <TextInput
-              style={styles.input}
-              placeholder={t("auth.phone.placeholder")}
-              placeholderTextColor={colors.text.muted}
-              keyboardType="number-pad"
-              value={phone}
-              onChangeText={handlePhoneChange}
-              autoFocus
-              maxLength={10}
-              accessibilityLabel={t("auth.phone.a11yLabel")}
-              returnKeyType="done"
-              onSubmitEditing={handleSubmit}
-            />
-          </View>
-
-          {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
-          <Text style={styles.helperText}>{t("auth.phone.helper")}</Text>
         </View>
 
         <View style={styles.footer}>
-          <Pressable
-            onPress={handleSubmit}
+          <Button
+            onPress={() => void handleSubmit()}
+            fullWidth
             disabled={!canSubmit}
-            accessibilityRole="button"
+            loading={submitting}
             accessibilityLabel={t("auth.phone.sendOtp")}
-            style={({ pressed }) => [
-              styles.cta,
-              !canSubmit && styles.ctaDisabled,
-              pressed && canSubmit && styles.ctaPressed
-            ]}
           >
-            {submitting ? (
-              <ActivityIndicator color={colors.text.inverse} />
-            ) : (
-              <Text style={styles.ctaLabel}>{t("auth.phone.sendOtp")}</Text>
-            )}
-          </Pressable>
+            {t("auth.phone.sendOtp")}
+          </Button>
           <Text style={styles.legal}>{t("auth.phone.legal")}</Text>
         </View>
       </KeyboardAvoidingView>
@@ -183,35 +171,12 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: spacing[5],
-    paddingTop: spacing[4],
-    gap: spacing[3]
+    paddingTop: spacing[5],
+    gap: spacing[5]
   },
-  brandRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing[2],
-    marginBottom: spacing[4]
-  },
-  brandIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.md,
-    backgroundColor: colors.brand.accentLight,
-    alignItems: "center",
-    justifyContent: "center"
-  },
-  brandName: {
-    ...typography.h3,
-    color: colors.brand.primary
-  },
-  heroIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: radius.lg,
-    backgroundColor: colors.brand.accentLight,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: spacing[1]
+  heroBlock: {
+    marginTop: spacing[4],
+    gap: spacing[2]
   },
   title: {
     ...typography.h1,
@@ -220,20 +185,31 @@ const styles = StyleSheet.create({
   subtitle: {
     ...typography.body,
     color: colors.text.secondary,
-    marginBottom: spacing[3]
+    lineHeight: 22
   },
   inputRow: {
     flexDirection: "row",
     alignItems: "stretch",
-    gap: spacing[2]
+    backgroundColor: colors.surface.default,
+    borderRadius: radius.md,
+    borderWidth: 1.5,
+    borderColor: colors.border.subtle,
+    overflow: "hidden"
+  },
+  inputRowFocused: {
+    borderColor: colors.brand.primary
+  },
+  inputRowError: {
+    borderColor: colors.status.danger
   },
   prefixBox: {
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: colors.surface.sunken,
-    borderRadius: radius.md,
     paddingHorizontal: spacing[3],
-    minWidth: 64
+    minWidth: 68,
+    borderRightWidth: 1,
+    borderRightColor: colors.border.subtle
   },
   prefixText: {
     ...typography.bodyEmphasis,
@@ -243,43 +219,25 @@ const styles = StyleSheet.create({
     flex: 1,
     ...typography.h3,
     color: colors.text.primary,
-    backgroundColor: colors.surface.default,
-    borderColor: colors.border.subtle,
-    borderWidth: 1,
-    borderRadius: radius.md,
     paddingHorizontal: spacing[3],
-    minHeight: 52,
-    letterSpacing: 1
+    minHeight: 56,
+    letterSpacing: 1.5
   },
   errorText: {
     ...typography.bodySmall,
-    color: colors.status.danger
+    color: colors.status.danger,
+    marginTop: spacing[2]
   },
   helperText: {
     ...typography.caption,
     color: colors.text.muted,
-    marginTop: spacing[1]
+    marginTop: spacing[2]
   },
   footer: {
-    padding: spacing[5],
+    paddingHorizontal: spacing[5],
+    paddingBottom: spacing[4],
+    paddingTop: spacing[2],
     gap: spacing[3]
-  },
-  cta: {
-    minHeight: 52,
-    borderRadius: radius.md,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: colors.brand.primary
-  },
-  ctaPressed: {
-    backgroundColor: colors.brand.primaryPressed
-  },
-  ctaDisabled: {
-    backgroundColor: colors.interactive.disabled
-  },
-  ctaLabel: {
-    ...typography.button,
-    color: colors.text.inverse
   },
   legal: {
     ...typography.caption,

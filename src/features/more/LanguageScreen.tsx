@@ -9,6 +9,7 @@ import { useAuth } from "@/features/auth/AuthProvider";
 import { APP_LANGUAGES, getAppLanguage, type AppLanguageCode } from "@/i18n/languages";
 import { i18n } from "@/i18n";
 import { SalonRepository } from "@/repositories/salon-repository";
+import { setPreferredLanguage } from "@/session/app-preferences";
 import { Events, track } from "@/observability";
 
 const salonRepo = new SalonRepository();
@@ -26,6 +27,7 @@ export function LanguageScreen() {
   function select(code: AppLanguageCode) {
     if (code === current) return;
     void i18n.changeLanguage(code);
+    void setPreferredLanguage(code);
     if (salonId) {
       salonRepo.updateLanguage(salonId, code);
     }
