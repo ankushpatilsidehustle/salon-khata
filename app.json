@@ -5,6 +5,12 @@
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
+    "icon": "./assets/images/icon.png",
+    "splash": {
+      "image": "./assets/images/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F5F6FA"
+    },
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -18,7 +24,11 @@
     },
     "android": {
       "package": "com.salonkhata.app",
-      "googleServicesFile": "./google-services.json"
+      "googleServicesFile": "./google-services.json",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#6739B7"
+      }
     },
     "plugins": [
       "expo-sqlite",
@@ -36,7 +46,15 @@
       ],
       "expo-secure-store",
       "expo-background-task",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#F5F6FA",
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 200
+        }
+      ]
     ],
     "extra": {
       "eas": {

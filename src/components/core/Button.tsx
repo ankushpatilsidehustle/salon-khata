@@ -1,6 +1,6 @@
 import type { PropsWithChildren } from "react";
 import type { StyleProp, ViewStyle } from "react-native";
-import { Pressable, StyleSheet, Text } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, Text } from "react-native";
 
 import { colors, radius, spacing, typography } from "@/design-system/tokens";
 
@@ -10,6 +10,8 @@ type ButtonProps = PropsWithChildren<{
   onPress: () => void;
   variant?: ButtonVariant;
   fullWidth?: boolean;
+  disabled?: boolean;
+  loading?: boolean;
   accessibilityLabel?: string;
   testID?: string;
   style?: StyleProp<ViewStyle>;
@@ -18,27 +20,50 @@ type ButtonProps = PropsWithChildren<{
 export function Button({
   accessibilityLabel,
   children,
+  disabled = false,
   fullWidth = false,
+  loading = false,
   onPress,
   style,
   testID,
   variant = "primary"
 }: ButtonProps) {
+  const isDisabled = disabled || loading;
+  const spinnerColor =
+    variant === "secondary" || variant === "ghost"
+      ? colors.brand.primary
+      : colors.text.inverse;
+
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
+      accessibilityState={{ disabled: isDisabled, busy: loading }}
       testID={testID}
+      disabled={isDisabled}
       onPress={onPress}
       style={({ pressed }) => [
         styles.button,
         variantContainerStyle[variant],
         fullWidth && styles.fullWidth,
-        pressed && styles.pressed,
+        isDisabled && styles.disabled,
+        pressed && !isDisabled && styles.pressed,
         style
       ]}
     >
-      <Text style={[styles.label, variantLabelStyle[variant]]}>{children}</Text>
+      {loading ? (
+        <ActivityIndicator color={spinnerColor} />
+      ) : (
+        <Text
+          style={[
+            styles.label,
+            variantLabelStyle[variant],
+            isDisabled && styles.disabledLabel
+          ]}
+        >
+          {children}
+        </Text>
+      )}
     </Pressable>
   );
 }
@@ -55,6 +80,13 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.86
+  },
+  disabled: {
+    backgroundColor: colors.interactive.disabled,
+    borderColor: colors.interactive.disabled
+  },
+  disabledLabel: {
+    color: colors.interactive.disabledText
   },
   label: {
     ...typography.button

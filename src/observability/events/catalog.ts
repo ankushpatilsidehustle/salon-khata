@@ -20,6 +20,8 @@ export const AuthEvents = {
 export const OnboardingEvents = {
   started: "onboarding_started",
   languageSelected: "onboarding_language_selected",
+  gettingStartedCompleted: "onboarding_getting_started_completed",
+  gettingStartedSkipped: "onboarding_getting_started_skipped",
   salonTypeSelected: "onboarding_salon_type_selected",
   businessSetupCompleted: "onboarding_business_setup_completed",
   servicesSeeded: "onboarding_services_seeded",

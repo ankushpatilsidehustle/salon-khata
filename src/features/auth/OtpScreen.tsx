@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -14,6 +13,7 @@ import { useTranslation } from "react-i18next";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 
+import { Button } from "@/components/core/Button";
 import { colors, radius, spacing, typography } from "@/design-system/tokens";
 import {
   AuthError,
@@ -30,7 +30,6 @@ type Props = NativeStackScreenProps<AuthStackParamList, "Otp">;
 const OTP_LENGTH = 6;
 const RESEND_COOLDOWN_SEC = 30;
 
-/** Strip country code to the 10-digit local mobile for the Phone screen prefill. */
 function localDigitsFromE164(e164: string): string {
   const digits = e164.replace(/\D/g, "");
   if (digits.length >= 10) return digits.slice(-10);
@@ -66,7 +65,6 @@ export function OtpScreen({ navigation, route }: Props) {
       const digits = next.replace(/\D/g, "").slice(0, OTP_LENGTH);
       setCode(digits);
       if (error) setError(null);
-      // Allow re-submit after editing a previously failed code.
       if (submittedCodeRef.current && digits !== submittedCodeRef.current) {
         submittedCodeRef.current = null;
       }
@@ -83,14 +81,12 @@ export function OtpScreen({ navigation, route }: Props) {
     try {
       await verifyOtp(confirmation, code);
       track(Events.auth.otpVerified);
-      // Success — AuthProvider's onAuthStateChanged swaps the navigator.
     } catch (err) {
       const authCode = err instanceof AuthError ? err.code : "unknown";
       track(Events.auth.loginFailed, {
         error_code: authCode,
         stage: "otp_verify"
       });
-      // Expected user mistakes — do not flood Crashlytics.
       const skip =
         authCode === "invalid-code" ||
         authCode === "code-expired" ||
@@ -109,12 +105,10 @@ export function OtpScreen({ navigation, route }: Props) {
     }
   }, [code, submitting, confirmation, t]);
 
-  // Auto-login as soon as all 6 digits are entered.
   useEffect(() => {
     if (code.length === OTP_LENGTH && !submitting) {
       void handleSubmit();
     }
-    // Intentionally omit handleSubmit to avoid double-fire on rebind.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [code]);
 
@@ -148,6 +142,7 @@ export function OtpScreen({ navigation, route }: Props) {
 
   const boxes = Array.from({ length: OTP_LENGTH });
   const displayPhone = formatE164ForDisplay(e164Phone);
+  const canVerify = code.length === OTP_LENGTH && !submitting;
 
   return (
     <SafeAreaView style={styles.root} edges={["top", "left", "right", "bottom"]}>
@@ -161,8 +156,9 @@ export function OtpScreen({ navigation, route }: Props) {
             hitSlop={12}
             accessibilityRole="button"
             accessibilityLabel={t("common.back")}
+            style={styles.backBtn}
           >
-            <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
+            <Ionicons name="arrow-back" size={22} color={colors.text.primary} />
           </Pressable>
         </View>
 
@@ -195,7 +191,8 @@ export function OtpScreen({ navigation, route }: Props) {
                   style={[
                     styles.box,
                     filled && styles.boxFilled,
-                    active && styles.boxActive
+                    active && styles.boxActive,
+                    !!error && styles.boxError
                   ]}
                 >
                   <Text style={styles.boxChar}>{char}</Text>
@@ -204,7 +201,6 @@ export function OtpScreen({ navigation, route }: Props) {
             })}
           </Pressable>
 
-          {/* Hidden real input drives the boxes (SMS auto-fill supported). */}
           <TextInput
             ref={inputRef}
             value={code}
@@ -227,7 +223,7 @@ export function OtpScreen({ navigation, route }: Props) {
               </Text>
             ) : (
               <Pressable
-                onPress={handleResend}
+                onPress={() => void handleResend()}
                 disabled={resending}
                 accessibilityRole="button"
               >
@@ -245,26 +241,15 @@ export function OtpScreen({ navigation, route }: Props) {
         </View>
 
         <View style={styles.footer}>
-          <Pressable
-            onPress={handleSubmit}
-            disabled={code.length !== OTP_LENGTH || submitting}
-            accessibilityRole="button"
+          <Button
+            onPress={() => void handleSubmit()}
+            fullWidth
+            disabled={!canVerify}
+            loading={submitting}
             accessibilityLabel={t("auth.otp.verify")}
-            style={({ pressed }) => [
-              styles.cta,
-              (code.length !== OTP_LENGTH || submitting) && styles.ctaDisabled,
-              pressed &&
-                code.length === OTP_LENGTH &&
-                !submitting &&
-                styles.ctaPressed
-            ]}
           >
-            {submitting ? (
-              <ActivityIndicator color={colors.text.inverse} />
-            ) : (
-              <Text style={styles.ctaLabel}>{t("auth.otp.verify")}</Text>
-            )}
-          </Pressable>
+            {t("auth.otp.verify")}
+          </Button>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -301,11 +286,22 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: spacing[4],
-    paddingVertical: spacing[3]
+    paddingVertical: spacing[2]
+  },
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.md,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.surface.default,
+    borderWidth: 1,
+    borderColor: colors.border.subtle
   },
   content: {
     flex: 1,
     paddingHorizontal: spacing[5],
+    paddingTop: spacing[3],
     gap: spacing[3]
   },
   title: {
@@ -315,7 +311,8 @@ const styles = StyleSheet.create({
   subtitle: {
     ...typography.body,
     color: colors.text.secondary,
-    marginBottom: spacing[4]
+    marginBottom: spacing[3],
+    lineHeight: 22
   },
   changeLink: {
     ...typography.bodyEmphasis,
@@ -325,12 +322,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: spacing[2],
     justifyContent: "space-between",
-    marginBottom: spacing[3]
+    marginTop: spacing[2]
   },
   box: {
     flex: 1,
     minHeight: 56,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: colors.border.subtle,
     borderRadius: radius.md,
     backgroundColor: colors.surface.default,
@@ -342,8 +339,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface.raised
   },
   boxActive: {
-    borderColor: colors.brand.primary,
-    borderWidth: 2
+    borderColor: colors.brand.primary
+  },
+  boxError: {
+    borderColor: colors.status.danger
   },
   boxChar: {
     ...typography.h2,
@@ -364,31 +363,15 @@ const styles = StyleSheet.create({
     color: colors.text.muted
   },
   resendRow: {
-    marginTop: spacing[2]
+    marginTop: spacing[1]
   },
   resendLink: {
     ...typography.bodyEmphasis,
     color: colors.text.link
   },
   footer: {
-    padding: spacing[5],
-    gap: spacing[3]
-  },
-  cta: {
-    minHeight: 52,
-    borderRadius: radius.md,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: colors.brand.primary
-  },
-  ctaPressed: {
-    backgroundColor: colors.brand.primaryPressed
-  },
-  ctaDisabled: {
-    backgroundColor: colors.interactive.disabled
-  },
-  ctaLabel: {
-    ...typography.button,
-    color: colors.text.inverse
+    paddingHorizontal: spacing[5],
+    paddingBottom: spacing[4],
+    paddingTop: spacing[2]
   }
 });

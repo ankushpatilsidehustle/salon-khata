@@ -4,17 +4,14 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 import { Events, onNavigationStateChange, track } from "@/observability";
 import type { SalonType } from "@/repositories/salon-repository";
-import { LanguageStep } from "./LanguageStep";
 import { SalonTypeStep } from "./SalonTypeStep";
 import { BusinessSetupStep } from "./BusinessSetupStep";
 import { ServicesStep } from "./ServicesStep";
 
 export type OnboardingStackParamList = {
-  Language: undefined;
-  SalonType: { language: string };
-  BusinessSetup: { language: string; salonType: SalonType };
+  SalonType: undefined;
+  BusinessSetup: { salonType: SalonType };
   Services: {
-    language: string;
     salonType: SalonType;
     businessName: string;
     ownerName: string;
@@ -52,7 +49,6 @@ export function OnboardingNavigator({ onDone }: OnboardingNavigatorProps) {
             gestureEnabled: false
           }}
         >
-          <Stack.Screen name="Language" component={LanguageStep} />
           <Stack.Screen name="SalonType" component={SalonTypeStep} />
           <Stack.Screen name="BusinessSetup" component={BusinessSetupStep} />
           <Stack.Screen name="Services" component={ServicesStep} />

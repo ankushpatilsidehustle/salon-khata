@@ -39,22 +39,17 @@ const OPTIONS: SalonTypeOption[] = [
   }
 ];
 
-export function SalonTypeStep({ navigation, route }: Props) {
+export function SalonTypeStep({ navigation }: Props) {
   const { t } = useTranslation();
-  const { language } = route.params;
 
   function select(salonType: SalonType) {
     track(Events.onboarding.salonTypeSelected, { salon_type: salonType });
-    navigation.navigate("BusinessSetup", { language, salonType });
+    navigation.navigate("BusinessSetup", { salonType });
   }
 
   return (
     <View style={styles.root}>
-      <StepHeader
-        currentStep={2}
-        totalSteps={4}
-        onBack={() => navigation.goBack()}
-      />
+      <StepHeader currentStep={1} totalSteps={3} />
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}

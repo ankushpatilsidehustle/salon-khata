@@ -1,6 +1,7 @@
 {
   "app": {
-    "name": "Salon Khata"
+    "name": "Salon Khata",
+    "tagline": "Your salon's daily khata"
   },
   "nav": {
     "home": "Home"
@@ -8,6 +9,8 @@
   "common": {
     "loading": "Loading",
     "save": "Save",
+    "continue": "Continue",
+    "skip": "Skip",
     "offlineReady": "Works offline",
     "profile": "Profile",
     "back": "Go back",
@@ -673,6 +676,10 @@
     "boundaryRetry": "Try again"
   },
   "auth": {
+    "language": {
+      "title": "Choose your language",
+      "subtitle": "We'll use this throughout the app. You can change it later in settings."
+    },
     "phone": {
       "title": "Enter your mobile number",
       "subtitle": "We'll send you a 6-digit code by SMS to verify it's you.",
@@ -776,5 +783,26 @@
       "footerHint": "You can edit prices anytime from the Services screen."
     },
     "welcome": "Welcome, {{name}}!"
+  },
+  "gettingStarted": {
+    "getStarted": "Get started",
+    "slides": {
+      "what": {
+        "title": "Your salon's daily khata",
+        "body": "Record every bill, expense and staff commission in one simple offline notebook made for busy salons."
+      },
+      "benefits": {
+        "title": "Know today's numbers instantly",
+        "body": "See income, expenses and commissions even without internet — so you never lose track of the day's cash."
+      },
+      "features": {
+        "title": "Bills, staff & reports",
+        "body": "Quick bill entry, employee commissions, customer history and clear reports — everything you need to run the floor."
+      },
+      "why": {
+        "title": "Built for small salon owners",
+        "body": "No complicated ERP. Just a fast, local-first khata in your language so you can start in minutes."
+      }
+    }
   }
 }

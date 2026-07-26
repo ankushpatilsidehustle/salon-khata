@@ -22,7 +22,7 @@ type Props = NativeStackScreenProps<OnboardingStackParamList, "BusinessSetup">;
 
 export function BusinessSetupStep({ navigation, route }: Props) {
   const { t } = useTranslation();
-  const { language, salonType } = route.params;
+  const { salonType } = route.params;
 
   const [businessName, setBusinessName] = useState("");
   const [ownerName, setOwnerName] = useState("");
@@ -57,7 +57,6 @@ export function BusinessSetupStep({ navigation, route }: Props) {
     }
 
     navigation.navigate("Services", {
-      language,
       salonType,
       businessName: trimmedBusiness,
       ownerName: trimmedOwner,
@@ -69,8 +68,8 @@ export function BusinessSetupStep({ navigation, route }: Props) {
   return (
     <View style={styles.root}>
       <StepHeader
-        currentStep={3}
-        totalSteps={4}
+        currentStep={2}
+        totalSteps={3}
         onBack={() => navigation.goBack()}
       />
       <KeyboardAvoidingView

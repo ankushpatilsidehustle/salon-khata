@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import { StatusBar } from "expo-status-bar";
+import * as SplashScreen from "expo-splash-screen";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import { ActivityIndicator, StyleSheet, Text } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
 import "@/i18n";
 import { i18n } from "@/i18n";
 import { isAppLanguageCode } from "@/i18n/languages";
 import { SnackbarProvider } from "@/components/core/SnackbarProvider";
+import { AppLogo } from "@/components/domain/AppLogo";
 import { colors, spacing, typography } from "@/design-system/tokens";
 import { runAllMigrations } from "@/database/migrations";
 import { AppNavigator } from "@/application/AppNavigator";
@@ -20,6 +22,7 @@ import { initializeAppCheck } from "@/firebase/app-check";
 import { loadDeviceIdentity } from "@/device/device-identity";
 import { startNetworkManager } from "@/network/network-manager";
 import { loadBackupPreferences } from "@/backup/backup-preferences";
+import { loadAppPreferences } from "@/session/app-preferences";
 import { registerBackgroundSyncTask } from "@/sync/background-sync-task";
 import {
   ObservabilityErrorBoundary,
@@ -27,6 +30,11 @@ import {
   bootstrapObservability,
   endStartupTrace
 } from "@/observability";
+
+// Keep the native splash visible until JS boot finishes — no artificial delay.
+void SplashScreen.preventAutoHideAsync().catch(() => {
+  // Expo Go / unsupported environments — ignore.
+});
 
 const settingsRepo = new SettingsRepository();
 
@@ -41,34 +49,27 @@ export function AppRoot() {
       try {
         await beginStartupTrace();
         runAllMigrations();
-        // Resolve the persistent install_id before anything else — the key
-        // vault and backup engine depend on it. Cheap on subsequent launches
-        // (a single Secure Store read).
         await loadDeviceIdentity();
-        // Begin observing connectivity so the BackupScheduler (Phase 3) has
-        // a warm cache the moment it starts.
         startNetworkManager();
-        // Hydrate backup preferences so both the foreground scheduler and
-        // the background-task worker see the user's wifi-only / enabled
-        // flags without a redundant AsyncStorage round-trip.
         await loadBackupPreferences();
-        // Kick off App Check before any auth request goes out. Errors are
-        // swallowed inside initializeAppCheck (soft-fail).
+        const prefs = await loadAppPreferences();
+        if (prefs.preferredLanguage) {
+          await i18n.changeLanguage(prefs.preferredLanguage);
+        }
         await initializeAppCheck();
-        // Observability after identity + network so crash keys / consent work.
         await bootstrapObservability();
-        // Register the OS-level per-record sync background worker. The
-        // Phase-7 file-backup engine is manual-only — no OS task registered.
         void registerBackgroundSyncTask();
         if (!cancelled) {
           setIsReady(true);
           void endStartupTrace();
+          await SplashScreen.hideAsync().catch(() => undefined);
         }
       } catch (error) {
         if (!cancelled) {
           setStartupError(
             error instanceof Error ? error.message : t("errors.unknown")
           );
+          await SplashScreen.hideAsync().catch(() => undefined);
         }
       }
     })();
@@ -89,7 +90,7 @@ export function AppRoot() {
   }
 
   if (!isReady) {
-    return <BootSplash label={t("common.loading")} />;
+    return <BootSplash />;
   }
 
   return (
@@ -114,8 +115,6 @@ function AuthGate() {
   const { t } = useTranslation();
   const { status, salonId, refreshSalon } = useAuth();
 
-  // Whenever we land in `signed-in` for the first time, sync the salon's
-  // saved language into i18n so the app boots in the owner's chosen locale.
   useEffect(() => {
     if (status !== "signed-in" || !salonId) return;
     const lang = settingsRepo.getSalonLanguage(salonId);
@@ -125,7 +124,7 @@ function AuthGate() {
   }, [status, salonId]);
 
   if (status === "loading") {
-    return <BootSplash label={t("common.loading")} />;
+    return <BootSplash />;
   }
   if (status === "signed-out") {
     return <AuthNavigator />;
@@ -140,13 +139,19 @@ function AuthGate() {
   );
 }
 
-function BootSplash({ label }: { label: string }) {
+function BootSplash() {
+  const { t } = useTranslation();
   return (
     <SafeAreaProvider>
-      <SafeAreaView style={styles.centeredScreen}>
-        <ActivityIndicator color={colors.brand.primary} />
-        <Text style={styles.body}>{label}</Text>
-      </SafeAreaView>
+      <View style={styles.bootRoot}>
+        <AppLogo
+          size={88}
+          showWordmark
+          layout="vertical"
+          wordmark={t("app.name")}
+        />
+        <Text style={styles.tagline}>{t("app.tagline")}</Text>
+      </View>
     </SafeAreaProvider>
   );
 }
@@ -159,6 +164,20 @@ const styles = StyleSheet.create({
     gap: spacing[3],
     justifyContent: "center",
     padding: spacing[4]
+  },
+  bootRoot: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.background.default,
+    padding: spacing[5],
+    gap: spacing[3]
+  },
+  tagline: {
+    ...typography.body,
+    color: colors.text.secondary,
+    textAlign: "center",
+    marginTop: spacing[1]
   },
   title: {
     ...typography.h2,

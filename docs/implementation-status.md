@@ -35,17 +35,22 @@ it's in [`docs/future-features.md`](future-features.md) or
 
 ### 2.1 Authentication
 
-Firebase phone-OTP + App Check. Auth-gate splash → phone → OTP →
-onboarding (first time) → main tabs.
+Firebase phone-OTP + App Check. First-launch journey:
+
+`native splash / BootSplash → Language (once) → Getting Started carousel (once) → Phone → OTP → business setup (first time) → main tabs`.
 
 | File | Role |
 | --- | --- |
 | `src/firebase/auth.ts` | `signInWithPhone`, `verifyOtp`, `signOut`, `deleteAccount`, `subscribeAuthState` — typed `AuthError { code, message }` |
 | `src/firebase/app-check.ts` | `initializeAppCheck()` — Debug provider under `__DEV__`, Play Integrity / DeviceCheck in prod; prints debug token to console |
 | `src/features/auth/AuthProvider.tsx` | Context. States: `loading | signed-out | signed-in-no-salon | signed-in`. 3 s splash timeout guard. Also starts sync scheduler + backup scheduler + membership on sign-in |
-| `src/features/auth/AuthNavigator.tsx` | Native stack: `Phone` → `Otp` |
-| `src/features/auth/PhoneNumberScreen.tsx` | Brand + icon, +91 prefix, 10-digit input, Send OTP |
+| `src/features/auth/AuthNavigator.tsx` | Native stack: `Language` → `GettingStarted` → `Phone` → `Otp` (initial route from device prefs) |
+| `src/features/auth/LanguagePickerScreen.tsx` | Pre-auth language picker; persists via `app-preferences` |
+| `src/features/onboarding/getting-started/GettingStartedScreen.tsx` | Netflix-style intro carousel (skip / get started); shown once |
+| `src/features/auth/PhoneNumberScreen.tsx` | Branded login: logo, +91 prefix, focused input states, DS `Button` |
 | `src/features/auth/OtpScreen.tsx` | 6 boxes + auto-submit on 6th digit, Change number, 30 s resend, SMS auto-fill |
+| `src/session/app-preferences.ts` | AsyncStorage prefs: preferred language + getting-started completion |
+| `src/components/domain/AppLogo.tsx` | In-app brand mark for splash / auth |
 | `src/domain/phone.ts` | `toE164`, `formatE164ForDisplay` |
 
 Sign-out and Delete-account are surfaced on `MoreScreen` under an
@@ -54,17 +59,17 @@ re-auth.
 
 ### 2.2 Onboarding
 
-Four-step wizard shown when user is authenticated but has no salon:
+Language + product intro happen **before** login (see §2.1). After OTP, a
+three-step business setup wizard runs when the user has no salon row:
 
-`Language → SalonType → BusinessSetup → Services`.
+`SalonType → BusinessSetup → Services`.
 
 | File | Role |
 | --- | --- |
 | `src/features/onboarding/OnboardingNavigator.tsx` | Native stack |
-| `src/features/onboarding/LanguageStep.tsx` | en / hi / mr / gu / bn / ta / kn |
 | `src/features/onboarding/SalonTypeStep.tsx` | male / female / unisex |
 | `src/features/onboarding/BusinessSetupStep.tsx` | Business name, owner name |
-| `src/features/onboarding/ServicesStep.tsx` | Seeds an industry-appropriate service menu (`defaultServices.ts` — ~16 men's, ~30 women's; unisex = both). All rows insert on Finish; blank price = ₹0. Ensures default service categories exist |
+| `src/features/onboarding/ServicesStep.tsx` | Seeds an industry-appropriate service menu (`defaultServices.ts` — ~16 men's, ~30 women's; unisex = both). All rows insert on Finish; blank price = ₹0. Ensures default service categories exist. Salon language taken from device prefs / i18n |
 
 Finish step creates the salon with `id = user.uid`, `owner_uid =
 user.uid`, `mobile_number = user.phoneNumber`.
