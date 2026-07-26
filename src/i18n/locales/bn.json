@@ -589,6 +589,26 @@
       "grace": "গ্রেস পিরিয়ড",
       "expired": "মেয়াদ শেষ",
       "none": "কোনও প্ল্যান নেই"
+    },
+    "plansHint": "Choose a plan to unlock staff assignment and premium features.",
+    "billingCycle": {
+      "monthly": "Billed monthly",
+      "yearly": "Billed yearly"
+    },
+    "purchase": {
+      "subscribe": "Subscribe",
+      "currentPlanBadge": "Your current plan",
+      "successTitle": "You're subscribed",
+      "successBody": "Premium features are unlocked. Thank you!",
+      "failedTitle": "Payment failed",
+      "failedBody": "We couldn't complete the payment. Please try again.",
+      "offline": "You're offline. Connect to the internet to subscribe.",
+      "notConfigured": "Payments aren't configured yet. Please try again later.",
+      "timeout": "This is taking too long. Check your connection and try again.",
+      "browserTitle": "Complete payment in browser",
+      "browserBody": "Finish payment in the browser, then tap Refresh status on this screen.",
+      "verifyPendingTitle": "Confirming payment",
+      "verifyPendingBody": "Payment may still be processing. Tap Refresh status in a moment."
     }
   },
   "backup": {

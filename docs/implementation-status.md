@@ -250,7 +250,10 @@ Shipped locally:
   synced down to SQLite (not computed locally)
 - Sync entity types registered for salon-scoped subscription tables
 - Firestore rules stubs for `/referral_index`, `/referrals`, claim queue
-- Payment gateway **not** implemented — webhook hook is ready
+- **Razorpay billing (Phase 2):** checkout + verify Firestore queues,
+  `razorpayWebhook` (signature-verified), idempotent paid grant,
+  Subscription screen purchase UI (Monthly ₹99 / Yearly ₹999).
+  Setup: [`docs/subscription/razorpay-setup.md`](subscription/razorpay-setup.md)
 
 ### 2.12 Global overlays
 

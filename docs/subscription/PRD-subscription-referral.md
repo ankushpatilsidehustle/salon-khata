@@ -29,7 +29,7 @@ Salon Khata is free to adopt, but staff-assignment during billing is the premium
 
 ### 1.3 Non-goals (Phase 1)
 
-- Razorpay / Play Billing / App Store IAP
+- ~~Razorpay / Play Billing / App Store IAP~~ → **Razorpay shipped** (see `docs/subscription/razorpay-setup.md`); Play/IAP still out of scope
 - Multi-salon orgs, seats, or per-employee seats
 - Complex reward fulfillment UI (store reward intent only) — **updated:**
   fulfillment is Cloud Function–driven; Subscription screen explains the rule
@@ -297,16 +297,14 @@ Idempotency key: `externalPaymentId` (one free month per successful paid event, 
 - Disable plan: `is_enabled=0` (hidden from purchase UI; existing subs continue).  
 - Future cloud catalog pull can UPSERT plans by `code` without migration.
 
-Default Phase 1 seeds:
+Default seeds (purchaseable):
 
-| code | period | days | price | grace | assignStaff |
-| --- | --- | --- | --- | --- | --- |
-| trial | trial | 30 | 0 | 0 | true |
-| monthly | month | 30 | TBD placeholder | 3 | true |
-| quarterly | quarter | 90 | TBD | 3 | true |
-| yearly | year | 365 | TBD | 7 | true |
-
-Placeholder prices are non-zero stubs in paise; purchase UI is not shipped until payments.
+| code | period | days | price | grace | assignStaff | purchaseable |
+| --- | --- | --- | --- | --- | --- | --- |
+| trial | trial | 30 | 0 | 0 | true | no |
+| monthly | month | 30 | ₹99 (9900 paise) | 3 | true | yes |
+| yearly | year | 365 | ₹999 (99900 paise) | 7 | true | yes |
+| quarterly | quarter | 90 | legacy | 3 | true | **disabled** |
 
 ---
 

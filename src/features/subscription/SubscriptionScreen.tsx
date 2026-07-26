@@ -1,5 +1,6 @@
-import { useMemo, useEffect } from "react";
+import { useMemo, useEffect, useState, useCallback } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Pressable,
   ScrollView,
@@ -17,13 +18,26 @@ import { AppBar } from "@/components/core/AppBar";
 import { Button } from "@/components/core/Button";
 import { colors, radius, spacing, typography } from "@/design-system/tokens";
 import { formatMoney } from "@/domain/money";
+import {
+  buildSubscriptionGuard,
+  type Entitlements
+} from "@/domain/subscription";
 import type { RootStackParamList } from "@/application/AppNavigator";
 import { SubscriptionPlanRepository } from "@/repositories/subscription-plan-repository";
-import { Events, track } from "@/observability";
+import type { SubscriptionPlanRecord } from "@/repositories/subscription-plan-repository";
+import {
+  createBillingCheckout,
+  verifyBillingPayment,
+  type PurchaseablePlanCode
+} from "@/cloud/razorpay-billing";
+import { syncScheduler } from "@/sync/sync-scheduler";
+import { useAuth } from "@/features/auth/AuthProvider";
+import { Events, logger, track } from "@/observability";
 import {
   useRefreshEntitlementsOnFocus,
   useSubscription
 } from "./SubscriptionProvider";
+import { openRazorpayCheckout } from "./razorpay-checkout";
 
 const planRepo = new SubscriptionPlanRepository();
 
@@ -35,10 +49,16 @@ type Nav = NativeStackNavigationProp<RootStackParamList>;
 export function SubscriptionScreen() {
   const { t } = useTranslation();
   const navigation = useNavigation<Nav>();
+  const { salonId } = useAuth();
   const { entitlements, referralCode, refresh } = useSubscription();
   useRefreshEntitlementsOnFocus();
 
+  const [purchasingCode, setPurchasingCode] = useState<string | null>(null);
   const plans = useMemo(() => planRepo.listPurchaseable(), []);
+  const guard = useMemo(
+    () => buildSubscriptionGuard(entitlements),
+    [entitlements]
+  );
 
   useEffect(() => {
     track(Events.subscription.screenViewed, {
@@ -87,6 +107,118 @@ export function SubscriptionScreen() {
       });
     } catch {
       Alert.alert(t("subscription.referral.yourCode"), referralCode.code);
+    }
+  }
+
+  const refreshAfterPurchase = useCallback(async () => {
+    try {
+      await syncScheduler.runNow();
+    } catch (err) {
+      logger.warn("subscription.sync_after_purchase_failed", {
+        error: err instanceof Error ? err.message : String(err)
+      });
+    }
+    refresh();
+  }, [refresh]);
+
+  async function handlePurchase(plan: SubscriptionPlanRecord) {
+    if (!salonId) return;
+    if (plan.code !== "monthly" && plan.code !== "yearly") return;
+    if (purchasingCode) return;
+
+    const planCode = plan.code as PurchaseablePlanCode;
+    track(Events.subscription.planSelected, { plan_code: planCode });
+    setPurchasingCode(planCode);
+
+    try {
+      const checkout = await createBillingCheckout({ salonId, planCode });
+      if (!checkout.ok) {
+        Alert.alert(
+          t("subscription.purchase.failedTitle"),
+          checkoutReasonMessage(t, checkout.reason, checkout.message)
+        );
+        return;
+      }
+
+      track(Events.subscription.checkoutStarted, {
+        plan_code: planCode,
+        subscription_id: checkout.subscriptionId
+      });
+
+      const payment = await openRazorpayCheckout({
+        keyId: checkout.keyId,
+        subscriptionId: checkout.subscriptionId,
+        name: checkout.name,
+        description: checkout.description,
+        amountPaise: checkout.amountPaise,
+        currency: checkout.currency,
+        themeColor: checkout.themeColor,
+        shortUrl: checkout.shortUrl
+      });
+
+      if (!payment.ok) {
+        if (payment.error.code === "cancelled") {
+          track(Events.subscription.checkoutCancelled, { plan_code: planCode });
+          return;
+        }
+        if (payment.error.code === "unavailable") {
+          Alert.alert(
+            t("subscription.purchase.browserTitle"),
+            t("subscription.purchase.browserBody")
+          );
+          return;
+        }
+        track(Events.subscription.checkoutFailed, {
+          plan_code: planCode,
+          reason: payment.error.description
+        });
+        Alert.alert(
+          t("subscription.purchase.failedTitle"),
+          payment.error.description || t("subscription.purchase.failedBody")
+        );
+        return;
+      }
+
+      const verified = await verifyBillingPayment({
+        salonId,
+        planCode,
+        razorpayPaymentId: payment.data.razorpay_payment_id,
+        razorpaySubscriptionId: payment.data.razorpay_subscription_id,
+        razorpaySignature: payment.data.razorpay_signature
+      });
+
+      if (!verified.ok) {
+        track(Events.subscription.checkoutFailed, {
+          plan_code: planCode,
+          reason: verified.reason
+        });
+        Alert.alert(
+          t("subscription.purchase.verifyPendingTitle"),
+          t("subscription.purchase.verifyPendingBody")
+        );
+        await refreshAfterPurchase();
+        return;
+      }
+
+      track(Events.subscription.checkoutSucceeded, {
+        plan_code: planCode,
+        already_processed: verified.alreadyProcessed
+      });
+      await refreshAfterPurchase();
+      Alert.alert(
+        t("subscription.purchase.successTitle"),
+        t("subscription.purchase.successBody")
+      );
+    } catch (err) {
+      logger.error("subscription.purchase_unexpected", {
+        error: err instanceof Error ? err.message : String(err)
+      });
+      Alert.alert(
+        t("subscription.purchase.failedTitle"),
+        t("subscription.purchase.failedBody")
+      );
+    } finally {
+      setPurchasingCode(null);
     }
   }
 
@@ -162,6 +294,26 @@ export function SubscriptionScreen() {
           label={t("subscription.features.premium")}
         />
 
+        <Text style={styles.sectionTitle}>{t("subscription.plansTitle")}</Text>
+        <Text style={styles.plansHint}>{t("subscription.plansHint")}</Text>
+        {plans.map((plan) => (
+          <PlanCard
+            key={plan.id}
+            plan={plan}
+            entitlements={entitlements}
+            busy={purchasingCode === plan.code}
+            disabled={purchasingCode != null}
+            isCurrent={
+              guard.planCode === plan.code &&
+              (guard.isSubscriptionActive || guard.isOnTrial)
+            }
+            onPurchase={() => {
+              void handlePurchase(plan);
+            }}
+            t={t}
+          />
+        ))}
+
         <Text style={styles.sectionTitle}>{t("subscription.referral.title")}</Text>
         <View style={styles.codeCard}>
           <Text style={styles.codeLabel}>{t("subscription.referral.yourCode")}</Text>
@@ -183,26 +335,76 @@ export function SubscriptionScreen() {
           </Text>
         </View>
 
-        <Text style={styles.sectionTitle}>{t("subscription.plansTitle")}</Text>
-        <Text style={styles.plansHint}>{t("subscription.paymentsComingSoon")}</Text>
-        {plans.map((plan) => (
-          <View key={plan.id} style={styles.planRow}>
-            <View style={styles.planText}>
-              <Text style={styles.planName}>{plan.name}</Text>
-              <Text style={styles.planMeta}>
-                {t("subscription.planDuration", { days: plan.duration_days })}
-              </Text>
-            </View>
-            <Text style={styles.planPrice}>
-              {formatMoney(plan.price_paise)}
-            </Text>
-          </View>
-        ))}
-
-        <Pressable onPress={refresh} style={styles.refresh}>
+        <Pressable
+          onPress={() => {
+            void refreshAfterPurchase();
+          }}
+          style={styles.refresh}
+        >
           <Text style={styles.refreshText}>{t("subscription.refresh")}</Text>
         </Pressable>
       </ScrollView>
+    </View>
+  );
+}
+
+function PlanCard({
+  plan,
+  entitlements,
+  busy,
+  disabled,
+  isCurrent,
+  onPurchase,
+  t
+}: {
+  plan: SubscriptionPlanRecord;
+  entitlements: Entitlements;
+  busy: boolean;
+  disabled: boolean;
+  isCurrent: boolean;
+  onPurchase: () => void;
+  t: (key: string, opts?: Record<string, unknown>) => string;
+}) {
+  const cycleLabel =
+    plan.billing_period === "year"
+      ? t("subscription.billingCycle.yearly")
+      : t("subscription.billingCycle.monthly");
+
+  return (
+    <View style={[styles.planCard, isCurrent && styles.planCardCurrent]}>
+      <View style={styles.planHeader}>
+        <View style={styles.planText}>
+          <Text style={styles.planName}>{plan.name}</Text>
+          <Text style={styles.planMeta}>{cycleLabel}</Text>
+        </View>
+        <Text style={styles.planPrice}>{formatMoney(plan.price_paise)}</Text>
+      </View>
+
+      <FeatureRow ok label={t("subscription.features.assignStaff")} />
+      <FeatureRow ok label={t("subscription.features.reports")} />
+      <FeatureRow ok label={t("subscription.features.manageStaff")} />
+      <FeatureRow ok label={t("subscription.features.premium")} />
+
+      {isCurrent && !entitlements.isExpired ? (
+        <Text style={styles.currentBadge}>
+          {t("subscription.purchase.currentPlanBadge")}
+        </Text>
+      ) : (
+        <Pressable
+          onPress={onPurchase}
+          disabled={disabled}
+          style={[styles.buyButton, disabled && styles.buyButtonDisabled]}
+          accessibilityRole="button"
+        >
+          {busy ? (
+            <ActivityIndicator color={colors.text.inverse} />
+          ) : (
+            <Text style={styles.buyButtonText}>
+              {t("subscription.purchase.subscribe")}
+            </Text>
+          )}
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -218,6 +420,23 @@ function FeatureRow({ ok, label }: { ok: boolean; label: string }) {
       <Text style={styles.featureLabel}>{label}</Text>
     </View>
   );
+}
+
+function checkoutReasonMessage(
+  t: (key: string, opts?: Record<string, unknown>) => string,
+  reason: string,
+  message?: string
+): string {
+  switch (reason) {
+    case "offline":
+      return t("subscription.purchase.offline");
+    case "razorpay_not_configured":
+      return t("subscription.purchase.notConfigured");
+    case "timeout":
+      return t("subscription.purchase.timeout");
+    default:
+      return message || t("subscription.purchase.failedBody");
+  }
 }
 
 const styles = StyleSheet.create({
@@ -311,20 +530,29 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.text.muted
   },
-  planRow: {
+  planCard: {
+    backgroundColor: colors.surface.default,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border.subtle,
+    padding: spacing[4],
+    gap: spacing[2]
+  },
+  planCardCurrent: {
+    borderColor: colors.brand.primary
+  },
+  planHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: spacing[3],
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border.subtle
+    marginBottom: spacing[1]
   },
   planText: {
     flex: 1,
     gap: 2
   },
   planName: {
-    ...typography.body,
+    ...typography.h2,
     color: colors.text.primary
   },
   planMeta: {
@@ -332,9 +560,31 @@ const styles = StyleSheet.create({
     color: colors.text.muted
   },
   planPrice: {
-    ...typography.body,
+    ...typography.h2,
     color: colors.text.primary,
     fontVariant: ["tabular-nums"]
+  },
+  currentBadge: {
+    ...typography.caption,
+    color: colors.brand.primary,
+    marginTop: spacing[1]
+  },
+  buyButton: {
+    marginTop: spacing[2],
+    backgroundColor: colors.brand.primary,
+    borderRadius: radius.md,
+    paddingVertical: spacing[3],
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 44
+  },
+  buyButtonDisabled: {
+    opacity: 0.6
+  },
+  buyButtonText: {
+    ...typography.body,
+    color: colors.text.inverse,
+    fontWeight: "600"
   },
   refresh: {
     alignSelf: "center",

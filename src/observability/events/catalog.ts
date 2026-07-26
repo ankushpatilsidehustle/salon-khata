@@ -111,6 +111,10 @@ export const SubscriptionEvents = {
   trialExpiringShown: "trial_expiring_shown",
   softLockShown: "soft_lock_shown",
   planSelected: "plan_selected",
+  checkoutStarted: "subscription_checkout_started",
+  checkoutSucceeded: "subscription_checkout_succeeded",
+  checkoutFailed: "subscription_checkout_failed",
+  checkoutCancelled: "subscription_checkout_cancelled",
   referralCodeEntered: "referral_code_entered",
   referralClaimSucceeded: "referral_claim_succeeded",
   referralClaimFailed: "referral_claim_failed"

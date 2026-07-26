@@ -1,6 +1,6 @@
 {
   "name": "salon-khata-functions",
-  "description": "Cloud Functions for Salon Khata — tombstone GC, referral claim/index, paid subscription rewards.",
+  "description": "Cloud Functions for Salon Khata — tombstone GC, referral claim/index, Razorpay billing, paid subscription rewards.",
   "private": true,
   "engines": {
     "node": "20"
